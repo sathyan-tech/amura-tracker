@@ -244,11 +244,11 @@ background: var(–surface2); border: 1px solid var(–border); border-radius: 8
 font-size: 12px; font-weight: 600; transition: all 0.2s;
 }
 .test-item:hover { border-color: var(–accent); }
-.test-item.status-ok { background: rgba(74,222,128,0.1); border-color: var(–green); color: var(–green); }
-.test-item.status-test { background: rgba(96,165,250,0.1); border-color: var(–accent3); color: var(–accent3); }
-.test-item.status-retest { background: rgba(251,146,60,0.1); border-color: var(–orange); color: var(–orange); }
-.test-item.status-failed { background: rgba(248,113,113,0.1); border-color: var(–red); color: var(–red); }
-.test-item.status-ni { background: rgba(100,116,139,0.1); border-color: var(–muted); color: var(–muted); }
+.test-item.status-ok { background: rgba(74,222,128,0.2); border-color: var(–green); color: var(–green); }
+.test-item.status-test { background: rgba(96,165,250,0.2); border-color: var(–accent3); color: var(–accent3); }
+.test-item.status-retest { background: rgba(251,146,60,0.2); border-color: var(–orange); color: var(–orange); }
+.test-item.status-failed { background: rgba(248,113,113,0.2); border-color: var(–red); color: var(–red); }
+.test-item.status-ni { background: rgba(100,116,139,0.2); border-color: var(–muted); color: var(–muted); }
 
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 
@@ -273,10 +273,23 @@ padding: 10px 12px; border-bottom: 1px solid var(–border); font-size: 13px;
 .lookup-result-cal { font-family: ‘DM Mono’, monospace; color: var(–accent2); font-weight: 700; font-size: 14px; }
 .lookup-result-phase { font-size: 10px; color: var(–muted); font-family: ‘DM Mono’, monospace; }
 .lookup-result-status { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
-.s-ok { background: rgba(74,222,128,0.15); color: var(–green); }
-.s-test { background: rgba(96,165,250,0.15); color: var(–accent3); }
-.s-retest { background: rgba(251,146,60,0.15); color: var(–orange); }
-.s-ni { background: rgba(100,116,139,0.15); color: var(–muted); }
+.s-ok     { background: rgba(74,222,128,0.2);  color: var(–green);   border: 1px solid rgba(74,222,128,0.4); }
+.s-test   { background: rgba(96,165,250,0.2);  color: var(–accent3); border: 1px solid rgba(96,165,250,0.4); }
+.s-retest { background: rgba(251,146,60,0.2);  color: var(–orange);  border: 1px solid rgba(251,146,60,0.4); }
+.s-failed { background: rgba(248,113,113,0.2); color: var(–red);     border: 1px solid rgba(248,113,113,0.4); }
+.s-ni     { background: rgba(100,116,139,0.2); color: var(–muted);   border: 1px solid rgba(100,116,139,0.4); }
+
+/* FOOD EDITOR MODAL */
+.food-editor-modal { display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center; }
+.food-editor-sheet { background:var(–surface);border:1px solid var(–border);border-radius:20px 20px 0 0;padding:20px 20px 40px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto; }
+.food-editor-field { margin-bottom:14px; }
+.food-editor-label { font-size:11px;font-weight:700;color:var(–muted);letter-spacing:1px;margin-bottom:5px;font-family:‘DM Mono’,monospace; }
+.food-editor-input { width:100%;background:var(–surface2);border:1px solid var(–border);color:var(–text);border-radius:10px;padding:10px 14px;font-size:14px;font-family:‘Syne’,sans-serif;outline:none;box-sizing:border-box; }
+.food-editor-input:focus { border-color:var(–accent); }
+.food-editor-select { width:100%;background:var(–surface2);border:1px solid var(–border);color:var(–text);border-radius:10px;padding:10px 14px;font-size:14px;font-family:‘Syne’,sans-serif;outline:none;box-sizing:border-box; }
+.lookup-result-row { cursor:pointer; transition: background 0.15s; }
+.lookup-result-row:hover { background: var(–surface2); border-radius: 10px; }
+.edit-btn { font-size:11px;background:rgba(96,165,250,0.15);border:1px solid rgba(96,165,250,0.3);color:var(–accent3);border-radius:6px;padding:3px 8px;cursor:pointer;font-family:‘Syne’,sans-serif;font-weight:700;flex-shrink:0; }
 
 /* HISTORY */
 .history-card {
@@ -561,7 +574,10 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
 <div class="page" id="page-lookup">
   <div class="lookup-card">
-    <h3 style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">🔍 Calorie Lookup</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <h3 style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">🔍 Food Database</h3>
+      <button onclick="openFoodEditor(null)" style="background:var(--accent);color:#0d0f14;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;">+ Add Food</button>
+    </div>
     <input class="lookup-search" type="text" id="lookupInput" placeholder="Search any food..." oninput="runLookup()">
     <div class="cat-filter" id="lookupCatFilter"></div>
     <div id="lookupResults"></div>
@@ -575,6 +591,90 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
     <div class="section-title">Log History</div>
   </div>
   <div id="historyList"></div>
+</div>
+
+<!-- FOOD EDITOR MODAL -->
+
+<div class="food-editor-modal" id="foodEditorModal">
+  <div class="food-editor-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:800;" id="foodEditorTitle">Add Food</div>
+      <button onclick="closeFoodEditor()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
+    </div>
+
+```
+<div class="food-editor-field">
+  <div class="food-editor-label">FOOD NAME</div>
+  <input class="food-editor-input" id="fe_name" placeholder="e.g. Spinach">
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+  <div class="food-editor-field">
+    <div class="food-editor-label">CALORIES (kcal)</div>
+    <input class="food-editor-input" id="fe_cal" type="number" placeholder="e.g. 41">
+  </div>
+  <div class="food-editor-field">
+    <div class="food-editor-label">PER QTY</div>
+    <input class="food-editor-input" id="fe_qty" type="number" placeholder="e.g. 100">
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+  <div class="food-editor-field">
+    <div class="food-editor-label">UNIT</div>
+    <select class="food-editor-select" id="fe_unit">
+      <option value="gms">gms</option>
+      <option value="ml">ml</option>
+      <option value="piece">piece</option>
+      <option value="tbsp">tbsp</option>
+      <option value="tsp">tsp</option>
+      <option value="cup">cup</option>
+      <option value="nos">nos</option>
+    </select>
+  </div>
+  <div class="food-editor-field">
+    <div class="food-editor-label">PHASE</div>
+    <select class="food-editor-select" id="fe_phase">
+      <option value="1">Phase 1</option>
+      <option value="2">Phase 2</option>
+      <option value="3">Phase 3</option>
+      <option value="4">Phase 4</option>
+    </select>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+  <div class="food-editor-field">
+    <div class="food-editor-label">CATEGORY</div>
+    <select class="food-editor-select" id="fe_cat">
+      <option>Vegetables</option>
+      <option>Fruits</option>
+      <option>Protein</option>
+      <option>Dairy</option>
+      <option>Nuts</option>
+      <option>Seeds</option>
+      <option>Oils</option>
+      <option>Other</option>
+    </select>
+  </div>
+  <div class="food-editor-field">
+    <div class="food-editor-label">STATUS</div>
+    <select class="food-editor-select" id="fe_status">
+      <option value="NI">NI (Not Introduced)</option>
+      <option value="Test">Test</option>
+      <option value="OK">OK (Passed)</option>
+      <option value="Retest">Retest</option>
+      <option value="Failed">Failed</option>
+    </select>
+  </div>
+</div>
+
+<div id="fe_error" style="display:none;color:var(--red);font-size:12px;margin-bottom:10px;"></div>
+
+<div style="display:flex;gap:10px;margin-top:4px;">
+  <button onclick="closeFoodEditor()" class="btn-secondary" style="flex:1;">Cancel</button>
+  <button onclick="saveFoodEditor()" class="btn-primary" style="flex:2;" id="fe_saveBtn">Save Food</button>
+</div>
+```
+
+  </div>
 </div>
 
 <!-- SNAPSHOT CARD (off-screen, rendered by html2canvas) -->
@@ -927,6 +1027,7 @@ function setSyncStatus(msg, color) {
 // ============================================================
 async function appInit() {
   await loadAllFromFirestore();
+  await loadCustomFoods();
   currentDate = getTodayStr();
   document.getElementById('todayDate').value = currentDate;
   updateTopbarDate();
@@ -1224,31 +1325,157 @@ function runLookup() {
     if (q && !f.name.toLowerCase().includes(q)) return false;
     return true;
   });
+  // Also include custom foods from customFoods array
+  const allItems = [...items, ...customFoods.filter(f => {
+    if (lookupCat !== 'all' && f.cat !== lookupCat) return false;
+    if (q && !f.name.toLowerCase().includes(q)) return false;
+    return true;
+  })];
 
   const el = document.getElementById('lookupResults');
-  if (!items.length) { el.innerHTML = '<div class="empty-state">No results</div>'; return; }
+  if (!allItems.length) { el.innerHTML = '<div class="empty-state">No results</div>'; return; }
 
-  el.innerHTML = items.map(f => {
+  el.innerHTML = allItems.map(f => {
     const status = foodStatusOverrides[f.name] || f.status;
-    const sc = status === 'OK' ? 's-ok' : status === 'Test' ? 's-test' : status === 'Retest' ? 's-retest' : 's-ni';
+    const sc = status === 'OK' ? 's-ok' : status === 'Test' ? 's-test' : status === 'Retest' ? 's-retest' : status === 'Failed' ? 's-failed' : 's-ni';
+    const isCustom = f._custom ? '✦ ' : '';
     return `
-    <div class="lookup-result-row">
-      <div>
-        <div class="lookup-result-name">${f.name}</div>
+    <div class="lookup-result-row" style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px;border-bottom:1px solid var(--border);">
+      <div style="flex:1;min-width:0;">
+        <div class="lookup-result-name">${isCustom}${f.name}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px">${f.cat} · Phase ${f.phase}</div>
       </div>
-      <div class="lookup-result-meta">
+      <div class="lookup-result-meta" style="margin-left:8px;">
         <div class="lookup-result-cal">${f.cal} kcal</div>
         <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">per ${f.qty} ${f.unit}</div>
-        <div class="lookup-result-status ${sc}">${status}</div>
+        <div class="lookup-result-status ${sc}" style="margin-top:3px;">${status}</div>
       </div>
+      <button class="edit-btn" style="margin-left:10px;" onclick="openFoodEditor('${f.name.replace(/'/g,"\\'")}')">✏ Edit</button>
     </div>
   `}).join('');
 }
 
 // ============================================================
-// HISTORY
+// FOOD DATABASE EDITOR
 // ============================================================
+let customFoods = []; // user-added foods stored in Firestore
+let editingFoodName = null; // null = adding new, string = editing existing
+
+async function loadCustomFoods() {
+  if (!db || !currentUser) return;
+  try {
+    const snap = await userDoc().collection('customFoods').get();
+    customFoods = [];
+    snap.forEach(doc => customFoods.push({ ...doc.data(), _custom: true }));
+    // Also merge into search so food log autocomplete picks them up
+    customFoods.forEach(cf => {
+      if (!CALORIE_DB.find(f => f.name === cf.name)) CALORIE_DB.push(cf);
+    });
+  } catch(e) { console.warn('Could not load custom foods', e); }
+}
+
+async function saveCustomFood(food) {
+  if (!db || !currentUser) return;
+  await userDoc().collection('customFoods').doc(food.name).set(food);
+}
+
+async function deleteCustomFood(name) {
+  if (!db || !currentUser) return;
+  await userDoc().collection('customFoods').doc(name).delete();
+}
+
+function openFoodEditor(foodName) {
+  editingFoodName = foodName;
+  const modal = document.getElementById('foodEditorModal');
+  const title = document.getElementById('foodEditorTitle');
+  document.getElementById('fe_error').style.display = 'none';
+
+  if (foodName) {
+    // Editing existing
+    title.textContent = '✏ Edit Food';
+    const f = [...CALORIE_DB, ...customFoods].find(x => x.name === foodName);
+    if (!f) return;
+    document.getElementById('fe_name').value = f.name;
+    document.getElementById('fe_cal').value = f.cal;
+    document.getElementById('fe_qty').value = f.qty;
+    document.getElementById('fe_unit').value = f.unit;
+    document.getElementById('fe_phase').value = f.phase;
+    document.getElementById('fe_cat').value = f.cat;
+    document.getElementById('fe_status').value = foodStatusOverrides[f.name] || f.status;
+    document.getElementById('fe_name').disabled = !f._custom; // can't rename built-in foods
+  } else {
+    // Adding new
+    title.textContent = '+ Add Food';
+    document.getElementById('fe_name').value = '';
+    document.getElementById('fe_name').disabled = false;
+    document.getElementById('fe_cal').value = '';
+    document.getElementById('fe_qty').value = '100';
+    document.getElementById('fe_unit').value = 'gms';
+    document.getElementById('fe_phase').value = '1';
+    document.getElementById('fe_cat').value = 'Vegetables';
+    document.getElementById('fe_status').value = 'NI';
+  }
+
+  modal.style.display = 'flex';
+}
+
+function closeFoodEditor() {
+  document.getElementById('foodEditorModal').style.display = 'none';
+}
+
+async function saveFoodEditor() {
+  const errEl = document.getElementById('fe_error');
+  errEl.style.display = 'none';
+
+  const name = document.getElementById('fe_name').value.trim();
+  const cal  = parseFloat(document.getElementById('fe_cal').value);
+  const qty  = parseFloat(document.getElementById('fe_qty').value);
+  const unit = document.getElementById('fe_unit').value;
+  const phase = document.getElementById('fe_phase').value;
+  const cat  = document.getElementById('fe_cat').value;
+  const status = document.getElementById('fe_status').value;
+
+  if (!name) { errEl.textContent = 'Food name is required'; errEl.style.display = 'block'; return; }
+  if (isNaN(cal) || cal < 0) { errEl.textContent = 'Enter a valid calorie value'; errEl.style.display = 'block'; return; }
+  if (isNaN(qty) || qty <= 0) { errEl.textContent = 'Enter a valid quantity'; errEl.style.display = 'block'; return; }
+
+  const isBuiltIn = CALORIE_DB.find(f => f.name === name && !f._custom);
+
+  if (isBuiltIn) {
+    // For built-in foods, only update the status override + save cal/qty/phase to a custom overlay
+    foodStatusOverrides[name] = status;
+    // Update in-memory CALORIE_DB entry
+    const idx = CALORIE_DB.findIndex(f => f.name === name);
+    if (idx >= 0) Object.assign(CALORIE_DB[idx], { cal, qty, unit, phase, cat });
+    saveOverrides();
+    // Save override data as a custom food entry too so edits persist
+    await saveCustomFood({ name, cal, qty, unit, phase: String(phase), cat, status, _custom: true });
+    const existing = customFoods.findIndex(f => f.name === name);
+    const updated = { name, cal, qty, unit, phase: String(phase), cat, status, _custom: true };
+    if (existing >= 0) customFoods[existing] = updated; else customFoods.push(updated);
+  } else {
+    // Custom food — save fully
+    const food = { name, cal, qty, unit, phase: String(phase), cat, status, _custom: true };
+    await saveCustomFood(food);
+    // Update in-memory
+    const existingDB = CALORIE_DB.findIndex(f => f.name === name);
+    if (existingDB >= 0) Object.assign(CALORIE_DB[existingDB], food);
+    else CALORIE_DB.push(food);
+    const existingCF = customFoods.findIndex(f => f.name === name);
+    if (existingCF >= 0) customFoods[existingCF] = food; else customFoods.push(food);
+    // Update status override
+    foodStatusOverrides[name] = status;
+    saveOverrides();
+  }
+
+  closeFoodEditor();
+  showToast(`${name} saved!`);
+  runLookup();
+  buildCatFilters();
+  buildLookupCatFilter();
+}
+
+
 function renderHistory() {
   const el = document.getElementById('historyList');
   const dates = Object.keys(dayLogs).sort((a,b) => b.localeCompare(a));
