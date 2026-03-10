@@ -346,32 +346,24 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <div style="font-size:14px;font-weight:800;margin-bottom:10px;">Step 1 — Firebase project checklist</div>
   <ol style="color:#94a3b8;font-size:13px;line-height:2;padding-left:18px;">
     <li>Go to <a href="https://console.firebase.google.com" target="_blank" style="color:#6ee7b7;">console.firebase.google.com</a></li>
-    <li>Create a project → register a <strong style="color:#e2e8f0;">Web app</strong> (&lt;/&gt;)</li>
-    <li><strong style="color:#e2e8f0;">Build → Firestore Database</strong> → Create → test mode</li>
-    <li><strong style="color:#e2e8f0;">Build → Authentication</strong> → Enable Google sign-in</li>
-    <li><strong style="color:#e2e8f0;">Authentication → Settings → Authorized domains</strong> → Add <code style="background:#1e2230;padding:1px 5px;border-radius:3px;">sathyan-tech.github.io</code></li>
+    <li>Create a project &#8594; register a <strong style="color:#e2e8f0;">Web app</strong> (&lt;/&gt;)</li>
+    <li><strong style="color:#e2e8f0;">Build &#8594; Firestore Database</strong> &#8594; Create &#8594; test mode</li>
+    <li><strong style="color:#e2e8f0;">Build &#8594; Authentication</strong> &#8594; Enable Google sign-in</li>
+    <li><strong style="color:#e2e8f0;">Authentication &#8594; Settings &#8594; Authorized domains</strong> &#8594; Add <code style="background:#1e2230;padding:1px 5px;border-radius:3px;">sathyan-tech.github.io</code></li>
   </ol>
 </div>
 
 <div style="background:#161922;border:1px solid #2a2f3f;border-radius:16px;padding:18px;margin-bottom:16px;">
   <div style="font-size:14px;font-weight:800;margin-bottom:6px;">Step 2 — Paste your Firebase config</div>
-  <div style="font-size:12px;color:#64748b;margin-bottom:10px;">From Project Settings → Your apps → copy the values inside the <code style="background:#1e2230;padding:1px 5px;border-radius:3px;">{ }</code></div>
+  <div style="font-size:12px;color:#64748b;margin-bottom:10px;">From Project Settings &#8594; Your apps &#8594; copy the values inside the <code style="background:#1e2230;padding:1px 5px;border-radius:3px;">{ }</code></div>
   <textarea id="fbConfigInput"
-    placeholder='apiKey: "AIzaSy...",
-```
+    placeholder='Paste your Firebase config here...'
+    style="width:100%;height:150px;background:#0a0c10;border:2px solid #6ee7b7;border-radius:10px;padding:12px;color:#6ee7b7;font-family:'DM Mono',monospace;font-size:12px;resize:none;outline:none;display:block;box-sizing:border-box;margin-bottom:4px;"></textarea>
+  <div id="fbConfigError" style="display:none;color:#f87171;font-size:12px;margin-top:6px;"></div>
 
-authDomain: “your-app.firebaseapp.com”,
-projectId: “your-app”,
-storageBucket: “your-app.appspot.com”,
-messagingSenderId: “123456”,
-appId: “1:123456:web:abc”’
-style=“width:100%;height:150px;background:#0a0c10;border:2px solid #6ee7b7;border-radius:10px;padding:12px;color:#6ee7b7;font-family:‘DM Mono’,monospace;font-size:12px;resize:none;outline:none;display:block;box-sizing:border-box;margin-bottom:4px;”></textarea>
-<div id="fbConfigError" style="display:none;color:#f87171;font-size:12px;margin-top:6px;"></div>
-
-```
   <button onclick="initFirebaseFromInput()"
     style="width:100%;background:#6ee7b7;color:#0d0f14;border:none;border-radius:12px;padding:16px;font-size:15px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;margin-top:14px;display:block;box-sizing:border-box;">
-    Connect Firebase & Continue →
+    Connect &amp; Continue &#8594;
   </button>
 </div>
 
@@ -847,9 +839,6 @@ function showSetupScreen() {
 }
 
 function showLoginScreen() {
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('setupScreen').style.display = 'none';
-}
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('setupScreen').style.display = 'none';
 }
