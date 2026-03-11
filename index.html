@@ -583,12 +583,22 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
     <button class="select-chip" id="fphase-4" onclick="filterPhase('4')">Phase 4</button>
   </div>
 
-  <div class="phase-legend">
-    <div class="legend-item l-ok">   <div class="legend-dot" style="background:#4ade80"></div>Passed</div>
-    <div class="legend-item l-test"> <div class="legend-dot" style="background:#60a5fa"></div>To Test</div>
-    <div class="legend-item l-retest"><div class="legend-dot" style="background:#fb923c"></div>Retest</div>
-    <div class="legend-item l-failed"><div class="legend-dot" style="background:#f87171"></div>Failed</div>
-    <div class="legend-item l-ni">   <div class="legend-dot" style="background:#94a3b8"></div>Not Interested</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:12px 14px;background:#161922;border:1px solid #2a2f3f;border-radius:12px;">
+    <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px;background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.5);color:#4ade80;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#4ade80;flex-shrink:0;"></div>Passed
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px;background:rgba(96,165,250,0.15);border:1px solid rgba(96,165,250,0.5);color:#93c5fd;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#60a5fa;flex-shrink:0;"></div>To Test
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px;background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.5);color:#fdba74;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#fb923c;flex-shrink:0;"></div>Retest
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px;background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.5);color:#fca5a5;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#f87171;flex-shrink:0;"></div>Failed
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px;background:rgba(148,163,184,0.12);border:1px solid rgba(148,163,184,0.35);color:#94a3b8;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#94a3b8;flex-shrink:0;"></div>Not Interested
+    </div>
   </div>
 
   <div class="cat-filter" id="catFilter"></div>
@@ -1732,22 +1742,28 @@ function renderPhaseList(phFilter, catFilter) {
   const el = document.getElementById('phaseList');
   if (!items.length) { el.innerHTML = '<div class="empty-state">No foods match filters</div>'; return; }
 
-  el.innerHTML = Object.entries(grouped).map(([cat, foods]) => `
-    <div class="food-test-card">
-      <div class="food-test-header">
-        <h3>${cat}</h3>
-        <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">${foods.length} items</span>
-      </div>
-      <div class="test-items">
-        ${foods.map(f => `
-          <div class="test-item status-${f.status.toLowerCase()}" onclick="cycleStatus('${f.name.replace(/'/g,"\\'")}')">
-            <div class="status-dot"></div>
-            ${f.name}${f.status === 'NI' ? ' <span style="font-size:9px;opacity:0.7">(not interested)</span>' : ''}
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
+  const _cs = {
+    ok:     'background:rgba(74,222,128,0.18);border:1px solid #4ade80;color:#4ade80;',
+    test:   'background:rgba(96,165,250,0.18);border:1px solid #60a5fa;color:#93c5fd;',
+    retest: 'background:rgba(251,146,60,0.18);border:1px solid #fb923c;color:#fdba74;',
+    failed: 'background:rgba(248,113,113,0.18);border:1px solid #f87171;color:#fca5a5;',
+    ni:     'background:rgba(148,163,184,0.12);border:1px solid #475569;color:#94a3b8;',
+  };
+  const _dc = { ok:'#4ade80', test:'#60a5fa', retest:'#fb923c', failed:'#f87171', ni:'#94a3b8' };
+  const _base = 'display:inline-flex;align-items:center;gap:7px;cursor:pointer;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;transition:opacity 0.15s;';
+
+  el.innerHTML = Object.entries(grouped).map(([cat, foods]) => {
+    const chips = foods.map(f => {
+      const k = f.status.toLowerCase();
+      const cs = _cs[k] || _cs.ni;
+      const dc = _dc[k] || _dc.ni;
+      const ni = f.status === 'NI' ? ' <span style="font-size:9px;opacity:0.6">(not interested)</span>' : '';
+      const dot = '<div style="width:9px;height:9px;border-radius:50%;background:' + dc + ';flex-shrink:0;"></div>';
+      const nm = f.name.replace(/'/g, "\'");
+      return '<div style="' + _base + cs + '" onclick="cycleStatus(\'' + nm + '\')">' + dot + f.name + ni + '</div>';
+    }).join('');
+    return '<div class="food-test-card"><div class="food-test-header"><h3>' + cat + '</h3><span style="font-size:11px;color:#64748b;font-family:\'DM Mono\',monospace">' + foods.length + ' items</span></div><div class="test-items">' + chips + '</div></div>';
+  }).join('');
 }
 
 // ============================================================
