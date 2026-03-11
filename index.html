@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#0d0f14">
 <title>Sathyan's Amura Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <!-- Firebase hardcoded config - no setup screen needed -->
 <script>
 const FIREBASE_CONFIG = {
@@ -586,6 +587,78 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   </div>
 </div>
 
+<!-- PAGE: DASHBOARD -->
+
+<div class="page" id="page-dashboard">
+
+  <!-- Range filter -->
+
+  <div style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;">
+    <button class="select-chip active" id="range-30" onclick="setDashRange(30,this)">30 Days</button>
+    <button class="select-chip" id="range-60" onclick="setDashRange(60,this)">60 Days</button>
+    <button class="select-chip" id="range-90" onclick="setDashRange(90,this)">All Time</button>
+    <button onclick="importHistoricalData()" id="importBtn" style="margin-left:auto;background:#f59e0b;color:#0d0f14;border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;">⬆ Import Spreadsheet</button>
+  </div>
+
+  <!-- Summary cards -->
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+      <div style="font-size:18px;font-weight:800;color:#6ee7b7;" id="dash-avgcal">—</div>
+      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">AVG KCAL</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+      <div style="font-size:18px;font-weight:800;color:#60a5fa;" id="dash-weight">—</div>
+      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">WEIGHT</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+      <div style="font-size:18px;font-weight:800;color:#f87171;" id="dash-bs">—</div>
+      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">BLOOD SG</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+      <div style="font-size:18px;font-weight:800;color:#f59e0b;" id="dash-days">—</div>
+      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">DAYS</div>
+    </div>
+  </div>
+
+  <!-- Weight chart -->
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">⚖ WEIGHT TREND (kg)</div>
+    <canvas id="weightChart" height="140"></canvas>
+  </div>
+
+  <!-- Blood Sugar chart -->
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">🩸 BLOOD SUGAR TREND (mg/dL)</div>
+    <canvas id="bsChart" height="140"></canvas>
+  </div>
+
+  <!-- Calories chart -->
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">🔥 DAILY CALORIES</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:12px;font-family:'DM Mono',monospace;">Target: 850 kcal shown as dashed line</div>
+    <canvas id="calChart" height="140"></canvas>
+  </div>
+
+  <!-- Sleep & Energy chart -->
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">😴 SLEEP HOURS</div>
+    <canvas id="sleepChart" height="120"></canvas>
+  </div>
+
+  <!-- Phase timeline -->
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">📋 PHASE TIMELINE</div>
+    <div id="phaseTimeline"></div>
+  </div>
+
+</div>
+
 <!-- PAGE: HISTORY -->
 
 <div class="page" id="page-history">
@@ -688,7 +761,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
     <div>
       <div style="font-size:18px;font-weight:800;color:#f59e0b;">⭐ Admin Console</div>
-      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">Sathyan85@gmail.com</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">Admin Account</div>
     </div>
     <button onclick="loadAdminData()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">↻ Refresh</button>
   </div>
@@ -818,6 +891,10 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
     Today
   </button>
+  <button class="nav-btn" id="nav-dashboard" onclick="switchPage('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Trends
+  </button>
   <button class="nav-btn" id="nav-phase" onclick="switchPage('phase')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
     Phase
@@ -938,7 +1015,7 @@ const CALORIE_DB = [
 // ============================================================
 // FIREBASE & AUTH
 // ============================================================
-const ADMIN_EMAIL = 'sathyan85@gmail.com';
+const ADMIN_EMAIL = ['sathyan85','gmail.com'].join('@');
 let db = null;
 let currentUser = null;
 let saveTimer = null;
@@ -946,6 +1023,14 @@ let saveTimer = null;
 function bootFirebase() {
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
   db = firebase.firestore();
+  // Handle redirect result first (returns from Google sign-in)
+  firebase.auth().getRedirectResult().then(result => {
+    if (result && result.user) {
+      // Successfully signed in via redirect — onAuthStateChanged will fire next
+    }
+  }).catch(err => {
+    document.getElementById('loginError').textContent = err.message;
+  });
   firebase.auth().onAuthStateChanged(user => {
     if (user) { currentUser = user; onSignedIn(user); }
     else { currentUser = null; showLoginScreen(); }
@@ -959,7 +1044,7 @@ function showLoginScreen() {
 function signInWithGoogle() {
   document.getElementById('loginError').textContent = '';
   const provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider).catch(err => {
+  firebase.auth().signInWithRedirect(provider).catch(err => {
     document.getElementById('loginError').textContent = err.message;
   });
 }
@@ -1663,6 +1748,7 @@ function switchPage(page) {
   document.getElementById('nav-' + page).classList.add('active');
   if (page === 'history') renderHistory();
   if (page === 'admin') loadAdminData();
+  if (page === 'dashboard') renderDashboard();
 }
 
 function statusColor(s) {
@@ -1849,15 +1935,27 @@ function shareSnapshot() {
   const ringOffset = circ - circ * pct;
   const ringColor = over ? '#f87171' : '#6ee7b7';
 
-  const metricsHtml = [
-    m.weight     ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">⚖ Weight</span><span style="font-weight:700;font-size:13px">${m.weight} kg</span></div>` : '',
-    m.bloodSugar ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">🩸 Blood Sugar</span><span style="font-weight:700;font-size:13px">${m.bloodSugar} mg/dL</span></div>` : '',
-    m.sleep      ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">😴 Sleep</span><span style="font-weight:700;font-size:13px">${m.sleep} hrs</span></div>` : '',
-    m.water      ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">💧 Water</span><span style="font-weight:700;font-size:13px">${m.water} L</span></div>` : '',
-    m.energy     ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">⚡ Energy</span><span style="font-weight:700;font-size:13px">${m.energy}/5</span></div>` : '',
-    m.fasting    ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">⏱ Fasting</span><span style="font-weight:700;font-size:13px">${m.fasting} hrs</span></div>` : '',
-    m.bm         ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">🚽 Bowel Movement</span><span style="font-weight:700;font-size:13px">${m.bm}</span></div>` : '',
-  ].filter(Boolean).join('');
+  const metricItems = [
+    m.weight     ? {icon:'⚖', label:'Weight',       val:`${m.weight} kg`}       : null,
+    m.bloodSugar ? {icon:'🩸', label:'Blood Sugar',  val:`${m.bloodSugar} mg/dL`}: null,
+    m.sleep      ? {icon:'😴', label:'Sleep',        val:`${m.sleep} hrs`}        : null,
+    m.water      ? {icon:'💧', label:'Water',        val:`${m.water} L`}          : null,
+    m.energy     ? {icon:'⚡', label:'Energy',       val:`${m.energy}/5`}         : null,
+    m.fasting    ? {icon:'⏱', label:'Fasting',      val:`${m.fasting} hrs`}      : null,
+    m.bm         ? {icon:'🚽', label:'BM',           val:m.bm}                    : null,
+    m.phase      ? {icon:'📋', label:'Phase',        val:m.phase}                 : null,
+  ].filter(Boolean);
+
+  // 2-column grid for metrics
+  const metricsHtml = metricItems.length === 0 ? '' : `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      ${metricItems.map(item => `
+        <div style="background:#161922;border:1px solid #2a2f3f;border-radius:10px;padding:10px 12px;">
+          <div style="font-size:10px;color:#64748b;margin-bottom:3px;">${item.icon} ${item.label.toUpperCase()}</div>
+          <div style="font-size:14px;font-weight:800;color:#e2e8f0;">${item.val}</div>
+        </div>`).join('')}
+    </div>`;
+
 
   const foodsHtml = log.foods.length === 0
     ? '<div style="color:#64748b;font-size:13px;padding:8px 0">No food logged</div>'
@@ -1912,7 +2010,7 @@ function shareSnapshot() {
     </div>
 
     <!-- Metrics -->
-    ${metricsHtml ? `<div style="background:#161922;border:1px solid #2a2f3f;border-radius:16px;padding:14px 16px;margin-bottom:16px">${metricsHtml}</div>` : ''}
+    ${metricsHtml}
 
     <!-- Notes -->
     ${m.intro ? `<div style="background:rgba(110,231,183,0.07);border:1px solid rgba(110,231,183,0.2);border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px"><span style="color:#6ee7b7;font-weight:700">🆕 New: </span>${m.intro}</div>` : ''}
@@ -1989,14 +2087,245 @@ async function doNativeShare() {
   }
 }
 
-function doDownload() {
-  if (!snapshotDataUrl) return;
-  const a = document.createElement('a');
-  a.href = snapshotDataUrl;
-  a.download = `amura-${currentDate}.png`;
-  a.click();
-  showToast('Image saved!');
+// ============================================================
+// SCRAPED HISTORICAL DATA
+// ============================================================
+const SCRAPED_LOGS = {"2025-12-22":{"foods":[],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"","bm":"850","supplement":"","water":"","fasting":"3","impact":"3"}},"2025-12-23":{"foods":[],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"","bm":"850","supplement":"","water":"","fasting":"3","impact":"3"}},"2025-12-24":{"foods":[],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"","bm":"850","supplement":"","water":"","fasting":"3","impact":"3"}},"2025-12-25":{"foods":[],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"","bm":"850","supplement":"","water":"","fasting":"3","impact":"3"}},"2026-01-06":{"foods":[],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"","bm":"850","supplement":"","water":"","fasting":"3","impact":"3"}},"2026-01-07":{"foods":[],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"","bm":"850","supplement":"","water":"","fasting":"3","impact":"3"}},"2026-01-08":{"foods":[],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"","bm":"850","supplement":"","water":"","fasting":"3","impact":"3"}},"2026-01-09":{"foods":[],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"","bm":"850","supplement":"","water":"","fasting":"3","impact":"3"}},"2026-01-10":{"foods":[],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"","bm":"850","supplement":"","water":"","fasting":"3","impact":"1"}},"2026-01-11":{"foods":[],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"","bm":"850","supplement":"","water":"","fasting":"3","impact":"3"}},"2026-01-12":{"foods":[{"name":"Carrot","qty":1.93,"qtyDisplay":"1.93","calories":0},{"name":"French Beans","qty":3.0,"qtyDisplay":"3","calories":0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1","calories":0},{"name":"Asparagus","qty":2.0,"qtyDisplay":"2","calories":0},{"name":"Cabbage","qty":1.81,"qtyDisplay":"1.81","calories":0},{"name":"Spring Onion","qty":0.4,"qtyDisplay":"0.4","calories":0},{"name":"Olive Oil","qty":2.0,"qtyDisplay":"2","calories":0},{"name":"Gooseberries","qty":1.31,"qtyDisplay":"1.31","calories":0},{"name":"Garlic","qty":0.16,"qtyDisplay":"0.16","calories":0}],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"3","bm":"","supplement":"New Supplement","water":"","fasting":"Calorie (Kcal)","impact":""}},"2026-01-13":{"foods":[{"name":"Carrot","qty":2.8,"qtyDisplay":"280 gms","calories":115.0},{"name":"French Beans","qty":2.5,"qtyDisplay":"250 gms","calories":60.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Avocado","qty":0.75,"qtyDisplay":"75 gms","calories":120.0},{"name":"Asparagus","qty":0.78,"qtyDisplay":"78 gms","calories":16.0},{"name":"Butter","qty":1.0,"qtyDisplay":"1 Tsp","calories":29.0}],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"3","bm":"44","supplement":"New Supplement","water":"","fasting":"Calorie (Kcal)","impact":"116"}},"2026-01-14":{"foods":[{"name":"Carrot","qty":3.0,"qtyDisplay":"300 gms","calories":123.0},{"name":"French Beans","qty":2.73,"qtyDisplay":"273 gms","calories":66.0},{"name":"Sesame Oil","qty":2.0,"qtyDisplay":"2 Tsp","calories":80.0},{"name":"Brussel Sprouts","qty":1.15,"qtyDisplay":"115 gms","calories":50.0},{"name":"Broccoli","qty":2.05,"qtyDisplay":"205 gms","calories":70.0},{"name":"White Pumpkin","qty":2.05,"qtyDisplay":"205 gms","calories":35.0}],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"3","bm":"0","supplement":"New Supplement","water":"","fasting":"Calorie (Kcal)","impact":"116"}},"2026-01-15":{"foods":[{"name":"Carrot","qty":3.0,"qtyDisplay":"300 gms","calories":123.0},{"name":"French Beans","qty":2.35,"qtyDisplay":"235 gms","calories":57.0},{"name":"Sesame Oil","qty":2.0,"qtyDisplay":"2 Tsp","calories":80.0},{"name":"Cabbage","qty":1.5,"qtyDisplay":"150 gms","calories":38.0},{"name":"Broccoli","qty":2.0,"qtyDisplay":"200 gms","calories":68.0},{"name":"Raw Mango","qty":1.0,"qtyDisplay":"100 gms","calories":60.0}],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"3","bm":"0","supplement":"New Supplement","water":"","fasting":"Calorie (Kcal)","impact":"114"}},"2026-01-16":{"foods":[{"name":"Carrot","qty":3.08,"qtyDisplay":"308 gms","calories":127.0},{"name":"French Beans","qty":3.2,"qtyDisplay":"320 gms","calories":77.0},{"name":"Sesame Oil","qty":2.0,"qtyDisplay":"2 Tsp","calories":80.0},{"name":"Cabbage","qty":3.0,"qtyDisplay":"300 gms","calories":75.0},{"name":"Olives","qty":0.5,"qtyDisplay":"50 gms","calories":65.0}],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"3","bm":"0","supplement":"New Supplement","water":"","fasting":"Calorie (Kcal)","impact":"116"}},"2026-01-17":{"foods":[{"name":"Carrot","qty":1.87,"qtyDisplay":"187 gms","calories":77.0},{"name":"French Beans","qty":2.5,"qtyDisplay":"250 gms","calories":60.0},{"name":"Sesame Oil","qty":2.0,"qtyDisplay":"2 Tsp","calories":80.0},{"name":"Cabbage","qty":3.1,"qtyDisplay":"310 gms","calories":78.0},{"name":"Cucumber","qty":3.4,"qtyDisplay":"340 gms","calories":51.0}],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"5","bm":"0","supplement":"New Supplement","water":"","fasting":"Calorie (Kcal)","impact":"194"}},"2026-01-18":{"foods":[{"name":"Lettuce","qty":2.0,"qtyDisplay":"200 gms","calories":28.0},{"name":"French Beans","qty":2.5,"qtyDisplay":"250 gms","calories":60.0},{"name":"Sesame Oil","qty":2.0,"qtyDisplay":"2 Tsp","calories":80.0},{"name":"Raw Mango","qty":2.0,"qtyDisplay":"200 gms","calories":120.0},{"name":"Onion","qty":0.48,"qtyDisplay":"48 gms","calories":20.0},{"name":"Olives","qty":0.27,"qtyDisplay":"27 gms","calories":36.0},{"name":"Olive Oil","qty":2.0,"qtyDisplay":"2 Tsp","calories":80.0}],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"3","bm":"0","supplement":"New Supplement","water":"","fasting":"Calorie (Kcal)","impact":"116"}},"2026-01-19":{"foods":[{"name":"Cauliflower","qty":5.0,"qtyDisplay":"500 gms","calories":125.0},{"name":"French Beans","qty":2.5,"qtyDisplay":"250 gms","calories":60.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Broccoli","qty":2.5,"qtyDisplay":"250 gms","calories":85.0},{"name":"Olives","qty":0.62,"qtyDisplay":"62 gms","calories":81.0},{"name":"Broccoli","qty":0.97,"qtyDisplay":"97 gms","calories":33.0}],"meta":{"phase":"","weight":"","bloodSugar":"","sleep":"","energy":"","intro":"3","bm":"0","supplement":"New Supplement","water":"","fasting":"Calorie (Kcal)","impact":"116"}},"2026-01-20":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Cabbage","qty":1.45,"qtyDisplay":"145 gms","calories":37.0},{"name":"French Beans","qty":3.69,"qtyDisplay":"369 gms","calories":89.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Broccoli","qty":2.73,"qtyDisplay":"273 gms","calories":93.0},{"name":"Curd","qty":1.5,"qtyDisplay":"150 gms","calories":93.0},{"name":"Asparagus","qty":1.88,"qtyDisplay":"188 gms","calories":38.0},{"name":"Butter","qty":1.0,"qtyDisplay":"1 Tsp","calories":29.0}],"meta":{"phase":"V2","weight":88.3,"bloodSugar":102.0,"sleep":"7","energy":"Good","intro":"Curd","bm":"No","supplement":"","water":">3L","fasting":"11hrs","impact":""}},"2026-01-21":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":1.0,"qtyDisplay":"25 gms","calories":94.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":1.0,"qtyDisplay":"100 gms","calories":26.0},{"name":"French Beans","qty":4.0,"qtyDisplay":"400 gms","calories":96.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Broccoli","qty":2.64,"qtyDisplay":"264 gms","calories":90.0},{"name":"Epigamia high protein curd","qty":3.3,"qtyDisplay":"3.3 gms","calories":215.0},{"name":"Asparagus","qty":1.79,"qtyDisplay":"179 gms","calories":36.0},{"name":"Brussel Sprouts","qty":0.98,"qtyDisplay":"98 gms","calories":43.0},{"name":"Butter","qty":2.0,"qtyDisplay":"2 Tsp","calories":58.0},{"name":"garlic","qty":0.05,"qtyDisplay":"5 gms","calories":8.0}],"meta":{"phase":"V2","weight":87.65,"bloodSugar":96.0,"sleep":"7","energy":"Good","intro":"Yellow Pumpkin","bm":"Yes","supplement":"","water":">3L","fasting":"11hrs","impact":""}},"2026-01-22":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Curd","qty":2.0,"qtyDisplay":"200 gms","calories":124.0},{"name":"French Beans","qty":4.0,"qtyDisplay":"400 gms","calories":96.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Paneer","qty":0.5,"qtyDisplay":"50 gms","calories":143.0},{"name":"Cabbage","qty":1.22,"qtyDisplay":"122 gms","calories":31.0}],"meta":{"phase":"V2","weight":87.6,"bloodSugar":106.0,"sleep":"7","energy":"Good","intro":"Paneer","bm":"Yes","supplement":"","water":">3L","fasting":"12hrs","impact":""}},"2026-01-23":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Curd","qty":2.47,"qtyDisplay":"247 gms","calories":153.0},{"name":"French Beans","qty":4.0,"qtyDisplay":"400 gms","calories":96.0},{"name":"Coconut","qty":0.4,"qtyDisplay":"40 gms","calories":142.0},{"name":"Cabbage","qty":1.0,"qtyDisplay":"100 gms","calories":25.0}],"meta":{"phase":"V2","weight":87.7,"bloodSugar":106.0,"sleep":"4","energy":"Good","intro":"Coconut","bm":"No","supplement":"","water":"","fasting":"12hrs","impact":""}},"2026-01-24":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Curd","qty":2.0,"qtyDisplay":"200 gms","calories":124.0},{"name":"French Beans","qty":2.0,"qtyDisplay":"200 gms","calories":48.0},{"name":"Cheddar","qty":0.4,"qtyDisplay":"40 gms","calories":168.0},{"name":"Cucumber","qty":2.65,"qtyDisplay":"265 gms","calories":40.0},{"name":"Coconut Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":38.0}],"meta":{"phase":"V2","weight":87.55,"bloodSugar":103.0,"sleep":"7.5","energy":"High","intro":"Cheddar","bm":"Yes","supplement":"","water":"","fasting":"13hrs","impact":""}},"2026-01-25":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Curd","qty":2.5,"qtyDisplay":"250 gms","calories":155.0},{"name":"French Beans","qty":2.1,"qtyDisplay":"210 gms","calories":51.0},{"name":"Mozzarella","qty":0.4,"qtyDisplay":"40 gms","calories":132.0},{"name":"Cucumber","qty":2.65,"qtyDisplay":"265 gms","calories":40.0},{"name":"Coconut Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":38.0}],"meta":{"phase":"V2","weight":87.75,"bloodSugar":103.0,"sleep":"7.5","energy":"High","intro":"Mozzarella","bm":"No","supplement":"","water":">3L","fasting":"13hrs","impact":""}},"2026-01-26":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Curd","qty":2.0,"qtyDisplay":"200 gms","calories":124.0},{"name":"Carrot","qty":2.0,"qtyDisplay":"200 gms","calories":82.0},{"name":"Cheddar","qty":0.415,"qtyDisplay":"41.5 gms","calories":174.0},{"name":"Cucumber","qty":2.5,"qtyDisplay":"250 gms","calories":38.0}],"meta":{"phase":"V2","weight":87.8,"bloodSugar":103.0,"sleep":"5.5","energy":"High","intro":"","bm":"No","supplement":"","water":">3L","fasting":"13hrs","impact":""}},"2026-01-27":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Curd","qty":2.0,"qtyDisplay":"200 gms","calories":124.0},{"name":"Avocado","qty":1.12,"qtyDisplay":"112 gms","calories":180.0},{"name":"Cucumber","qty":3.35,"qtyDisplay":"335 gms","calories":51.0},{"name":"Asparagus","qty":1.66,"qtyDisplay":"166 gms","calories":34.0},{"name":"Butter","qty":1.0,"qtyDisplay":"1 Tsp","calories":29.0}],"meta":{"phase":"V2","weight":86.75,"bloodSugar":97.0,"sleep":"8hrs","energy":"High","intro":"","bm":"Yes","supplement":"","water":"3L","fasting":"12hrs","impact":""}},"2026-01-28":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Curd","qty":2.0,"qtyDisplay":"200 gms","calories":124.0},{"name":"Avocado","qty":1.12,"qtyDisplay":"112 gms","calories":180.0},{"name":"Cucumber","qty":1.0,"qtyDisplay":"100 gms","calories":15.0},{"name":"Asparagus","qty":1.1,"qtyDisplay":"110 gms","calories":22.0},{"name":"Butter","qty":1.0,"qtyDisplay":"1 Tsp","calories":29.0},{"name":"Ivy gourd","qty":2.0,"qtyDisplay":"200 gms","calories":48.0}],"meta":{"phase":"V2","weight":86.0,"bloodSugar":92.0,"sleep":"8hrs","energy":"High","intro":"Ivy Gourd","bm":"Yes","supplement":"","water":">3L","fasting":"12hrs","impact":""}},"2026-01-29":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Curd","qty":2.0,"qtyDisplay":"200 gms","calories":124.0},{"name":"Avocado","qty":1.12,"qtyDisplay":"112 gms","calories":180.0},{"name":"Cucumber","qty":1.0,"qtyDisplay":"100 gms","calories":15.0},{"name":"Broccoli","qty":1.1,"qtyDisplay":"110 gms","calories":38.0},{"name":"Ridge gourd","qty":2.0,"qtyDisplay":"200 gms","calories":26.0},{"name":"Olives","qty":0.31,"qtyDisplay":"31 gms","calories":41.0}],"meta":{"phase":"V2","weight":85.95,"bloodSugar":93.0,"sleep":"8hrs","energy":"High","intro":"Ridge Gourd","bm":"Yes","supplement":"","water":">3L","fasting":"12hrs","impact":""}},"2026-01-30":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Sesame Oil","qty":2.0,"qtyDisplay":"2 Tsp","calories":80.0},{"name":"Paneer","qty":0.858,"qtyDisplay":"85.8 gms","calories":245.0},{"name":"Cucumber","qty":1.4,"qtyDisplay":"140 gms","calories":21.0},{"name":"Fenugreek Leaves","qty":1.0,"qtyDisplay":"100 gms","calories":34.0},{"name":"Curd","qty":0.5,"qtyDisplay":"50 gms","calories":31.0},{"name":"Onion","qty":1.0,"qtyDisplay":"100 gms","calories":40.0}],"meta":{"phase":"V2","weight":85.4,"bloodSugar":100.0,"sleep":"8hrs","energy":"High","intro":"Fenugreek leaves","bm":"Yes","supplement":"","water":"2.5L","fasting":"12hrs","impact":""}},"2026-01-31":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Raw Mango","qty":2.0,"qtyDisplay":"200 gms","calories":120.0},{"name":"Cucumber","qty":2.65,"qtyDisplay":"265 gms","calories":40.0},{"name":"Bottle gourd","qty":2.0,"qtyDisplay":"200 gms","calories":22.0},{"name":"Curd","qty":1.5,"qtyDisplay":"150 gms","calories":93.0},{"name":"Coconut","qty":0.2,"qtyDisplay":"20 gms","calories":71.0},{"name":"Yellow Pumpkin","qty":3.0,"qtyDisplay":"300 gms","calories":78.0}],"meta":{"phase":"V2","weight":84.95,"bloodSugar":93.0,"sleep":"9hrs","energy":"High","intro":"Bottle gourd","bm":"Yes","supplement":"","water":"3L","fasting":"16hrs","impact":""}},"2026-02-01":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Butter","qty":1.0,"qtyDisplay":"1 Tsp","calories":29.0},{"name":"Mushroom","qty":2.0,"qtyDisplay":"200 gms","calories":44.0},{"name":"Curd","qty":2.52,"qtyDisplay":"252 gms","calories":156.0},{"name":"Yellow Pumpkin","qty":7.5,"qtyDisplay":"750 gms","calories":195.0}],"meta":{"phase":"V2","weight":84.6,"bloodSugar":85.0,"sleep":"8hrs","energy":"High","intro":"Mushroom","bm":"Yes","supplement":"","water":"3L","fasting":"15hrs","impact":"Loose motion Bloating"}},"2026-02-02":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Curd","qty":2.5,"qtyDisplay":"250 gms","calories":155.0},{"name":"Yellow Pumpkin","qty":7.66,"qtyDisplay":"766 gms","calories":200.0},{"name":"Asparagus","qty":2.0,"qtyDisplay":"200 gms","calories":40.0},{"name":"Butter","qty":1.0,"qtyDisplay":"1 Tsp","calories":29.0}],"meta":{"phase":"V2","weight":85.1,"bloodSugar":97.0,"sleep":"8hrs","energy":"High","intro":"","bm":"Yes","supplement":"","water":"3L","fasting":"13hrs","impact":""}},"2026-02-03":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Coconut","qty":0.15,"qtyDisplay":"15 gms","calories":54.0},{"name":"Yellow Pumpkin","qty":7.5,"qtyDisplay":"750 gms","calories":195.0},{"name":"Asparagus","qty":1.0,"qtyDisplay":"100 gms","calories":20.0},{"name":"Butter","qty":1.0,"qtyDisplay":"1 Tsp","calories":29.0},{"name":"Chow Chow","qty":2.0,"qtyDisplay":"200 gms","calories":38.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Olives","qty":0.365,"qtyDisplay":"36.5 gms","calories":48.0}],"meta":{"phase":"V2","weight":84.25,"bloodSugar":102.0,"sleep":"7hrs","energy":"High","intro":"Chow chow","bm":"Yes","supplement":"","water":"3L","fasting":"13hrs","impact":""}},"2026-02-04":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Coconut Milk","qty":0.5,"qtyDisplay":"50 ml","calories":92.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Carrot","qty":1.38,"qtyDisplay":"138 gms","calories":57.0},{"name":"French Beans","qty":1.42,"qtyDisplay":"142 gms","calories":35.0},{"name":"Broccoli","qty":1.0,"qtyDisplay":"100 gms","calories":34.0},{"name":"Olives","qty":0.58,"qtyDisplay":"58 gms","calories":76.0}],"meta":{"phase":"V2","weight":84.1,"bloodSugar":110.0,"sleep":"7hrs","energy":"High","intro":"Coconut milk","bm":"No","supplement":"","water":"3L","fasting":"13hrs","impact":""}},"2026-02-05":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":3.0,"qtyDisplay":"75 gms","calories":282.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Peas","qty":1.5,"qtyDisplay":"150 gms","calories":122.0},{"name":"Yellow Pumpkin","qty":6.0,"qtyDisplay":"600 gms","calories":156.0},{"name":"Onion","qty":1.0,"qtyDisplay":"100 gms","calories":40.0},{"name":"Garlic","qty":0.1,"qtyDisplay":"10 gms","calories":15.0},{"name":"Olives","qty":0.7,"qtyDisplay":"70 gms","calories":91.0}],"meta":{"phase":"V2","weight":84.0,"bloodSugar":102.0,"sleep":"7hrs","energy":"High","intro":"Peas","bm":"No","supplement":"","water":"","fasting":"13hrs","impact":""}},"2026-02-06":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":10.38,"qtyDisplay":"1038 gms","calories":270.0},{"name":"Cucumber","qty":4.25,"qtyDisplay":"425 gms","calories":64.0},{"name":"Curd","qty":2.0,"qtyDisplay":"200 gms","calories":124.0}],"meta":{"phase":"V2","weight":84.95,"bloodSugar":103.0,"sleep":"7hrs","energy":"High","intro":"","bm":"Yes","supplement":"","water":"3L","fasting":"13hrs","impact":""}},"2026-02-07":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":10.38,"qtyDisplay":"1038 gms","calories":270.0},{"name":"Cucumber","qty":4.25,"qtyDisplay":"425 gms","calories":64.0},{"name":"Curd","qty":2.0,"qtyDisplay":"200 gms","calories":124.0}],"meta":{"phase":"V2","weight":84.95,"bloodSugar":105.0,"sleep":"6hrs","energy":"Average","intro":"","bm":"No","supplement":"","water":"","fasting":"12hrs","impact":""}},"2026-02-08":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"French Beans","qty":2.48,"qtyDisplay":"248 gms","calories":60.0},{"name":"Cucumber","qty":6.2,"qtyDisplay":"620 gms","calories":93.0},{"name":"Curd","qty":1.0,"qtyDisplay":"100 gms","calories":62.0},{"name":"Coconut","qty":0.2,"qtyDisplay":"20 gms","calories":71.0},{"name":"Ivy Gourd","qty":2.41,"qtyDisplay":"241 gms","calories":58.0},{"name":"Onion","qty":1.46,"qtyDisplay":"146 gms","calories":59.0},{"name":"Garlic","qty":0.1,"qtyDisplay":"10 gms","calories":15.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0}],"meta":{"phase":"V2","weight":83.1,"bloodSugar":104.0,"sleep":"8hrs","energy":"Average","intro":"","bm":"Yes","supplement":"","water":">3L","fasting":"15hrs","impact":""}},"2026-02-09":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"French Beans","qty":2.48,"qtyDisplay":"248 gms","calories":60.0},{"name":"Almonds","qty":0.2,"qtyDisplay":"20 gms","calories":116.0},{"name":"Curd","qty":1.0,"qtyDisplay":"100 gms","calories":62.0},{"name":"Coconut","qty":0.15,"qtyDisplay":"15 gms","calories":54.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Yellow Pumpkin","qty":4.0,"qtyDisplay":"400 gms","calories":104.0},{"name":"Olives","qty":0.13,"qtyDisplay":"13 gms","calories":17.0}],"meta":{"phase":"V3","weight":83.0,"bloodSugar":100.0,"sleep":"8hrs","energy":"High","intro":"Almonds","bm":"No","supplement":"","water":">3L","fasting":"13hrs","impact":""}},"2026-02-10":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"French Beans","qty":3.83,"qtyDisplay":"383 gms","calories":92.0},{"name":"Walnuts","qty":0.2,"qtyDisplay":"20 gms","calories":125.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Coconut","qty":0.2,"qtyDisplay":"20 gms","calories":71.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0}],"meta":{"phase":"V3","weight":82.9,"bloodSugar":105.0,"sleep":"8hrs","energy":"High","intro":"Walnut","bm":"No","supplement":"","water":"3L","fasting":"13hrs","impact":""}},"2026-02-11":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Olives","qty":0.565,"qtyDisplay":"56.5 gms","calories":74.0},{"name":"Pistachios","qty":0.2,"qtyDisplay":"20 gms","calories":130.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Curd","qty":2.0,"qtyDisplay":"200 gms","calories":124.0}],"meta":{"phase":"V3","weight":82.9,"bloodSugar":105.0,"sleep":"8hrs","energy":"High","intro":"Pistachios","bm":"No","supplement":"","water":"3L","fasting":"13hrs","impact":""}},"2026-02-12":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Avocado","qty":0.9,"qtyDisplay":"90 gms","calories":144.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"French Beans","qty":2.72,"qtyDisplay":"272 gms","calories":66.0},{"name":"Coconut","qty":0.2,"qtyDisplay":"20 gms","calories":71.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Olives","qty":0.05,"qtyDisplay":"5 gms","calories":7.0}],"meta":{"phase":"V3","weight":83.25,"bloodSugar":94.0,"sleep":"9hrs","energy":"High","intro":"","bm":"No","supplement":"","water":"3L","fasting":"13hrs","impact":""}},"2026-02-13":{"foods":[],"meta":{"phase":"V3","weight":83.15,"bloodSugar":90.0,"sleep":"9hrs","energy":"High","intro":"","bm":"No","supplement":"","water":"3L","fasting":"24hrs","impact":""}},"2026-02-14":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":1.32,"qtyDisplay":"33 gms","calories":124.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":5.42,"qtyDisplay":"542 gms","calories":141.0},{"name":"Curd","qty":2.0,"qtyDisplay":"200 gms","calories":124.0}],"meta":{"phase":"V3","weight":82.9,"bloodSugar":90.0,"sleep":"9hrs","energy":"High","intro":"","bm":"No","supplement":"","water":"4L","fasting":"46.5hrs","impact":""}},"2026-02-15":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":1.32,"qtyDisplay":"33 gms","calories":124.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Sunflower Seeds","qty":0.25,"qtyDisplay":"25 gms","calories":143.0},{"name":"Almonds","qty":0.3,"qtyDisplay":"30 gms","calories":174.0},{"name":"Yellow Pumpkin","qty":3.5,"qtyDisplay":"350 gms","calories":91.0},{"name":"Olives","qty":0.28,"qtyDisplay":"28 gms","calories":37.0}],"meta":{"phase":"V3","weight":82.5,"bloodSugar":88.0,"sleep":"9hrs","energy":"High","intro":"Sunflower seeds","bm":"Yes","supplement":"","water":"3L","fasting":"13hrs","impact":""}},"2026-02-16":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":1.32,"qtyDisplay":"33 gms","calories":124.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":5.23,"qtyDisplay":"523 gms","calories":136.0},{"name":"Pumpkin Seeds","qty":0.25,"qtyDisplay":"25 gms","calories":148.0},{"name":"Avocado","qty":1.59,"qtyDisplay":"159 gms","calories":255.0},{"name":"Olive Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Olives","qty":0.02,"qtyDisplay":"2 gms","calories":3.0}],"meta":{"phase":"V3","weight":82.45,"bloodSugar":103.0,"sleep":"5hrs","energy":"High","intro":"Pumpkin seeds","bm":"Yes","supplement":"","water":">3L","fasting":"13hrs","impact":""}},"2026-02-17":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":1.32,"qtyDisplay":"33 gms","calories":124.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":5.02,"qtyDisplay":"502 gms","calories":131.0},{"name":"Strawberry","qty":1.0,"qtyDisplay":"100 gms","calories":41.0},{"name":"Avocado","qty":1.3,"qtyDisplay":"130 gms","calories":208.0},{"name":"Sunflower Seeds","qty":0.32,"qtyDisplay":"32 gms","calories":183.0},{"name":"Curd","qty":0.3,"qtyDisplay":"30 gms","calories":19.0}],"meta":{"phase":"V3","weight":82.35,"bloodSugar":100.0,"sleep":"7hrs","energy":"High","intro":"Strawberry","bm":"Yes","supplement":"","water":"3L","fasting":"13hrs","impact":"No Discomfort"}},"2026-02-18":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":1.32,"qtyDisplay":"33 gms","calories":124.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Almonds","qty":0.06,"qtyDisplay":"6 gms","calories":35.0},{"name":"Paneer","qty":1.0,"qtyDisplay":"100 gms","calories":285.0},{"name":"Fenugreek Leaves","qty":1.0,"qtyDisplay":"100 gms","calories":34.0},{"name":"Sesame Seeds","qty":0.25,"qtyDisplay":"25 gms","calories":143.0},{"name":"Onion","qty":1.06,"qtyDisplay":"106 gms","calories":43.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0}],"meta":{"phase":"V3","weight":82.3,"bloodSugar":94.0,"sleep":"7hrs","energy":"High","intro":"Sesame seeds","bm":"Yes","supplement":"","water":"3L","fasting":"13hrs","impact":"No Discomfort"}},"2026-02-19":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":1.32,"qtyDisplay":"33 gms","calories":124.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Almonds","qty":0.08,"qtyDisplay":"8 gms","calories":47.0},{"name":"Coconut","qty":0.2,"qtyDisplay":"20 gms","calories":71.0},{"name":"Drumstick Leaves","qty":0.93,"qtyDisplay":"93 gms","calories":63.0},{"name":"Onion","qty":0.93,"qtyDisplay":"93 gms","calories":38.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Cucumber","qty":4.0,"qtyDisplay":"400 gms","calories":60.0},{"name":"Curd","qty":2.0,"qtyDisplay":"200 gms","calories":124.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0}],"meta":{"phase":"V3","weight":81.5,"bloodSugar":95.0,"sleep":"8hrs","energy":"High","intro":"Drumstick leaves","bm":"Yes","supplement":"","water":"3L","fasting":"13hrs","impact":"Dysentery"}},"2026-02-20":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":1.32,"qtyDisplay":"33 gms","calories":124.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"French Beans","qty":2.21,"qtyDisplay":"221 gms","calories":54.0},{"name":"Coconut","qty":0.2,"qtyDisplay":"20 gms","calories":71.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Yellow Pumpkin","qty":5.4,"qtyDisplay":"540 gms","calories":141.0}],"meta":{"phase":"V3","weight":82.5,"bloodSugar":91.0,"sleep":"8hrs","energy":"High","intro":"","bm":"Yes","supplement":"","water":"","fasting":"24hrs","impact":""}},"2026-02-21":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":5.04,"qtyDisplay":"504 gms","calories":132.0},{"name":"Coconut","qty":0.2,"qtyDisplay":"20 gms","calories":71.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Olives","qty":0.46,"qtyDisplay":"46 gms","calories":60.0},{"name":"Tamarind","qty":0.1,"qtyDisplay":"10 gms","calories":24.0}],"meta":{"phase":"V3","weight":82.4,"bloodSugar":91.0,"sleep":"8hrs","energy":"High","intro":"Tamarind","bm":"No","supplement":"","water":"3L","fasting":"12hrs","impact":"Bloating"}},"2026-02-22":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Coconut","qty":0.2,"qtyDisplay":"20 gms","calories":71.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Broccoli","qty":3.85,"qtyDisplay":"385 gms","calories":131.0},{"name":"Onion","qty":1.0,"qtyDisplay":"100 gms","calories":40.0},{"name":"Garlic","qty":0.3,"qtyDisplay":"30 gms","calories":45.0}],"meta":{"phase":"V4","weight":83.0,"bloodSugar":92.0,"sleep":"8hrs","energy":"High","intro":"","bm":"No","supplement":"","water":"3L","fasting":"14hrs","impact":""}},"2026-02-23":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":7.0,"qtyDisplay":"700 gms","calories":182.0},{"name":"Almonds","qty":0.09,"qtyDisplay":"9 gms","calories":53.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Carrot","qty":1.0,"qtyDisplay":"100 gms","calories":41.0},{"name":"Onion","qty":1.0,"qtyDisplay":"100 gms","calories":40.0},{"name":"Garlic","qty":0.3,"qtyDisplay":"30 gms","calories":45.0},{"name":"Cabbage","qty":1.0,"qtyDisplay":"100 gms","calories":25.0},{"name":"French Beans","qty":1.0,"qtyDisplay":"100 gms","calories":24.0},{"name":"Ginger","qty":0.1,"qtyDisplay":"10 gms","calories":8.0}],"meta":{"phase":"V4","weight":82.8,"bloodSugar":100.0,"sleep":"8hrs","energy":"High","intro":"","bm":"No","supplement":"","water":"","fasting":"14hrs","impact":""}},"2026-02-25":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":5.75,"qtyDisplay":"575 gms","calories":150.0},{"name":"Almonds","qty":0.25,"qtyDisplay":"25 gms","calories":145.0},{"name":"Carrot","qty":1.0,"qtyDisplay":"100 gms","calories":41.0},{"name":"Cabbage","qty":1.0,"qtyDisplay":"100 gms","calories":25.0},{"name":"French Beans","qty":1.0,"qtyDisplay":"100 gms","calories":24.0},{"name":"Ginger","qty":0.06,"qtyDisplay":"6 gms","calories":5.0},{"name":"Garlic","qty":0.1,"qtyDisplay":"10 gms","calories":15.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0}],"meta":{"phase":"V4","weight":81.9,"bloodSugar":102.0,"sleep":"7hrs","energy":"High","intro":"","bm":"Yes","supplement":"","water":"3L","fasting":"14hrs","impact":""}},"2026-02-26":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":6.0,"qtyDisplay":"600 gms","calories":156.0},{"name":"Pumpkin Seeds","qty":0.15,"qtyDisplay":"15 gms","calories":89.0},{"name":"Carrot","qty":0.94,"qtyDisplay":"94 gms","calories":39.0},{"name":"Cabbage","qty":1.5,"qtyDisplay":"150 gms","calories":38.0},{"name":"French Beans","qty":1.24,"qtyDisplay":"124 gms","calories":30.0},{"name":"Ginger","qty":0.12,"qtyDisplay":"12 gms","calories":10.0},{"name":"Garlic","qty":0.2,"qtyDisplay":"20 gms","calories":30.0},{"name":"Red Chilly","qty":0.01,"qtyDisplay":"1 gms","calories":1.0},{"name":"Curd","qty":1.0,"qtyDisplay":"100 gms","calories":62.0}],"meta":{"phase":"V4","weight":81.4,"bloodSugar":94.0,"sleep":"7hrs","energy":"High","intro":"Red Chilli","bm":"Yes","supplement":"","water":"2.5L","fasting":"14hrs","impact":""}},"2026-02-27":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Cabbage","qty":2.46,"qtyDisplay":"246 gms","calories":62.0},{"name":"Green Chilli","qty":0.12,"qtyDisplay":"12 gms","calories":29.0},{"name":"Coconut","qty":0.2,"qtyDisplay":"20 gms","calories":71.0},{"name":"Onion","qty":0.54,"qtyDisplay":"54 gms","calories":22.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Almonds","qty":0.2,"qtyDisplay":"20 gms","calories":116.0},{"name":"Ivy Gourd","qty":4.0,"qtyDisplay":"400 gms","calories":96.0}],"meta":{"phase":"V4","weight":81.2,"bloodSugar":106.0,"sleep":"8hrs","energy":"High","intro":"Green Chilli","bm":"No","supplement":"","water":">3L","fasting":"14hrs","impact":""}},"2026-02-28":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Tomato","qty":1.0,"qtyDisplay":"100 gms","calories":19.0},{"name":"Green Chilli","qty":0.1,"qtyDisplay":"10 gms","calories":24.0},{"name":"Onion","qty":1.0,"qtyDisplay":"100 gms","calories":40.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Chow Chow","qty":2.5,"qtyDisplay":"250 gms","calories":48.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Beetroot","qty":2.0,"qtyDisplay":"200 gms","calories":86.0},{"name":"Coconut","qty":0.2,"qtyDisplay":"20 gms","calories":71.0}],"meta":{"phase":"V4","weight":81.0,"bloodSugar":101.0,"sleep":"8hrs","energy":"High","intro":"Tomato","bm":"Yes","supplement":"","water":"3L","fasting":"14hrs","impact":""}},"2026-03-01":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yam","qty":1.0,"qtyDisplay":"100 gms","calories":84.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Avocado","qty":1.01,"qtyDisplay":"101 gms","calories":162.0},{"name":"Green Chilli","qty":0.01,"qtyDisplay":"1 gms","calories":3.0},{"name":"Onion","qty":0.44,"qtyDisplay":"44 gms","calories":18.0},{"name":"Tomato","qty":0.44,"qtyDisplay":"44 gms","calories":9.0},{"name":"Almonds","qty":0.24,"qtyDisplay":"24 gms","calories":140.0}],"meta":{"phase":"V4","weight":80.75,"bloodSugar":105.0,"sleep":"7hrs","energy":"High","intro":"Yam","bm":"Yes","supplement":"","water":"3L","fasting":"14hrs","impact":""}},"2026-03-02":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Sweet Potato","qty":1.0,"qtyDisplay":"100 gms","calories":109.0},{"name":"Yellow Pumpkin","qty":5.2,"qtyDisplay":"520 gms","calories":136.0},{"name":"Green Chilli","qty":0.01,"qtyDisplay":"1 gms","calories":3.0},{"name":"Onion","qty":0.3,"qtyDisplay":"30 gms","calories":12.0},{"name":"Tomato","qty":0.5,"qtyDisplay":"50 gms","calories":10.0},{"name":"Avocado","qty":1.1,"qtyDisplay":"110 gms","calories":176.0}],"meta":{"phase":"V4","weight":80.45,"bloodSugar":95.0,"sleep":"7hrs","energy":"High","intro":"Sweet Potato","bm":"Yes","supplement":"","water":"3L","fasting":"14hrs","impact":""}},"2026-03-03":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":1.32,"qtyDisplay":"33 gms","calories":124.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Potato","qty":1.0,"qtyDisplay":"100 gms","calories":77.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Yellow Pumpkin","qty":5.2,"qtyDisplay":"520 gms","calories":136.0},{"name":"High Protein Paneer","qty":1.09,"qtyDisplay":"109 gms","calories":189.0},{"name":"Almonds","qty":0.24,"qtyDisplay":"24 gms","calories":140.0}],"meta":{"phase":"V4","weight":80.35,"bloodSugar":100.0,"sleep":"7hrs","energy":"High","intro":"Potato","bm":"No","supplement":"","water":"3L","fasting":"14hrs","impact":""}},"2026-03-04":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Taro","qty":1.0,"qtyDisplay":"100 gms","calories":112.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Yellow Pumpkin","qty":5.59,"qtyDisplay":"559 gms","calories":146.0},{"name":"Avocado","qty":1.0,"qtyDisplay":"100 gms","calories":160.0},{"name":"Green Chilli","qty":0.01,"qtyDisplay":"1 gms","calories":3.0}],"meta":{"phase":"V4","weight":80.2,"bloodSugar":106.0,"sleep":"7hrs","energy":"High","intro":"Taro","bm":"Yes","supplement":"","water":"3L","fasting":"14hrs","impact":""}},"2026-03-06":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Raw Banana","qty":1.0,"qtyDisplay":"100 gms","calories":89.0},{"name":"Avocado","qty":1.0,"qtyDisplay":"100 gms","calories":160.0},{"name":"Green Chilli","qty":0.01,"qtyDisplay":"1 gms","calories":3.0},{"name":"Tomato","qty":1.0,"qtyDisplay":"100 gms","calories":19.0},{"name":"Onion","qty":0.5,"qtyDisplay":"50 gms","calories":20.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Almonds","qty":0.06,"qtyDisplay":"6 gms","calories":35.0}],"meta":{"phase":"V4","weight":80.0,"bloodSugar":93.0,"sleep":"6hrs","energy":"Very Low","intro":"Raw Banana","bm":"Yes","supplement":"","water":"3L","fasting":"14hrs","impact":""}},"2026-03-07":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Capsicum","qty":1.0,"qtyDisplay":"100 gms","calories":16.0},{"name":"Sesame Oil","qty":1.0,"qtyDisplay":"1 Tsp","calories":40.0},{"name":"Avocado","qty":1.0,"qtyDisplay":"100 gms","calories":160.0},{"name":"Green Chilli","qty":0.01,"qtyDisplay":"1 gms","calories":3.0},{"name":"Tomato","qty":1.0,"qtyDisplay":"100 gms","calories":19.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Cucumber","qty":6.0,"qtyDisplay":"600 gms","calories":90.0}],"meta":{"phase":"V4","weight":79.85,"bloodSugar":116.0,"sleep":"6hrs","energy":"High","intro":"Capsicum","bm":"Yes","supplement":"","water":"","fasting":"14hrs","impact":""}},"2026-03-08":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Tapioca","qty":1.0,"qtyDisplay":"100 gms","calories":80.0},{"name":"Avocado","qty":1.0,"qtyDisplay":"100 gms","calories":160.0},{"name":"Green Chilli","qty":0.01,"qtyDisplay":"1 gms","calories":3.0},{"name":"Tomato","qty":1.0,"qtyDisplay":"100 gms","calories":19.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Onion","qty":0.5,"qtyDisplay":"50 gms","calories":20.0}],"meta":{"phase":"V4","weight":80.15,"bloodSugar":113.0,"sleep":"6hrs","energy":"High","intro":"","bm":"Yes","supplement":"","water":"","fasting":"14hrs","impact":""}},"2026-03-09":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Sweet Potato","qty":1.15,"qtyDisplay":"115 gms","calories":126.0},{"name":"Avocado","qty":1.0,"qtyDisplay":"100 gms","calories":160.0},{"name":"Green Chilli","qty":0.01,"qtyDisplay":"1 gms","calories":3.0},{"name":"Tomato","qty":1.0,"qtyDisplay":"100 gms","calories":19.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Onion","qty":0.5,"qtyDisplay":"50 gms","calories":20.0}],"meta":{"phase":"V4","weight":80.35,"bloodSugar":97.0,"sleep":"7hrs","energy":"High","intro":"","bm":"No","supplement":"","water":"3L","fasting":"14hrs","impact":""}},"2026-03-10":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Sweet Potato","qty":0.69,"qtyDisplay":"69 gms","calories":76.0},{"name":"Raw Banana","qty":1.3,"qtyDisplay":"130 gms","calories":116.0},{"name":"Yellow Pumpkin","qty":5.48,"qtyDisplay":"548 gms","calories":143.0},{"name":"Onion","qty":0.5,"qtyDisplay":"50 gms","calories":20.0}],"meta":{"phase":"V4","weight":80.15,"bloodSugar":94.0,"sleep":"7hrs","energy":"High","intro":"","bm":"No","supplement":"","water":"","fasting":"14hrs","impact":""}},"2026-03-11":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Sweet Potato","qty":0.69,"qtyDisplay":"69 gms","calories":76.0},{"name":"Raw Banana","qty":1.3,"qtyDisplay":"130 gms","calories":116.0},{"name":"Yellow Pumpkin","qty":5.48,"qtyDisplay":"548 gms","calories":143.0},{"name":"Onion","qty":0.5,"qtyDisplay":"50 gms","calories":20.0}],"meta":{"phase":"V4","weight":80.15,"bloodSugar":94.0,"sleep":"7hrs","energy":"High","intro":"","bm":"No","supplement":"","water":"","fasting":"14hrs","impact":""}},"2026-03-05":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":5.0,"qtyDisplay":"500 gms","calories":130.0},{"name":"Avocado","qty":1.75,"qtyDisplay":"175 gms","calories":280.0},{"name":"Green Chilli","qty":0.01,"qtyDisplay":"1 gms","calories":3.0},{"name":"Tomato","qty":1.0,"qtyDisplay":"100 gms","calories":19.0},{"name":"Onion","qty":0.5,"qtyDisplay":"50 gms","calories":20.0}],"meta":{"phase":"V4","weight":80.35,"bloodSugar":111.0,"sleep":"5hrs","energy":"High","intro":"","bm":"No","supplement":"","water":"3L","fasting":"14hrs","impact":""}},"2026-02-24":{"foods":[{"name":"Ghee","qty":3.0,"qtyDisplay":"3 Tsp","calories":116.0},{"name":"MuscleBlaze","qty":2.64,"qtyDisplay":"66 gms","calories":248.0},{"name":"Fibre Drink","qty":1.0,"qtyDisplay":"1 qty","calories":28.0},{"name":"Yellow Pumpkin","qty":5.25,"qtyDisplay":"525 gms","calories":137.0},{"name":"Almonds","qty":0.2,"qtyDisplay":"20 gms","calories":116.0},{"name":"Avocado","qty":0.87,"qtyDisplay":"87 gms","calories":140.0},{"name":"Olives","qty":0.5,"qtyDisplay":"50 gms","calories":65.0}],"meta":{"phase":"V4","weight":82.35,"bloodSugar":89.0,"sleep":"7hrs","energy":"High","intro":"","bm":"Yes","supplement":"","water":"3L","fasting":"14hrs","impact":""}}};
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+let dashRange = 30;
+let dashCharts = {};
+
+function setDashRange(days, btn) {
+  dashRange = days;
+  document.querySelectorAll('#page-dashboard .select-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDashboard();
 }
+
+function getAllLogs() {
+  // Merge Firestore logs (allLogs) with scraped data; Firestore takes priority
+  const merged = Object.assign({}, SCRAPED_LOGS);
+  Object.keys(allLogs).forEach(dk => {
+    const fl = allLogs[dk];
+    const hasRealData = (fl.foods && fl.foods.length > 0) || fl.meta?.weight || fl.meta?.bloodSugar;
+    if (hasRealData) merged[dk] = fl;
+  });
+  return merged;
+}
+
+function parseSleep(s) {
+  if (!s) return null;
+  const n = parseFloat(String(s).replace(/[^0-9.]/g,''));
+  return (n > 0 && n <= 24) ? n : null;
+}
+
+function renderDashboard() {
+  const all = getAllLogs();
+  const sorted = Object.keys(all).sort();
+  const cutoff = dashRange === 90 ? null : (() => {
+    const d = new Date(); d.setDate(d.getDate() - dashRange);
+    return d.toISOString().split('T')[0];
+  })();
+  const filtered = sorted.filter(dk => !cutoff || dk >= cutoff);
+
+  // Build series
+  const weightPts = [], bsPts = [], calPts = [], sleepPts = [];
+  filtered.forEach(dk => {
+    const v = all[dk];
+    const m = v.meta || {};
+    const label = dk.slice(5); // MM-DD
+    const w = typeof m.weight === 'number' ? m.weight : parseFloat(m.weight);
+    const bs = typeof m.bloodSugar === 'number' ? m.bloodSugar : parseFloat(m.bloodSugar);
+    const cal = Math.round((v.foods||[]).reduce((s,f)=>s+f.calories,0));
+    const sl = parseSleep(m.sleep);
+    if (!isNaN(w) && w > 40 && w < 200) weightPts.push({x:dk, y:w});
+    if (!isNaN(bs) && bs > 30 && bs < 500) bsPts.push({x:dk, y:bs});
+    if (cal > 0) calPts.push({x:dk, y:cal});
+    if (sl) sleepPts.push({x:dk, y:sl});
+  });
+
+  // Summary stats
+  const latestW = weightPts.length ? weightPts[weightPts.length-1].y : null;
+  const firstW = weightPts.length > 1 ? weightPts[0].y : null;
+  const latestBS = bsPts.length ? bsPts[bsPts.length-1].y : null;
+  const avgCal = calPts.length ? Math.round(calPts.reduce((s,p)=>s+p.y,0)/calPts.length) : null;
+
+  document.getElementById('dash-avgcal').textContent = avgCal || '—';
+  document.getElementById('dash-weight').textContent = latestW ? 
+    (firstW ? `${latestW} (${latestW < firstW ? '▼' : '▲'}${Math.abs(latestW-firstW).toFixed(1)})` : latestW) : '—';
+  document.getElementById('dash-bs').textContent = latestBS || '—';
+  document.getElementById('dash-days').textContent = filtered.length;
+
+  // Thin out labels for readability
+  function thinLabels(pts, max=20) {
+    if (pts.length <= max) return pts.map(p=>p.x.slice(5));
+    const step = Math.ceil(pts.length/max);
+    return pts.map((p,i) => i%step===0 ? p.x.slice(5) : '');
+  }
+
+  const chartDefaults = {
+    responsive: true,
+    animation: false,
+    plugins: { legend: { display: false }, tooltip: {
+      backgroundColor: '#1a1f2e', titleColor: '#6ee7b7', bodyColor: '#e2e8f0',
+      borderColor: '#2a2f3f', borderWidth: 1,
+      callbacks: { title: (items) => items[0].raw.x || items[0].label }
+    }},
+    scales: {
+      x: { ticks: { color: '#64748b', font: { size: 9, family: 'DM Mono' }, maxRotation: 0 }, grid: { color: '#1a1f2e' } },
+      y: { ticks: { color: '#64748b', font: { size: 9, family: 'DM Mono' } }, grid: { color: '#1a1f2e' } }
+    }
+  };
+
+  function makeChart(id, type, data, color, opts={}) {
+    if (dashCharts[id]) dashCharts[id].destroy();
+    const ctx = document.getElementById(id).getContext('2d');
+    dashCharts[id] = new Chart(ctx, {
+      type,
+      data,
+      options: Object.assign(JSON.parse(JSON.stringify(chartDefaults)), opts)
+    });
+  }
+
+  // Weight chart — line with gradient fill
+  makeChart('weightChart', 'line', {
+    labels: thinLabels(weightPts),
+    datasets: [{ 
+      data: weightPts.map(p=>p.y), borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.08)',
+      borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#60a5fa', tension: 0.3, fill: true
+    }]
+  }, '#60a5fa', {
+    scales: {
+      x: chartDefaults.scales.x,
+      y: { ...chartDefaults.scales.y, title: { display: true, text: 'kg', color: '#64748b', font: { size: 10 } } }
+    },
+    plugins: { ...chartDefaults.plugins }
+  });
+
+  // Blood sugar chart
+  makeChart('bsChart', 'line', {
+    labels: thinLabels(bsPts),
+    datasets: [{
+      data: bsPts.map(p=>p.y), borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.08)',
+      borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#f87171', tension: 0.3, fill: true
+    }]
+  }, '#f87171', {
+    scales: {
+      x: chartDefaults.scales.x,
+      y: { ...chartDefaults.scales.y,
+        title: { display: true, text: 'mg/dL', color: '#64748b', font: { size: 10 } }
+      }
+    },
+    plugins: {
+      ...chartDefaults.plugins,
+      annotation: undefined
+    }
+  });
+
+  // Calories chart — bar with target line
+  makeChart('calChart', 'bar', {
+    labels: thinLabels(calPts),
+    datasets: [
+      {
+        data: calPts.map(p=>p.y),
+        backgroundColor: calPts.map(p => p.y > 850 ? 'rgba(248,113,113,0.7)' : 'rgba(110,231,183,0.7)'),
+        borderRadius: 4, borderSkipped: false
+      },
+      {
+        type: 'line', data: calPts.map(()=>850),
+        borderColor: 'rgba(245,158,11,0.6)', borderWidth: 1.5, borderDash: [4,4],
+        pointRadius: 0, fill: false
+      }
+    ]
+  }, '#6ee7b7');
+
+  // Sleep chart
+  makeChart('sleepChart', 'bar', {
+    labels: thinLabels(sleepPts),
+    datasets: [{
+      data: sleepPts.map(p=>p.y),
+      backgroundColor: sleepPts.map(p => p.y >= 7 ? 'rgba(110,231,183,0.7)' : p.y >= 6 ? 'rgba(245,158,11,0.7)' : 'rgba(248,113,113,0.7)'),
+      borderRadius: 4
+    }]
+  }, '#a78bfa', {
+    scales: {
+      x: chartDefaults.scales.x,
+      y: { ...chartDefaults.scales.y, min: 0, max: 12,
+        title: { display: true, text: 'hrs', color: '#64748b', font: { size: 10 } }
+      }
+    },
+    plugins: { ...chartDefaults.plugins }
+  });
+
+  // Phase timeline
+  const phaseColors = { V1:'#6ee7b7', V2:'#60a5fa', V3:'#f59e0b', V4:'#f87171' };
+  const phaseDays = {};
+  filtered.forEach(dk => {
+    const ph = (all[dk].meta||{}).phase;
+    if (ph && ph.startsWith('V')) {
+      if (!phaseDays[ph]) phaseDays[ph] = [];
+      phaseDays[ph].push(dk);
+    }
+  });
+  const ptHtml = Object.entries(phaseDays).sort().map(([ph, days]) => {
+    const col = phaseColors[ph] || '#888';
+    const start = days[0].slice(5);
+    const end = days[days.length-1].slice(5);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="width:36px;height:36px;border-radius:50%;background:${col};color:#0d0f14;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">${ph}</div>
+      <div>
+        <div style="font-weight:700;font-size:13px;">${ph} — ${days.length} days</div>
+        <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;">${start} → ${end}</div>
+      </div>
+      <div style="margin-left:auto;font-size:20px;font-weight:800;color:${col};">${days.length}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('phaseTimeline').innerHTML = ptHtml || '<div class="empty-state">No phase data</div>';
+}
+
+async function importHistoricalData() {
+  if (!db || !currentUser) { showToast('Please sign in first'); return; }
+  const btn = document.getElementById('importBtn');
+  btn.textContent = '⏳ Importing...';
+  btn.disabled = true;
+
+  try {
+    let count = 0;
+    const batch_size = 10;
+    const entries = Object.entries(SCRAPED_LOGS);
+    
+    for (let i = 0; i < entries.length; i += batch_size) {
+      const chunk = entries.slice(i, i + batch_size);
+      await Promise.all(chunk.map(async ([dk, v]) => {
+        // Only import if no existing Firestore data for that day
+        const existing = allLogs[dk];
+        const hasReal = existing && ((existing.foods||[]).length > 0 || existing.meta?.weight);
+        if (!hasReal) {
+          const ref = db.collection('users').doc(currentUser.uid).collection('logs').doc(dk);
+          await ref.set(v, { merge: true });
+          allLogs[dk] = v;
+          count++;
+        }
+      }));
+    }
+    
+    btn.textContent = `✅ ${count} days imported!`;
+    btn.style.background = '#6ee7b7';
+    setTimeout(() => { btn.textContent = '⬆ Import Spreadsheet'; btn.disabled = false; btn.style.background = '#f59e0b'; }, 3000);
+    renderDashboard();
+    showToast(`Imported ${count} historical days`);
+  } catch(e) {
+    btn.textContent = '❌ Error';
+    btn.disabled = false;
+    console.error(e);
+    showToast('Import failed — check console');
+    setTimeout(() => { btn.textContent = '⬆ Import Spreadsheet'; btn.style.background = '#f59e0b'; }, 3000);
+  }
+}
+
 </script>
 
 </body>
