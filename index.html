@@ -450,7 +450,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
       <div class="ring-info">
         <h2 id="calConsumedBig">0</h2>
         <div class="ring-sub">KCAL CONSUMED</div>
-        <div class="ring-avail">Target: <span id="calTargetDisplay">850</span> kcal</div>
+        <div class="ring-avail">Target: <span id="calTargetDisplay" onclick="openTargetEditor()" style="cursor:pointer;text-decoration:underline dotted;color:var(--accent2);">850</span> kcal <span style="font-size:10px;color:var(--muted);">✏</span></div>
         <div class="ring-avail">Remaining: <span id="calAvailDisplay">850</span> kcal</div>
       </div>
     </div>
@@ -593,6 +593,35 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   </div>
 </div>
 
+<!-- CALORIE TARGET EDITOR MODAL -->
+
+<div id="calTargetModal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:20px;padding:24px;width:88%;max-width:360px;">
+    <div style="font-size:16px;font-weight:800;margin-bottom:6px;">🎯 Daily Calorie Target</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;" id="calTargetSubtitle">Set your planned intake. Defaults to previous day's target.</div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;">
+      <input id="calTargetInput" type="number" min="200" max="5000" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:22px;font-weight:800;color:var(--accent2);text-align:center;font-family:'Syne',sans-serif;" placeholder="850">
+      <span style="color:var(--muted);font-size:13px;">kcal</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <button onclick="setTargetQuick(500)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">500</button>
+      <button onclick="setTargetQuick(700)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">700</button>
+      <button onclick="setTargetQuick(850)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">850</button>
+      <button onclick="setTargetQuick(1000)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">1000</button>
+      <button onclick="setTargetQuick(1200)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">1200</button>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer;">
+      <input type="checkbox" id="calTargetSetDefault" style="width:16px;height:16px;accent-color:#6ee7b7;">
+      <span style="font-size:12px;color:var(--muted);">Also set as my default going forward</span>
+    </label>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:16px;" id="calTargetHint"></div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeTargetEditor()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">Cancel</button>
+      <button onclick="saveCalTarget()" style="flex:2;background:#6ee7b7;border:none;color:#0d0f14;border-radius:10px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">Save Target</button>
+    </div>
+  </div>
+</div>
+
 <!-- PHASE EDITOR MODAL -->
 
 <div id="phaseEditorModal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
@@ -601,10 +630,11 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
       <div style="font-size:16px;font-weight:800;">⚙ Manage Phases</div>
       <button onclick="closePhaseEditor()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
     </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Phases are labels for food testing stages. Add custom phases beyond the default V1–V4.</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">All phases can be renamed. Custom phases can also be removed. Default phases (1–4) cannot be deleted.</div>
     <div id="phaseList" style="margin-bottom:16px;"></div>
+    <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px;">ADD NEW PHASE</div>
     <div style="display:flex;gap:8px;">
-      <input id="newPhaseInput" placeholder="Phase name e.g. V5" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;" maxlength="10">
+      <input id="newPhaseInput" placeholder="e.g. V5, Maintenance, Reintro" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;" maxlength="20">
       <button onclick="addCustomPhase()" style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:8px;padding:10px 16px;font-weight:800;font-size:13px;font-family:'Syne',sans-serif;cursor:pointer;">Add</button>
     </div>
     <div id="phaseEditorError" style="color:var(--red);font-size:12px;margin-top:8px;"></div>
@@ -1342,7 +1372,7 @@ function calcCalories(food, qty) {
 
 function renderFoodLog() {
   const log = getLog(currentDate);
-  const target = 850;
+  const target = getCalTarget();
   let consumed = 0;
   log.foods.forEach(f => consumed += f.calories);
   consumed = Math.round(consumed);
@@ -1740,6 +1770,7 @@ function renderHistory() {
     const dt = new Date(d + 'T00:00:00');
     const dateStr = dt.toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
     const diff = 850 - consumed;
+    const dayTarget = log.meta?.calTarget || 850;
     return `
     <div class="history-card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
@@ -1749,7 +1780,7 @@ function renderHistory() {
         <div onclick="jumpToDate('${d}')" style="cursor:pointer">
         ${log.meta.phase ? `<div class="phase-badge" style="margin-bottom:8px;font-size:10px;padding:3px 10px">Phase ${log.meta.phase}</div>` : ''}
         <div class="history-metrics">
-          <div><div class="history-metric-label">CALORIES</div><div class="history-cal">${consumed} <span style="font-size:11px;color:${diff>=0?'var(--green)':'var(--red)'}">/ 850</span></div></div>
+          <div><div class="history-metric-label">CALORIES</div><div class="history-cal">${consumed} <span style="font-size:11px;color:${consumed<=dayTarget?'var(--green)':'var(--red)'}">/ ${dayTarget}</span></div></div>
           ${log.meta.weight ? `<div><div class="history-metric-label">WEIGHT</div><div class="history-metric-val">${log.meta.weight} kg</div></div>` : ''}
           ${log.meta.bloodSugar ? `<div><div class="history-metric-label">B.SUGAR</div><div class="history-metric-val">${log.meta.bloodSugar}</div></div>` : ''}
           ${log.meta.bm ? `<div><div class="history-metric-label">BM</div><div class="history-metric-val">${log.meta.bm}</div></div>` : ''}
@@ -1871,32 +1902,159 @@ function showToast(msg) {
 }
 
 // ============================================================
+// CALORIE TARGET (per-day, stored in log meta)
 // ============================================================
-// PHASE EDITOR
+const DEFAULT_TARGET = 850;
+
+function getCalTarget(date) {
+  const meta = (getLog(date || currentDate).meta || {});
+  if (meta.calTarget && meta.calTarget > 0) return meta.calTarget;
+  return getPrevDayTarget();
+}
+
+function getPrevDayTarget() {
+  // Walk backwards through dayLogs looking for last saved target
+  const allKeys = [...Object.keys(dayLogs), ...Object.keys(SCRAPED_LOGS)];
+  const past = [...new Set(allKeys)].filter(dk => dk < currentDate).sort().reverse();
+  for (const dk of past) {
+    const t = dayLogs[dk]?.meta?.calTarget || SCRAPED_LOGS[dk]?.meta?.calTarget;
+    if (t && t > 0) return t;
+  }
+  // Fall back to localStorage saved default
+  const stored = parseInt(localStorage.getItem('amura_default_target'));
+  if (stored && stored > 0) return stored;
+  return DEFAULT_TARGET;
+}
+
+function openTargetEditor() {
+  const cur = getCalTarget();
+  const prev = getPrevDayTarget();
+  const stored = parseInt(localStorage.getItem('amura_default_target'));
+  document.getElementById('calTargetInput').value = cur;
+  const cbx = document.getElementById('calTargetSetDefault');
+  if (cbx) cbx.checked = false;
+  const hintEl = document.getElementById('calTargetHint');
+  const hasDayTarget = getLog(currentDate).meta?.calTarget > 0;
+  if (hasDayTarget) {
+    hintEl.innerHTML = `Custom target for this day: <strong style="color:var(--accent2);">${cur} kcal</strong>`;
+  } else if (prev !== DEFAULT_TARGET) {
+    hintEl.innerHTML = `Carrying from previous day: <strong style="color:var(--accent2);">${prev} kcal</strong>`;
+  } else if (stored) {
+    hintEl.innerHTML = `Using your saved default: <strong style="color:var(--accent2);">${stored} kcal</strong>`;
+  } else {
+    hintEl.innerHTML = `Using app default: <strong style="color:var(--accent2);">${DEFAULT_TARGET} kcal</strong>`;
+  }
+  document.getElementById('calTargetModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('calTargetInput').select(), 50);
+}
+
+function closeTargetEditor() {
+  document.getElementById('calTargetModal').style.display = 'none';
+}
+
+function setTargetQuick(val) {
+  document.getElementById('calTargetInput').value = val;
+}
+
+function saveCalTarget() {
+  const val = parseInt(document.getElementById('calTargetInput').value);
+  if (!val || val < 100 || val > 9999) { showToast('Enter a valid target (100–9999)'); return; }
+  const asDefault = document.getElementById('calTargetSetDefault')?.checked;
+  const log = getLog(currentDate);
+  if (!log.meta) log.meta = {};
+  log.meta.calTarget = val;
+  saveLogs();
+  // Also persist as localStorage default so new days pick it up without Firestore
+  if (asDefault) {
+    localStorage.setItem('amura_default_target', String(val));
+    showToast('Target set to ' + val + ' kcal (new default saved)');
+  } else {
+    showToast('Target set to ' + val + ' kcal');
+  }
+  closeTargetEditor();
+  renderFoodLog();
+}
+
+document.addEventListener('click', e => {
+  if (e.target === document.getElementById('calTargetModal')) closeTargetEditor();
+});
+
 // ============================================================
+// PHASE EDITOR — add, rename, delete custom phases
+// ============================================================
+let editingPhase = null;
+
 function openPhaseEditor() {
-  renderPhaseList();
+  editingPhase = null;
+  renderPhaseManagerList();
   document.getElementById('newPhaseInput').value = '';
   document.getElementById('phaseEditorError').textContent = '';
   document.getElementById('phaseEditorModal').style.display = 'flex';
 }
+
 function closePhaseEditor() {
   document.getElementById('phaseEditorModal').style.display = 'none';
+  editingPhase = null;
   buildLookupPhaseFilter();
   refreshFoodEditorPhases();
 }
-function renderPhaseList() {
+
+function phaseColor(p) {
+  const map = {'1':'#6ee7b7','2':'#60a5fa','3':'#f59e0b','4':'#f87171'};
+  return map[p] || '#a78bfa';
+}
+
+function renderPhaseManagerList() {
   const defaults = ['1','2','3','4'];
   const custom = getCustomPhases();
   const all = [...defaults, ...custom];
   document.getElementById('phaseList').innerHTML = all.map(p => {
     const isDef = defaults.includes(p);
+    const badge = p.length <= 3 ? p : p.slice(0,3);
+    if (editingPhase === p) {
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface2);border:1px solid var(--accent);border-radius:10px;margin-bottom:8px;">
+        <input id="editPhaseInput_${p}" value="${p}" maxlength="20"
+          style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;"
+          onkeydown="if(event.key==='Enter')commitPhaseRename('${p}');if(event.key==='Escape')cancelPhaseEdit();">
+        <button onclick="commitPhaseRename('${p}')" style="background:#6ee7b7;border:none;color:#0d0f14;border-radius:6px;padding:7px 13px;font-size:12px;font-weight:800;cursor:pointer;">Save</button>
+        <button onclick="cancelPhaseEdit()" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:7px 10px;font-size:13px;cursor:pointer;">✕</button>
+      </div>`;
+    }
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:10px;margin-bottom:8px;">
-      <div><span style="font-weight:700;">Phase ${p}</span>${isDef ? '<span style="font-size:10px;color:var(--muted);margin-left:8px;">default</span>' : ''}</div>
-      ${!isDef ? `<button onclick="deleteCustomPhase('${p}')" style="background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.3);color:#f87171;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">✕ Remove</button>` : '<span style="font-size:11px;color:var(--muted);">locked</span>'}
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:30px;height:30px;border-radius:50%;background:${phaseColor(p)};color:#0d0f14;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;">${badge}</div>
+        <span style="font-weight:700;">Phase ${p}</span>
+        ${isDef ? '<span style="font-size:10px;color:var(--muted);background:var(--bg);padding:2px 6px;border-radius:4px;">locked</span>' : ''}
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="startPhaseEdit('${p}')" style="background:rgba(110,231,183,0.1);border:1px solid rgba(110,231,183,0.3);color:#6ee7b7;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">✏ Rename</button>
+        ${!isDef
+          ? `<button onclick="deleteCustomPhase('${p}')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#f87171;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">✕</button>`
+          : ''}
+      </div>
     </div>`;
   }).join('');
+  if (editingPhase) setTimeout(() => document.getElementById('editPhaseInput_' + editingPhase)?.focus(), 30);
 }
+
+function startPhaseEdit(p) { editingPhase = p; renderPhaseManagerList(); }
+function cancelPhaseEdit() { editingPhase = null; renderPhaseManagerList(); }
+
+function commitPhaseRename(oldName) {
+  const inp = document.getElementById('editPhaseInput_' + oldName);
+  const newName = inp ? inp.value.trim() : '';
+  const errEl = document.getElementById('phaseEditorError');
+  if (!newName) { errEl.textContent = 'Name cannot be empty'; return; }
+  if (newName !== oldName && getAllPhases().some(p => p.toLowerCase() === newName.toLowerCase())) {
+    errEl.textContent = 'Phase name already exists'; return;
+  }
+  saveCustomPhases(getCustomPhases().map(p => p === oldName ? newName : p));
+  errEl.textContent = '';
+  editingPhase = null;
+  renderPhaseManagerList();
+  showToast('Renamed to Phase ' + newName);
+}
+
 function addCustomPhase() {
   const val = document.getElementById('newPhaseInput').value.trim();
   const errEl = document.getElementById('phaseEditorError');
@@ -1907,20 +2065,27 @@ function addCustomPhase() {
   saveCustomPhases(custom);
   document.getElementById('newPhaseInput').value = '';
   errEl.textContent = '';
-  renderPhaseList();
+  editingPhase = null;
+  renderPhaseManagerList();
   showToast('Phase ' + val + ' added');
 }
+
 function deleteCustomPhase(p) {
+  if (!confirm('Remove Phase ' + p + '? Foods using this phase keep their data.')) return;
   saveCustomPhases(getCustomPhases().filter(x => x !== p));
-  renderPhaseList();
+  editingPhase = null;
+  renderPhaseManagerList();
   showToast('Phase ' + p + ' removed');
 }
+
 function refreshFoodEditorPhases() {
   const sel = document.getElementById('fe_phase');
+  if (!sel) return;
   const cur = sel.value;
   sel.innerHTML = getAllPhases().map(p => `<option value="${p}">Phase ${p}</option>`).join('');
   sel.value = getAllPhases().includes(cur) ? cur : '1';
 }
+
 document.addEventListener('click', e => {
   if (e.target === document.getElementById('phaseEditorModal')) closePhaseEditor();
 });
@@ -2158,7 +2323,7 @@ function shareSnapshot() {
   // Build the snapshot card content
   const log = getLog(currentDate);
   const consumed = Math.round(log.foods.reduce((s, f) => s + f.calories, 0));
-  const target = 850;
+  const target = getCalTarget();
   const avail = target - consumed;
   const pct = Math.min(consumed / target, 1);
   const over = consumed > target;
@@ -2382,10 +2547,11 @@ function renderDashboard() {
     const w = typeof m.weight === 'number' ? m.weight : parseFloat(m.weight);
     const bs = typeof m.bloodSugar === 'number' ? m.bloodSugar : parseFloat(m.bloodSugar);
     const cal = Math.round((v.foods||[]).reduce((s,f)=>s+f.calories,0));
+    const dayTarget = (m.calTarget && m.calTarget > 0) ? m.calTarget : DEFAULT_TARGET;
     const sl = parseSleep(m.sleep);
     if (!isNaN(w) && w > 40 && w < 200) weightPts.push({x:dk, y:w});
     if (!isNaN(bs) && bs > 30 && bs < 500) bsPts.push({x:dk, y:bs});
-    if (cal > 0) calPts.push({x:dk, y:cal});
+    if (cal > 0) calPts.push({x:dk, y:cal, t:dayTarget});
     if (sl) sleepPts.push({x:dk, y:sl});
   });
 
@@ -2473,11 +2639,11 @@ function renderDashboard() {
     datasets: [
       {
         data: calPts.map(p=>p.y),
-        backgroundColor: calPts.map(p => p.y > 850 ? 'rgba(248,113,113,0.7)' : 'rgba(110,231,183,0.7)'),
+        backgroundColor: calPts.map(p => p.y > p.t ? 'rgba(248,113,113,0.7)' : 'rgba(110,231,183,0.7)'),
         borderRadius: 4, borderSkipped: false
       },
       {
-        type: 'line', data: calPts.map(()=>850),
+        type: 'line', data: calPts.map(p=>p.t),
         borderColor: 'rgba(245,158,11,0.6)', borderWidth: 1.5, borderDash: [4,4],
         pointRadius: 0, fill: false
       }
