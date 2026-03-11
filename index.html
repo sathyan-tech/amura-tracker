@@ -761,7 +761,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
     <div>
       <div style="font-size:18px;font-weight:800;color:#f59e0b;">⭐ Admin Console</div>
-      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c291a3b6aabba3acfaf782a5afa3abaeeca1adaf">[email&#160;protected]</a></div>
+      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">Admin Account</div>
     </div>
     <button onclick="loadAdminData()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">↻ Refresh</button>
   </div>
@@ -1016,7 +1016,7 @@ const CALORIE_DB = [
 // ============================================================
 // FIREBASE & AUTH
 // ============================================================
-const ADMIN_EMAIL = ‘sathyan85@gmail.com’;
+const ADMIN_EMAIL = [‘sathyan85’,‘gmail.com’].join(’@’);
 let db = null;
 let currentUser = null;
 let saveTimer = null;
@@ -1024,6 +1024,14 @@ let saveTimer = null;
 function bootFirebase() {
 if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
 db = firebase.firestore();
+// Handle redirect result first (returns from Google sign-in)
+firebase.auth().getRedirectResult().then(result => {
+if (result && result.user) {
+// Successfully signed in via redirect — onAuthStateChanged will fire next
+}
+}).catch(err => {
+document.getElementById(‘loginError’).textContent = err.message;
+});
 firebase.auth().onAuthStateChanged(user => {
 if (user) { currentUser = user; onSignedIn(user); }
 else { currentUser = null; showLoginScreen(); }
@@ -1037,7 +1045,7 @@ document.getElementById(‘loginScreen’).style.display = ‘flex’;
 function signInWithGoogle() {
 document.getElementById(‘loginError’).textContent = ‘’;
 const provider = new firebase.auth.GoogleAuthProvider();
-firebase.auth().signInWithPopup(provider).catch(err => {
+firebase.auth().signInWithRedirect(provider).catch(err => {
 document.getElementById(‘loginError’).textContent = err.message;
 });
 }
