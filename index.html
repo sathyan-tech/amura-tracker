@@ -679,6 +679,55 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   </div>
 </div>
 
+<!-- PAGE: ADMIN -->
+
+<div class="page" id="page-admin">
+
+  <!-- Header -->
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div>
+      <div style="font-size:18px;font-weight:800;color:#f59e0b;">⭐ Admin Console</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">Sathyan85@gmail.com</div>
+    </div>
+    <button onclick="loadAdminData()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">↻ Refresh</button>
+  </div>
+
+  <!-- Stats bar -->
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;" id="adminStats">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+      <div style="font-size:22px;font-weight:800;color:#6ee7b7;" id="stat-users">—</div>
+      <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USERS</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+      <div style="font-size:22px;font-weight:800;color:#60a5fa;" id="stat-days">—</div>
+      <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">TOTAL DAYS</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+      <div style="font-size:22px;font-weight:800;color:#f59e0b;" id="stat-active">—</div>
+      <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">ACTIVE TODAY</div>
+    </div>
+  </div>
+
+  <!-- User list -->
+
+  <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:8px;font-family:'DM Mono',monospace;">ALL USERS</div>
+  <div id="adminUserList">
+    <div class="empty-state">Loading users...</div>
+  </div>
+
+  <!-- User detail panel -->
+
+  <div id="adminUserDetail" style="display:none;margin-top:16px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <button onclick="closeAdminDetail()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">← Back</button>
+      <div style="font-size:14px;font-weight:800;" id="adminDetailName"></div>
+    </div>
+    <div id="adminDetailHistory"></div>
+  </div>
+</div>
+
 <!-- SNAPSHOT CARD (off-screen, rendered by html2canvas) -->
 
 <div id="snapshotCard" style="position:fixed;left:-9999px;top:0;width:390px;background:#0d0f14;padding:24px;font-family:'Syne',sans-serif;color:#e2e8f0;">
@@ -780,6 +829,10 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <button class="nav-btn" id="nav-history" onclick="switchPage('history')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
     History
+  </button>
+  <button class="nav-btn" id="nav-admin" onclick="switchPage('admin')" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Admin
   </button>
 </div>
 
@@ -885,6 +938,7 @@ const CALORIE_DB = [
 // ============================================================
 // FIREBASE & AUTH
 // ============================================================
+const ADMIN_EMAIL = 'sathyan85@gmail.com';
 let db = null;
 let currentUser = null;
 let saveTimer = null;
@@ -926,6 +980,10 @@ function onSignedIn(user) {
     img.src = user.photoURL; img.style.display = 'block'; initial.style.display = 'none';
   } else {
     initial.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
+  }
+  // Show admin tab only for admin
+  if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    document.getElementById('nav-admin').style.display = 'flex';
   }
   appInit();
 }
@@ -1604,6 +1662,7 @@ function switchPage(page) {
   document.getElementById('page-' + page).classList.add('active');
   document.getElementById('nav-' + page).classList.add('active');
   if (page === 'history') renderHistory();
+  if (page === 'admin') loadAdminData();
 }
 
 function statusColor(s) {
@@ -1617,7 +1676,142 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 1800);
 }
 
-// Auto-close suggestions on outside tap
+// ============================================================
+// ADMIN CONSOLE
+// ============================================================
+let adminUsers = [];
+
+async function loadAdminData() {
+  if (!db || !currentUser) return;
+  if (currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return;
+
+  document.getElementById('adminUserList').innerHTML = '<div class="empty-state">Loading...</div>';
+  document.getElementById('adminUserDetail').style.display = 'none';
+
+  try {
+    // Load all users collection
+    const usersSnap = await db.collection('users').get();
+    adminUsers = [];
+    const today = getTodayStr();
+    let totalDays = 0;
+    let activeToday = 0;
+
+    for (const userDoc of usersSnap.docs) {
+      const uid = userDoc.id;
+      const meta = userDoc.data();
+      // Load their logs
+      const logsSnap = await db.collection('users').doc(uid).collection('logs').get();
+      const logs = {};
+      logsSnap.forEach(d => { logs[d.id] = d.data(); });
+      const dayCount = Object.keys(logs).length;
+      totalDays += dayCount;
+
+      // Last active = most recent log date
+      const dates = Object.keys(logs).sort((a,b) => b.localeCompare(a));
+      const lastActive = dates[0] || '—';
+      if (lastActive === today) activeToday++;
+
+      // Avg calories
+      let totalCal = 0, calDays = 0;
+      dates.forEach(d => {
+        const cal = Math.round((logs[d].foods || []).reduce((s,f) => s + f.calories, 0));
+        if (cal > 0) { totalCal += cal; calDays++; }
+      });
+      const avgCal = calDays > 0 ? Math.round(totalCal / calDays) : 0;
+
+      adminUsers.push({ uid, email: meta.email || uid, displayName: meta.displayName || '', logs, dayCount, lastActive, avgCal });
+    }
+
+    // Update stats
+    document.getElementById('stat-users').textContent = adminUsers.length;
+    document.getElementById('stat-days').textContent = totalDays;
+    document.getElementById('stat-active').textContent = activeToday;
+
+    // Render user list
+    if (!adminUsers.length) {
+      document.getElementById('adminUserList').innerHTML = '<div class="empty-state">No users yet</div>';
+      return;
+    }
+
+    // Sort by last active
+    adminUsers.sort((a,b) => b.lastActive.localeCompare(a.lastActive));
+
+    document.getElementById('adminUserList').innerHTML = adminUsers.map((u, i) => `
+      <div onclick="viewAdminUser(${i})" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div style="font-size:14px;font-weight:800;">${u.email === currentUser.email ? '👑 ' : '👤 '}${u.email}</div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:${u.lastActive === today ? '#6ee7b7' : 'var(--muted)'};">${u.lastActive === today ? '● Active today' : u.lastActive}</div>
+        </div>
+        <div style="display:flex;gap:16px;">
+          <div style="font-size:12px;color:var(--muted);">📅 <strong style="color:var(--text)">${u.dayCount}</strong> days logged</div>
+          <div style="font-size:12px;color:var(--muted);">🔥 <strong style="color:var(--accent2)">${u.avgCal}</strong> avg kcal</div>
+        </div>
+      </div>
+    `).join('');
+
+  } catch(e) {
+    document.getElementById('adminUserList').innerHTML = `<div class="empty-state" style="color:var(--red);">⚠ Error loading users.<br><span style="font-size:11px;">Make sure Firestore rules allow admin access.</span></div>`;
+    console.error('Admin load error:', e);
+  }
+}
+
+function viewAdminUser(idx) {
+  const u = adminUsers[idx];
+  document.getElementById('adminUserList').style.display = 'none';
+  document.getElementById('adminStats').style.display = 'none';
+  document.getElementById('adminUserDetail').style.display = 'block';
+  document.getElementById('adminDetailName').textContent = u.email;
+
+  const dates = Object.keys(u.logs).sort((a,b) => b.localeCompare(a));
+  if (!dates.length) {
+    document.getElementById('adminDetailHistory').innerHTML = '<div class="empty-state">No logs yet</div>';
+    return;
+  }
+
+  document.getElementById('adminDetailHistory').innerHTML = dates.map(d => {
+    const log = u.logs[d];
+    const consumed = Math.round((log.foods || []).reduce((s,f) => s + f.calories, 0));
+    const m = log.meta || {};
+    const dt = new Date(d + 'T00:00:00');
+    const dateStr = dt.toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+    const diff = 850 - consumed;
+    const diffColor = diff >= 0 ? 'var(--green)' : 'var(--red)';
+
+    return `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:13px;font-weight:800;">${dateStr}</div>
+          ${m.phase ? `<span style="background:rgba(110,231,183,0.15);color:#6ee7b7;border:1px solid rgba(110,231,183,0.3);border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;">Phase ${m.phase}</span>` : ''}
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+          <div style="font-size:12px;"><span style="color:var(--muted)">Calories: </span><strong style="color:var(--accent)">${consumed}</strong> kcal</div>
+          <div style="font-size:12px;"><span style="color:var(--muted)">vs target: </span><strong style="color:${diffColor}">${diff >= 0 ? '+' : ''}${diff}</strong></div>
+          ${m.weight ? `<div style="font-size:12px;"><span style="color:var(--muted)">Weight: </span><strong>${m.weight} kg</strong></div>` : ''}
+          ${m.bloodSugar ? `<div style="font-size:12px;"><span style="color:var(--muted)">BS: </span><strong>${m.bloodSugar}</strong></div>` : ''}
+          ${m.sleep ? `<div style="font-size:12px;"><span style="color:var(--muted)">Sleep: </span><strong>${m.sleep}h</strong></div>` : ''}
+          ${m.energy ? `<div style="font-size:12px;"><span style="color:var(--muted)">Energy: </span><strong>${m.energy}/5</strong></div>` : ''}
+        </div>
+        ${(log.foods || []).length > 0 ? `
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-family:'DM Mono',monospace;">FOOD LOG</div>
+          ${(log.foods || []).map(f => `
+            <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);">
+              <span>${f.name} <span style="color:var(--muted)">${f.qtyDisplay}</span></span>
+              <span style="color:var(--accent2);font-weight:700;">${f.calories} kcal</span>
+            </div>`).join('')}
+        ` : ''}
+        ${m.impact ? `<div style="margin-top:6px;font-size:11px;color:var(--orange);">⚠ ${m.impact}</div>` : ''}
+        ${m.intro ? `<div style="font-size:11px;color:var(--accent2);">🆕 ${m.intro}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function closeAdminDetail() {
+  document.getElementById('adminUserDetail').style.display = 'none';
+  document.getElementById('adminUserList').style.display = 'block';
+  document.getElementById('adminStats').style.display = 'grid';
+}
+
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.add-food-panel')) {
     document.getElementById('foodSuggestions').classList.remove('show');
