@@ -579,11 +579,35 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <div class="lookup-card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <h3 style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">🔍 Food Database</h3>
-      <button onclick="openFoodEditor(null)" style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;">＋ Add Food</button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="openPhaseEditor()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">⚙ Phases</button>
+        <button onclick="openFoodEditor(null)" style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;">＋ Add Food</button>
+      </div>
     </div>
     <input class="lookup-search" type="text" id="lookupInput" placeholder="Search any food..." oninput="runLookup()">
+    <!-- Phase filter -->
+    <div class="cat-filter" id="lookupPhaseFilter" style="margin-bottom:6px;"></div>
+    <!-- Category filter -->
     <div class="cat-filter" id="lookupCatFilter"></div>
     <div id="lookupResults"></div>
+  </div>
+</div>
+
+<!-- PHASE EDITOR MODAL -->
+
+<div id="phaseEditorModal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
+  <div style="background:var(--surface);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:800;">⚙ Manage Phases</div>
+      <button onclick="closePhaseEditor()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Phases are labels for food testing stages. Add custom phases beyond the default V1–V4.</div>
+    <div id="phaseList" style="margin-bottom:16px;"></div>
+    <div style="display:flex;gap:8px;">
+      <input id="newPhaseInput" placeholder="Phase name e.g. V5" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;" maxlength="10">
+      <button onclick="addCustomPhase()" style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:8px;padding:10px 16px;font-weight:800;font-size:13px;font-family:'Syne',sans-serif;cursor:pointer;">Add</button>
+    </div>
+    <div id="phaseEditorError" style="color:var(--red);font-size:12px;margin-top:8px;"></div>
   </div>
 </div>
 
@@ -624,31 +648,47 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <!-- Weight chart -->
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">⚖ WEIGHT TREND (kg)</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;">⚖ WEIGHT TREND (kg)</div>
+      <button onclick="shareChart('weightChart','Weight Trend')" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">📤 Share</button>
+    </div>
     <canvas id="weightChart" height="140"></canvas>
   </div>
 
   <!-- Blood Sugar chart -->
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">🩸 BLOOD SUGAR TREND (mg/dL)</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;">🩸 BLOOD SUGAR TREND (mg/dL)</div>
+      <button onclick="shareChart('bsChart','Blood Sugar Trend')" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">📤 Share</button>
+    </div>
     <canvas id="bsChart" height="140"></canvas>
   </div>
 
   <!-- Calories chart -->
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">🔥 DAILY CALORIES</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;">🔥 DAILY CALORIES</div>
+      <button onclick="shareChart('calChart','Daily Calories')" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">📤 Share</button>
+    </div>
     <div style="font-size:10px;color:var(--muted);margin-bottom:12px;font-family:'DM Mono',monospace;">Target: 850 kcal shown as dashed line</div>
     <canvas id="calChart" height="140"></canvas>
   </div>
 
-  <!-- Sleep & Energy chart -->
+  <!-- Sleep chart -->
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">😴 SLEEP HOURS</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;">😴 SLEEP HOURS</div>
+      <button onclick="shareChart('sleepChart','Sleep Trend')" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">📤 Share</button>
+    </div>
     <canvas id="sleepChart" height="120"></canvas>
   </div>
+
+  <!-- Share all button -->
+
+<button onclick="shareAllCharts()" style="width:100%;background:var(--surface);border:1px solid var(--accent);color:var(--accent);border-radius:12px;padding:12px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;margin-bottom:14px;">📤 Share Full Trends Report</button>
 
   <!-- Phase timeline -->
 
@@ -715,7 +755,6 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
     </select>
   </div>
 </div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
   <div class="food-editor-field">
     <div class="food-editor-label">CATEGORY</div>
     <select class="food-editor-select" id="fe_cat">
@@ -1493,12 +1532,38 @@ function renderPhaseList(phFilter, catFilter) {
 // CALORIE LOOKUP
 // ============================================================
 let lookupCat = 'all';
+let lookupPhase = 'all';
+
+function getCustomPhases() {
+  try { return JSON.parse(localStorage.getItem('amura_custom_phases') || '[]'); } catch { return []; }
+}
+function saveCustomPhases(phases) {
+  localStorage.setItem('amura_custom_phases', JSON.stringify(phases));
+}
+function getAllPhases() {
+  return ['1','2','3','4', ...getCustomPhases()];
+}
+
+function buildLookupPhaseFilter() {
+  const phases = getAllPhases();
+  document.getElementById('lookupPhaseFilter').innerHTML =
+    `<div class="cat-chip active" onclick="setLookupPhase('all',this)">All Phases</div>` +
+    phases.map(p => `<div class="cat-chip" onclick="setLookupPhase('${p}',this)">Phase ${p}</div>`).join('');
+}
+
+function setLookupPhase(phase, el) {
+  lookupPhase = phase;
+  document.querySelectorAll('#lookupPhaseFilter .cat-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  runLookup();
+}
 
 function buildLookupCatFilter() {
   const cats = ['all', ...new Set(CALORIE_DB.map(f => f.cat))];
   document.getElementById('lookupCatFilter').innerHTML = cats.map(c =>
-    `<div class="cat-chip ${c==='all'?'active':''}" onclick="setLookupCat('${c}',this)">${c==='all'?'All':c}</div>`
+    `<div class="cat-chip ${c==='all'?'active':''}" onclick="setLookupCat('${c}',this)">${c==='all'?'All Categories':c}</div>`
   ).join('');
+  buildLookupPhaseFilter();
   runLookup();
 }
 
@@ -1511,17 +1576,13 @@ function setLookupCat(cat, el) {
 
 function runLookup() {
   const q = document.getElementById('lookupInput').value.toLowerCase();
-  let items = CALORIE_DB.filter(f => {
+  const filterFn = f => {
     if (lookupCat !== 'all' && f.cat !== lookupCat) return false;
+    if (lookupPhase !== 'all' && String(f.phase) !== String(lookupPhase)) return false;
     if (q && !f.name.toLowerCase().includes(q)) return false;
     return true;
-  });
-  // Also include custom foods from customFoods array
-  const allItems = [...items, ...customFoods.filter(f => {
-    if (lookupCat !== 'all' && f.cat !== lookupCat) return false;
-    if (q && !f.name.toLowerCase().includes(q)) return false;
-    return true;
-  })];
+  };
+  const allItems = [...CALORIE_DB.filter(filterFn), ...customFoods.filter(filterFn)];
 
   const el = document.getElementById('lookupResults');
   if (!allItems.length) { el.innerHTML = '<div class="empty-state">No results</div>'; return; }
@@ -1578,6 +1639,7 @@ async function deleteCustomFood(name) {
 
 function openFoodEditor(foodName) {
   editingFoodName = foodName;
+  refreshFoodEditorPhases(); // ensure custom phases are shown
   const modal = document.getElementById('foodEditorModal');
   const title = document.getElementById('foodEditorTitle');
   document.getElementById('fe_error').style.display = 'none';
@@ -1809,6 +1871,139 @@ function showToast(msg) {
 }
 
 // ============================================================
+// ============================================================
+// PHASE EDITOR
+// ============================================================
+function openPhaseEditor() {
+  renderPhaseList();
+  document.getElementById('newPhaseInput').value = '';
+  document.getElementById('phaseEditorError').textContent = '';
+  document.getElementById('phaseEditorModal').style.display = 'flex';
+}
+function closePhaseEditor() {
+  document.getElementById('phaseEditorModal').style.display = 'none';
+  buildLookupPhaseFilter();
+  refreshFoodEditorPhases();
+}
+function renderPhaseList() {
+  const defaults = ['1','2','3','4'];
+  const custom = getCustomPhases();
+  const all = [...defaults, ...custom];
+  document.getElementById('phaseList').innerHTML = all.map(p => {
+    const isDef = defaults.includes(p);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:10px;margin-bottom:8px;">
+      <div><span style="font-weight:700;">Phase ${p}</span>${isDef ? '<span style="font-size:10px;color:var(--muted);margin-left:8px;">default</span>' : ''}</div>
+      ${!isDef ? `<button onclick="deleteCustomPhase('${p}')" style="background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.3);color:#f87171;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">✕ Remove</button>` : '<span style="font-size:11px;color:var(--muted);">locked</span>'}
+    </div>`;
+  }).join('');
+}
+function addCustomPhase() {
+  const val = document.getElementById('newPhaseInput').value.trim();
+  const errEl = document.getElementById('phaseEditorError');
+  if (!val) { errEl.textContent = 'Enter a phase name'; return; }
+  if (getAllPhases().some(p => p.toLowerCase() === val.toLowerCase())) { errEl.textContent = 'Phase already exists'; return; }
+  const custom = getCustomPhases();
+  custom.push(val);
+  saveCustomPhases(custom);
+  document.getElementById('newPhaseInput').value = '';
+  errEl.textContent = '';
+  renderPhaseList();
+  showToast('Phase ' + val + ' added');
+}
+function deleteCustomPhase(p) {
+  saveCustomPhases(getCustomPhases().filter(x => x !== p));
+  renderPhaseList();
+  showToast('Phase ' + p + ' removed');
+}
+function refreshFoodEditorPhases() {
+  const sel = document.getElementById('fe_phase');
+  const cur = sel.value;
+  sel.innerHTML = getAllPhases().map(p => `<option value="${p}">Phase ${p}</option>`).join('');
+  sel.value = getAllPhases().includes(cur) ? cur : '1';
+}
+document.addEventListener('click', e => {
+  if (e.target === document.getElementById('phaseEditorModal')) closePhaseEditor();
+});
+
+// ============================================================
+// SHARE CHARTS (DASHBOARD)
+// ============================================================
+async function shareChart(canvasId, title) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) { showToast('Chart not ready'); return; }
+  const w = canvas.width, h = canvas.height;
+  const oc = document.createElement('canvas');
+  oc.width = w; oc.height = h + 80;
+  const ctx = oc.getContext('2d');
+  ctx.fillStyle = '#0d0f14';
+  ctx.fillRect(0, 0, oc.width, oc.height);
+  ctx.fillStyle = '#6ee7b7';
+  ctx.font = 'bold 28px sans-serif';
+  ctx.fillText('🌿 ' + title, 20, 38);
+  ctx.fillStyle = '#64748b';
+  ctx.font = '20px monospace';
+  const rangeLabel = document.querySelector('#page-dashboard .select-chip.active')?.textContent || '';
+  ctx.fillText(rangeLabel, 20, 65);
+  ctx.drawImage(canvas, 0, 80);
+  oc.toBlob(async blob => {
+    if (!blob) { showToast('Could not generate image'); return; }
+    const file = new File([blob], 'amura-' + canvasId + '.png', { type: 'image/png' });
+    if (navigator.share && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: 'Amura ' + title }); }
+      catch(e) { if (e.name !== 'AbortError') downloadChart(oc, canvasId); }
+    } else { downloadChart(oc, canvasId); }
+  }, 'image/png');
+}
+
+function downloadChart(canvas, name) {
+  const a = document.createElement('a');
+  a.download = 'amura-' + name + '.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+  showToast('Chart saved');
+}
+
+async function shareAllCharts() {
+  const charts = [
+    { id: 'weightChart', title: 'Weight Trend' },
+    { id: 'bsChart',     title: 'Blood Sugar' },
+    { id: 'calChart',    title: 'Calories' },
+    { id: 'sleepChart',  title: 'Sleep' },
+  ];
+  const rangeLabel = document.querySelector('#page-dashboard .select-chip.active')?.textContent || '';
+  const maxW = Math.max(...charts.map(c => document.getElementById(c.id)?.width || 400));
+  const totalH = charts.reduce((s,c) => s + (document.getElementById(c.id)?.height || 0) + 56, 80);
+  const oc = document.createElement('canvas');
+  oc.width = maxW; oc.height = totalH;
+  const ctx = oc.getContext('2d');
+  ctx.fillStyle = '#0d0f14';
+  ctx.fillRect(0, 0, oc.width, oc.height);
+  ctx.fillStyle = '#6ee7b7';
+  ctx.font = 'bold 30px sans-serif';
+  ctx.fillText("Sathyan's Amura Trends", 20, 40);
+  ctx.fillStyle = '#64748b';
+  ctx.font = '20px monospace';
+  ctx.fillText(rangeLabel, 20, 68);
+  let y = 86;
+  for (const c of charts) {
+    const src = document.getElementById(c.id);
+    if (!src) continue;
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillText(c.title, 20, y + 18);
+    ctx.drawImage(src, 0, y + 26);
+    y += src.height + 52;
+  }
+  oc.toBlob(async blob => {
+    if (!blob) { showToast('Could not generate image'); return; }
+    const file = new File([blob], 'amura-trends.png', { type: 'image/png' });
+    if (navigator.share && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: 'Amura Trends Report' }); }
+      catch(e) { if (e.name !== 'AbortError') downloadChart(oc, 'trends'); }
+    } else { downloadChart(oc, 'trends'); }
+  }, 'image/png');
+}
+
 // ADMIN CONSOLE
 // ============================================================
 let adminUsers = [];
