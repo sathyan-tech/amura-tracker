@@ -2106,10 +2106,10 @@ function setDashRange(days, btn) {
 }
 
 function getAllLogs() {
-  // Merge Firestore logs (allLogs) with scraped data; Firestore takes priority
+  // Merge SCRAPED_LOGS with live Firestore dayLogs; Firestore takes priority
   const merged = Object.assign({}, SCRAPED_LOGS);
-  Object.keys(allLogs).forEach(dk => {
-    const fl = allLogs[dk];
+  Object.keys(dayLogs).forEach(dk => {
+    const fl = dayLogs[dk];
     const hasRealData = (fl.foods && fl.foods.length > 0) || fl.meta?.weight || fl.meta?.bloodSugar;
     if (hasRealData) merged[dk] = fl;
   });
@@ -2301,12 +2301,12 @@ async function importHistoricalData() {
       const chunk = entries.slice(i, i + batch_size);
       await Promise.all(chunk.map(async ([dk, v]) => {
         // Only import if no existing Firestore data for that day
-        const existing = allLogs[dk];
+        const existing = dayLogs[dk];
         const hasReal = existing && ((existing.foods||[]).length > 0 || existing.meta?.weight);
         if (!hasReal) {
           const ref = db.collection('users').doc(currentUser.uid).collection('logs').doc(dk);
           await ref.set(v, { merge: true });
-          allLogs[dk] = v;
+          dayLogs[dk] = v;
           count++;
         }
       }));
