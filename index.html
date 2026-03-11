@@ -628,6 +628,46 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   </div>
 </div>
 
+<!-- EDIT FOOD ITEM MODAL -->
+
+<div id="editFoodModal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
+  <div style="background:var(--surface);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div style="font-size:16px;font-weight:800;">✎ Edit Food Entry</div>
+      <button onclick="closeEditFoodModal()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div id="editFoodName" style="font-size:13px;color:var(--accent2);font-weight:700;margin-bottom:4px;font-family:'DM Mono',monospace;"></div>
+    <div id="editFoodRef" style="font-size:11px;color:var(--muted);margin-bottom:18px;"></div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;">
+      <div style="flex:1;">
+        <label style="font-size:11px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">QUANTITY</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="stepEditQty(-1)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;width:36px;height:36px;font-size:20px;cursor:pointer;flex-shrink:0;">−</button>
+          <input id="editFoodQty" type="number" min="0.1" step="any" oninput="updateEditCalPreview()" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:20px;font-weight:800;color:var(--text);text-align:center;font-family:'Syne',sans-serif;">
+          <button onclick="stepEditQty(1)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;width:36px;height:36px;font-size:20px;cursor:pointer;flex-shrink:0;">+</button>
+        </div>
+      </div>
+      <div style="min-width:80px;text-align:center;">
+        <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px;">CALORIES</div>
+        <div id="editCalPreview" style="font-size:22px;font-weight:800;color:var(--accent2);font-family:'DM Mono',monospace;">—</div>
+        <div style="font-size:10px;color:var(--muted);">kcal</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;">
+      <div style="font-size:10px;color:var(--muted);width:100%;font-weight:700;">QUICK SET:</div>
+      <button onclick="setEditQtyMultiple(0.5)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">½×</button>
+      <button onclick="setEditQtyMultiple(1)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">1×</button>
+      <button onclick="setEditQtyMultiple(1.5)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">1.5×</button>
+      <button onclick="setEditQtyMultiple(2)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">2×</button>
+      <button onclick="setEditQtyMultiple(3)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">3×</button>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeEditFoodModal()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">Cancel</button>
+      <button onclick="saveEditFood()" style="flex:2;background:#6ee7b7;border:none;color:#0d0f14;border-radius:10px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- PHASE EDITOR MODAL -->
 
 <div id="phaseEditorModal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
@@ -1419,11 +1459,12 @@ function renderFoodLog() {
   }
   logEl.innerHTML = log.foods.map((f, i) => `
     <div class="food-item">
-      <div style="flex:1">
+      <div style="flex:1;cursor:pointer;" onclick="openEditFoodModal(${i})">
         <div class="food-item-name">${f.name}</div>
         <div class="food-item-qty">${f.qtyDisplay}</div>
       </div>
-      <div class="food-item-cal">${f.calories} kcal</div>
+      <div class="food-item-cal" style="cursor:pointer;" onclick="openEditFoodModal(${i})">${f.calories} kcal</div>
+      <button class="food-item-del" title="Edit" onclick="openEditFoodModal(${i})" style="color:var(--muted);font-size:14px;margin-right:2px;">✎</button>
       <button class="food-item-del" onclick="removeFoodItem(${i})">✕</button>
     </div>
   `).join('');
@@ -1435,6 +1476,94 @@ function removeFoodItem(i) {
   renderFoodLog();
   renderHistory();
   showToast('Removed');
+}
+
+// ---- Edit Food Item ----
+let editFoodIndex = -1;
+let editFoodDbEntry = null;
+
+function openEditFoodModal(i) {
+  const log = getLog(currentDate);
+  const f = log.foods[i];
+  if (!f) return;
+  editFoodIndex = i;
+  editFoodDbEntry = CALORIE_DB.find(db => db.name === f.name) || null;
+
+  document.getElementById('editFoodName').textContent = f.name;
+  if (editFoodDbEntry) {
+    document.getElementById('editFoodRef').textContent =
+      editFoodDbEntry.cal + ' kcal per ' + editFoodDbEntry.qty + ' ' + editFoodDbEntry.unit;
+  } else {
+    document.getElementById('editFoodRef').textContent =
+      f.calories + ' kcal for ' + f.qtyDisplay + ' (custom entry)';
+  }
+
+  document.getElementById('editFoodQty').value = f.qty;
+  updateEditCalPreview();
+  const modal = document.getElementById('editFoodModal');
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('editFoodQty').focus(), 100);
+}
+
+function closeEditFoodModal() {
+  document.getElementById('editFoodModal').style.display = 'none';
+  editFoodIndex = -1;
+  editFoodDbEntry = null;
+}
+
+function updateEditCalPreview() {
+  const qty = parseFloat(document.getElementById('editFoodQty').value);
+  const el = document.getElementById('editCalPreview');
+  if (!qty || qty <= 0) { el.textContent = '—'; return; }
+  let cal;
+  if (editFoodDbEntry) {
+    cal = calcCalories(editFoodDbEntry, qty);
+  } else if (editFoodIndex >= 0) {
+    const f = getLog(currentDate).foods[editFoodIndex];
+    cal = f.qty > 0 ? Math.round((f.calories / f.qty) * qty * 10) / 10 : f.calories;
+  }
+  el.textContent = (cal !== undefined) ? cal : '—';
+}
+
+function stepEditQty(dir) {
+  const inp = document.getElementById('editFoodQty');
+  const step = editFoodDbEntry ? editFoodDbEntry.qty : 10;
+  const current = parseFloat(inp.value) || 0;
+  inp.value = Math.max(0.1, Math.round((current + dir * step) * 10) / 10);
+  updateEditCalPreview();
+}
+
+function setEditQtyMultiple(mult) {
+  if (editFoodIndex < 0) return;
+  const baseQty = editFoodDbEntry
+    ? editFoodDbEntry.qty
+    : getLog(currentDate).foods[editFoodIndex].qty;
+  document.getElementById('editFoodQty').value = Math.round(baseQty * mult * 10) / 10;
+  updateEditCalPreview();
+}
+
+function saveEditFood() {
+  if (editFoodIndex < 0) return;
+  const qty = parseFloat(document.getElementById('editFoodQty').value);
+  if (!qty || qty <= 0) { showToast('Enter a valid quantity'); return; }
+  const log = getLog(currentDate);
+  const f = log.foods[editFoodIndex];
+  let cal, unit;
+  if (editFoodDbEntry) {
+    cal = calcCalories(editFoodDbEntry, qty);
+    unit = editFoodDbEntry.unit;
+  } else {
+    cal = f.qty > 0 ? Math.round((f.calories / f.qty) * qty * 10) / 10 : f.calories;
+    unit = f.qtyDisplay.replace(/^[\d.]+\s*/, '');
+  }
+  f.qty = qty;
+  f.qtyDisplay = (qty + ' ' + unit).trim();
+  f.calories = cal;
+  saveLogs();
+  renderFoodLog();
+  renderHistory();
+  closeEditFoodModal();
+  showToast('Updated → ' + cal + ' kcal');
 }
 
 // ============================================================
