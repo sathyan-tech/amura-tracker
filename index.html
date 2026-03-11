@@ -1292,6 +1292,12 @@ function setSyncStatus(msg, color) {
 // INIT
 // ============================================================
 async function appInit() {
+  // Save user profile so admin can see name/email
+  userDoc().set({
+    email: currentUser.email || '',
+    displayName: currentUser.displayName || '',
+    lastSeen: new Date().toISOString().slice(0, 10)
+  }, { merge: true }).catch(() => {});
   await loadAllFromFirestore();
   await loadCustomFoods();
   currentDate = getTodayStr();
@@ -2237,7 +2243,8 @@ async function loadAdminData() {
     document.getElementById('adminUserList').innerHTML = adminUsers.map((u, i) => `
       <div onclick="viewAdminUser(${i})" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <div style="font-size:14px;font-weight:800;">${u.email === currentUser.email ? '👑 ' : '👤 '}${u.email}</div>
+          <div style="font-size:14px;font-weight:800;">${u.email === currentUser.email ? '👑 ' : '👤 '}${u.displayName || u.email}</div>
+          ${u.displayName ? `<div style="font-size:11px;color:var(--muted);margin-top:1px;">${u.email}</div>` : ''}
           <div style="font-size:11px;font-family:'DM Mono',monospace;color:${u.lastActive === today ? '#6ee7b7' : 'var(--muted)'};">${u.lastActive === today ? '● Active today' : u.lastActive}</div>
         </div>
         <div style="display:flex;gap:16px;">
