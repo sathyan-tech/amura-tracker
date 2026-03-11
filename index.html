@@ -546,9 +546,20 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
     <input class="food-search" type="text" id="foodSearchInput" placeholder="Search food..." oninput="searchFood()">
     <div class="food-suggestions" id="foodSuggestions"></div>
     <div class="selected-food-name" id="selectedFoodName"></div>
+    <!-- live calorie preview while adding -->
+    <div id="addFoodPreview" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:10px 14px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-size:11px;color:var(--muted);font-weight:700;">THIS ITEM</span>
+        <span id="addPreviewCal" style="font-size:18px;font-weight:800;color:#f59e0b;font-family:'DM Mono',monospace;">— kcal</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11px;color:var(--muted);font-weight:700;">REMAINING AFTER</span>
+        <span id="addPreviewRemaining" style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;">— kcal</span>
+      </div>
+    </div>
     <div class="qty-row" id="qtyRow" style="display:none">
-      <input class="qty-input" type="number" step="0.01" id="foodQty" placeholder="Qty (in units)">
-      <button class="btn-primary" onclick="addFoodItem()">Add</button>
+      <input class="qty-input" type="number" step="0.01" id="foodQty" placeholder="Qty (in units)" oninput="updateAddPreview()">
+      <button onclick="addFoodItem()" style="background:#f59e0b;color:#0d0f14;border:none;border-radius:10px;padding:11px 22px;font-size:15px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 0 12px rgba(245,158,11,0.4);">＋ Add</button>
     </div>
   </div>
 </div>
@@ -1211,11 +1222,19 @@ function signInWithGoogle() {
 }
 
 function signOut() {
+  // Clear all in-memory state so the next user starts fresh
+  dayLogs = {};
+  foodStatusOverrides = {};
+  localStorage.removeItem('amura_logs_cache');
+  localStorage.removeItem('amura_overrides_cache');
   firebase.auth().signOut();
   closeUserMenu();
 }
 
 function onSignedIn(user) {
+  // Reset state for this user — prevents previous account's data from leaking
+  dayLogs = {};
+  foodStatusOverrides = {};
   document.getElementById('loginScreen').style.display = 'none';
   const syncBar = document.getElementById('syncBar');
   syncBar.style.display = 'flex';
@@ -1577,6 +1596,7 @@ function searchFood() {
   selectedFood = null;
   document.getElementById('selectedFoodName').classList.remove('show');
   document.getElementById('qtyRow').style.display = 'none';
+  document.getElementById('addFoodPreview').style.display = 'none';
 
   if (q.length < 1) { sugg.classList.remove('show'); return; }
   const matches = CALORIE_DB.filter(f => f.name.toLowerCase().includes(q)).slice(0, 12);
@@ -1606,7 +1626,31 @@ function selectFood(name) {
   sfn.classList.add('show');
   document.getElementById('qtyRow').style.display = 'flex';
   document.getElementById('foodQty').value = selectedFood.qty;
+  document.getElementById('addFoodPreview').style.display = 'block';
+  updateAddPreview();
   document.getElementById('foodQty').focus();
+}
+
+function updateAddPreview() {
+  if (!selectedFood) return;
+  const qty = parseFloat(document.getElementById('foodQty').value);
+  const calEl = document.getElementById('addPreviewCal');
+  const remEl = document.getElementById('addPreviewRemaining');
+  if (!qty || qty <= 0) {
+    calEl.textContent = '— kcal';
+    remEl.textContent = '— kcal';
+    remEl.style.color = 'var(--muted)';
+    return;
+  }
+  const itemCal = calcCalories(selectedFood, qty);
+  const log = getLog(currentDate);
+  let consumed = 0;
+  log.foods.forEach(f => consumed += f.calories);
+  const target = getCalTarget();
+  const remaining = target - consumed - itemCal;
+  calEl.textContent = itemCal + ' kcal';
+  remEl.textContent = Math.round(remaining) + ' kcal';
+  remEl.style.color = remaining >= 0 ? '#6ee7b7' : '#f87171';
 }
 
 function addFoodItem() {
@@ -1622,6 +1666,7 @@ function addFoodItem() {
   selectedFood = null;
   document.getElementById('selectedFoodName').classList.remove('show');
   document.getElementById('qtyRow').style.display = 'none';
+  document.getElementById('addFoodPreview').style.display = 'none';
   document.getElementById('foodQty').value = '';
   showToast(`Added ${cal} kcal`);
 }
