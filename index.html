@@ -631,7 +631,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
       <button onclick="closePhaseEditor()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
     </div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">All phases can be renamed. Custom phases can also be removed. Default phases (1–4) cannot be deleted.</div>
-    <div id="phaseList" style="margin-bottom:16px;"></div>
+    <div id="phaseManagerList" style="margin-bottom:16px;"></div>
     <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px;">ADD NEW PHASE</div>
     <div style="display:flex;gap:8px;">
       <input id="newPhaseInput" placeholder="e.g. V5, Maintenance, Reintro" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;" maxlength="20">
@@ -2008,7 +2008,7 @@ function renderPhaseManagerList() {
   const defaults = ['1','2','3','4'];
   const custom = getCustomPhases();
   const all = [...defaults, ...custom];
-  document.getElementById('phaseList').innerHTML = all.map(p => {
+  document.getElementById('phaseManagerList').innerHTML = all.map(p => {
     const isDef = defaults.includes(p);
     const badge = p.length <= 3 ? p : p.slice(0,3);
     if (editingPhase === p) {
