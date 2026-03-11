@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#0d0f14">
 <title>Sathyan's Amura Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <!-- Firebase hardcoded config - no setup screen needed -->
 <script>
 const FIREBASE_CONFIG = {
@@ -586,6 +587,78 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   </div>
 </div>
 
+<!-- PAGE: DASHBOARD -->
+
+<div class="page" id="page-dashboard">
+
+  <!-- Range filter -->
+
+  <div style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;">
+    <button class="select-chip active" id="range-30" onclick="setDashRange(30,this)">30 Days</button>
+    <button class="select-chip" id="range-60" onclick="setDashRange(60,this)">60 Days</button>
+    <button class="select-chip" id="range-90" onclick="setDashRange(90,this)">All Time</button>
+    <button onclick="importHistoricalData()" id="importBtn" style="margin-left:auto;background:#f59e0b;color:#0d0f14;border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;">⬆ Import Spreadsheet</button>
+  </div>
+
+  <!-- Summary cards -->
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+      <div style="font-size:18px;font-weight:800;color:#6ee7b7;" id="dash-avgcal">—</div>
+      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">AVG KCAL</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+      <div style="font-size:18px;font-weight:800;color:#60a5fa;" id="dash-weight">—</div>
+      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">WEIGHT</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+      <div style="font-size:18px;font-weight:800;color:#f87171;" id="dash-bs">—</div>
+      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">BLOOD SG</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+      <div style="font-size:18px;font-weight:800;color:#f59e0b;" id="dash-days">—</div>
+      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">DAYS</div>
+    </div>
+  </div>
+
+  <!-- Weight chart -->
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">⚖ WEIGHT TREND (kg)</div>
+    <canvas id="weightChart" height="140"></canvas>
+  </div>
+
+  <!-- Blood Sugar chart -->
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">🩸 BLOOD SUGAR TREND (mg/dL)</div>
+    <canvas id="bsChart" height="140"></canvas>
+  </div>
+
+  <!-- Calories chart -->
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">🔥 DAILY CALORIES</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:12px;font-family:'DM Mono',monospace;">Target: 850 kcal shown as dashed line</div>
+    <canvas id="calChart" height="140"></canvas>
+  </div>
+
+  <!-- Sleep & Energy chart -->
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">😴 SLEEP HOURS</div>
+    <canvas id="sleepChart" height="120"></canvas>
+  </div>
+
+  <!-- Phase timeline -->
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">📋 PHASE TIMELINE</div>
+    <div id="phaseTimeline"></div>
+  </div>
+
+</div>
+
 <!-- PAGE: HISTORY -->
 
 <div class="page" id="page-history">
@@ -688,7 +761,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
     <div>
       <div style="font-size:18px;font-weight:800;color:#f59e0b;">⭐ Admin Console</div>
-      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">Sathyan85@gmail.com</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c291a3b6aabba3acfaf782a5afa3abaeeca1adaf">[email&#160;protected]</a></div>
     </div>
     <button onclick="loadAdminData()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">↻ Refresh</button>
   </div>
@@ -818,6 +891,10 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
     Today
   </button>
+  <button class="nav-btn" id="nav-dashboard" onclick="switchPage('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Trends
+  </button>
   <button class="nav-btn" id="nav-phase" onclick="switchPage('phase')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
     Phase
@@ -838,179 +915,179 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+
 // ============================================================
 // CALORIE DATABASE from spreadsheet
 // ============================================================
 const CALORIE_DB = [
-  {name:"Bottle Gourd",cat:"Vegetables",phase:2,status:"Retest",cal:11,qty:100,unit:"gms"},
-  {name:"Snake Gourd",cat:"Vegetables",phase:2,status:"Test",cal:12,qty:100,unit:"gms"},
-  {name:"Ridge Gourd",cat:"Vegetables",phase:2,status:"OK",cal:13,qty:100,unit:"gms"},
-  {name:"Celery",cat:"Vegetables",phase:1,status:"NI",cal:14,qty:100,unit:"gms"},
-  {name:"Cucumber",cat:"Vegetables",phase:1,status:"OK",cal:15,qty:100,unit:"gms"},
-  {name:"Lettuce",cat:"Vegetables",phase:1,status:"Retest",cal:14,qty:100,unit:"gms"},
-  {name:"Capsicum",cat:"Vegetables",phase:4,status:"OK",cal:16,qty:100,unit:"gms"},
-  {name:"White Pumpkin",cat:"Vegetables",phase:1,status:"OK",cal:17,qty:100,unit:"gms"},
-  {name:"Zucchini",cat:"Vegetables",phase:1,status:"NI",cal:20,qty:100,unit:"gms"},
-  {name:"Knol Khol",cat:"Vegetables",phase:2,status:"Test",cal:16,qty:100,unit:"gms"},
-  {name:"Bok Choy",cat:"Vegetables",phase:1,status:"NI",cal:13,qty:100,unit:"gms"},
-  {name:"Chow Chow",cat:"Vegetables",phase:2,status:"OK",cal:19,qty:100,unit:"gms"},
-  {name:"Asparagus",cat:"Vegetables",phase:1,status:"OK",cal:20,qty:100,unit:"gms"},
-  {name:"Mushroom",cat:"Vegetables",phase:2,status:"Retest",cal:22,qty:100,unit:"gms"},
-  {name:"Spinach",cat:"Vegetables",phase:1,status:"Retest",cal:23,qty:100,unit:"gms"},
-  {name:"Cabbage",cat:"Vegetables",phase:1,status:"OK",cal:25,qty:100,unit:"gms"},
-  {name:"Cauliflower",cat:"Vegetables",phase:1,status:"OK",cal:25,qty:100,unit:"gms"},
-  {name:"Ivy Gourd",cat:"Vegetables",phase:2,status:"OK",cal:24,qty:100,unit:"gms"},
-  {name:"Long Beans",cat:"Vegetables",phase:2,status:"Test",cal:24.5,qty:100,unit:"gms"},
-  {name:"Eggplant",cat:"Vegetables",phase:4,status:"Test",cal:25,qty:100,unit:"gms"},
-  {name:"Yellow Pumpkin",cat:"Vegetables",phase:2,status:"OK",cal:26,qty:100,unit:"gms"},
-  {name:"French Beans",cat:"Vegetables",phase:1,status:"OK",cal:24,qty:100,unit:"gms"},
-  {name:"Radish",cat:"Vegetables",phase:2,status:"Test",cal:32.5,qty:100,unit:"gms"},
-  {name:"Broccoli",cat:"Vegetables",phase:1,status:"OK",cal:34,qty:100,unit:"gms"},
-  {name:"Fenugreek Leaves",cat:"Vegetables",phase:2,status:"OK",cal:34,qty:100,unit:"gms"},
-  {name:"Carrot",cat:"Vegetables",phase:1,status:"OK",cal:41,qty:100,unit:"gms"},
-  {name:"Beetroot",cat:"Vegetables",phase:1,status:"OK",cal:43,qty:100,unit:"gms"},
-  {name:"Brussel Sprouts",cat:"Vegetables",phase:1,status:"OK",cal:43,qty:100,unit:"gms"},
-  {name:"Drumstick Leaves",cat:"Vegetables",phase:2,status:"Retest",cal:67,qty:100,unit:"gms"},
-  {name:"Bitter Gourd",cat:"Vegetables",phase:3,status:"Test",cal:19,qty:100,unit:"gms"},
-  {name:"Yam",cat:"Vegetables",phase:4,status:"OK",cal:84,qty:100,unit:"gms"},
-  {name:"Raw Banana",cat:"Vegetables",phase:3,status:"Test",cal:89,qty:100,unit:"gms"},
-  {name:"Sweet Potato",cat:"Vegetables",phase:4,status:"OK",cal:109,qty:100,unit:"gms"},
-  {name:"Potato",cat:"Vegetables",phase:4,status:"OK",cal:77,qty:100,unit:"gms"},
-  {name:"Peas",cat:"Vegetables",phase:2,status:"Retest",cal:81.33,qty:100,unit:"gms"},
-  {name:"Taro",cat:"Vegetables",phase:4,status:"Retest",cal:112,qty:100,unit:"gms"},
-  {name:"Spring Onion",cat:"Vegetables",phase:1,status:"OK",cal:32,qty:100,unit:"gms"},
-  {name:"Tomato",cat:"Vegetables",phase:4,status:"OK",cal:19,qty:100,unit:"gms"},
-  {name:"Onion",cat:"Vegetables",phase:1,status:"OK",cal:40,qty:100,unit:"gms"},
-  {name:"Ginger",cat:"Vegetables",phase:1,status:"OK",cal:80,qty:100,unit:"gms"},
-  {name:"Garlic",cat:"Vegetables",phase:1,status:"OK",cal:149,qty:100,unit:"gms"},
-  {name:"Red Chilly",cat:"Vegetables",phase:4,status:"OK",cal:42,qty:100,unit:"gms"},
-  {name:"Green Chilli",cat:"Vegetables",phase:4,status:"OK",cal:237,qty:100,unit:"gms"},
-  {name:"Broad Beans",cat:"Vegetables",phase:4,status:"Test",cal:29,qty:100,unit:"gms"},
-  {name:"Cluster Beans",cat:"Vegetables",phase:4,status:"Test",cal:40,qty:100,unit:"gms"},
-  {name:"Tapioca",cat:"Vegetables",phase:4,status:"Test",cal:80,qty:100,unit:"gms"},
-  {name:"Drumstick",cat:"Vegetables",phase:3,status:"Test",cal:29,qty:100,unit:"gms"},
-  {name:"Ladies Finger",cat:"Vegetables",phase:3,status:"Test",cal:33,qty:100,unit:"gms"},
-  {name:"Tamarind",cat:"Vegetables",phase:3,status:"Retest",cal:240,qty:100,unit:"gms"},
-  {name:"Paneer",cat:"Dairy",phase:2,status:"OK",cal:285,qty:100,unit:"gms"},
-  {name:"Curd",cat:"Dairy",phase:2,status:"OK",cal:61.8,qty:100,unit:"gms"},
-  {name:"Buttermilk",cat:"Dairy",phase:2,status:"Test",cal:62,qty:100,unit:"ml"},
-  {name:"Cheddar",cat:"Dairy",phase:2,status:"Retest",cal:419,qty:100,unit:"gms"},
-  {name:"Parmesan",cat:"Dairy",phase:2,status:"NI",cal:371,qty:100,unit:"gms"},
-  {name:"Feta",cat:"Dairy",phase:2,status:"Test",cal:278,qty:100,unit:"gms"},
-  {name:"Mozzarella",cat:"Dairy",phase:2,status:"Retest",cal:328,qty:100,unit:"gms"},
-  {name:"Gouda",cat:"Dairy",phase:2,status:"NI",cal:369,qty:100,unit:"gms"},
-  {name:"Almonds",cat:"Nuts",phase:3,status:"OK",cal:580,qty:100,unit:"gms"},
-  {name:"Walnuts",cat:"Nuts",phase:3,status:"OK",cal:624,qty:100,unit:"gms"},
-  {name:"Pistachios",cat:"Nuts",phase:3,status:"OK",cal:649,qty:100,unit:"gms"},
-  {name:"Brazil Nuts",cat:"Nuts",phase:3,status:"NI",cal:683,qty:100,unit:"gms"},
-  {name:"Hazelnuts",cat:"Nuts",phase:3,status:"NI",cal:644,qty:100,unit:"gms"},
-  {name:"Macadamia",cat:"Nuts",phase:3,status:"NI",cal:725,qty:100,unit:"gms"},
-  {name:"Pine Nuts",cat:"Nuts",phase:3,status:"NI",cal:627,qty:100,unit:"gms"},
-  {name:"Pecan Nuts",cat:"Nuts",phase:3,status:"NI",cal:697.9,qty:100,unit:"gms"},
-  {name:"Flax Seeds",cat:"Seeds",phase:3,status:"Test",cal:505,qty:100,unit:"gms"},
-  {name:"Sunflower Seeds",cat:"Seeds",phase:3,status:"OK",cal:571,qty:100,unit:"gms"},
-  {name:"Pumpkin Seeds",cat:"Seeds",phase:3,status:"OK",cal:589,qty:100,unit:"gms"},
-  {name:"Melon Seeds",cat:"Seeds",phase:3,status:"NI",cal:468,qty:100,unit:"gms"},
-  {name:"Sesame Seeds",cat:"Seeds",phase:3,status:"OK",cal:572,qty:100,unit:"gms"},
-  {name:"Coconut",cat:"Fruits",phase:2,status:"OK",cal:355,qty:100,unit:"gms"},
-  {name:"Gooseberries",cat:"Fruits",phase:1,status:"OK",cal:24,qty:100,unit:"gms"},
-  {name:"Raw Mango",cat:"Fruits",phase:1,status:"OK",cal:60,qty:100,unit:"gms"},
-  {name:"Olives",cat:"Fruits",phase:1,status:"OK",cal:130,qty:100,unit:"gms"},
-  {name:"Avocado",cat:"Fruits",phase:1,status:"OK",cal:160,qty:100,unit:"gms"},
-  {name:"Strawberry",cat:"Fruits",phase:3,status:"OK",cal:41,qty:100,unit:"gms"},
-  {name:"Blueberry",cat:"Fruits",phase:3,status:"NI",cal:62,qty:100,unit:"gms"},
-  {name:"Blackberry",cat:"Fruits",phase:3,status:"NI",cal:43,qty:100,unit:"gms"},
-  {name:"Raspberry",cat:"Fruits",phase:3,status:"NI",cal:53,qty:100,unit:"gms"},
-  {name:"MuscleBlaze",cat:"Protein",phase:1,status:"OK",cal:93.9,qty:25,unit:"gms"},
-  {name:"Whey Protein",cat:"Protein",phase:1,status:"OK",cal:93.4,qty:25,unit:"gms"},
-  {name:"Coconut Milk",cat:"Vegetables",phase:2,status:"OK",cal:183,qty:100,unit:"ml"},
-  {name:"Butter",cat:"Oils",phase:1,status:"OK",cal:28.8,qty:1,unit:"Tsp"},
-  {name:"Ghee",cat:"Oils",phase:1,status:"OK",cal:38.67,qty:1,unit:"Tsp"},
-  {name:"Coconut Oil",cat:"Oils",phase:1,status:"OK",cal:38,qty:1,unit:"Tsp"},
-  {name:"Olive Oil",cat:"Oils",phase:1,status:"OK",cal:40,qty:1,unit:"Tsp"},
-  {name:"Sesame Oil",cat:"Oils",phase:1,status:"OK",cal:40,qty:1,unit:"Tsp"},
-  {name:"Fibre Drink",cat:"Other",phase:1,status:"OK",cal:28,qty:1,unit:"qty"},
-  {name:"Epigamia high protein curd",cat:"Protein",phase:1,status:"OK",cal:65,qty:1,unit:"gms"},
-  {name:"High Protein Paneer",cat:"Protein",phase:1,status:"OK",cal:173,qty:100,unit:"gms"},
+{name:“Bottle Gourd”,cat:“Vegetables”,phase:2,status:“Retest”,cal:11,qty:100,unit:“gms”},
+{name:“Snake Gourd”,cat:“Vegetables”,phase:2,status:“Test”,cal:12,qty:100,unit:“gms”},
+{name:“Ridge Gourd”,cat:“Vegetables”,phase:2,status:“OK”,cal:13,qty:100,unit:“gms”},
+{name:“Celery”,cat:“Vegetables”,phase:1,status:“NI”,cal:14,qty:100,unit:“gms”},
+{name:“Cucumber”,cat:“Vegetables”,phase:1,status:“OK”,cal:15,qty:100,unit:“gms”},
+{name:“Lettuce”,cat:“Vegetables”,phase:1,status:“Retest”,cal:14,qty:100,unit:“gms”},
+{name:“Capsicum”,cat:“Vegetables”,phase:4,status:“OK”,cal:16,qty:100,unit:“gms”},
+{name:“White Pumpkin”,cat:“Vegetables”,phase:1,status:“OK”,cal:17,qty:100,unit:“gms”},
+{name:“Zucchini”,cat:“Vegetables”,phase:1,status:“NI”,cal:20,qty:100,unit:“gms”},
+{name:“Knol Khol”,cat:“Vegetables”,phase:2,status:“Test”,cal:16,qty:100,unit:“gms”},
+{name:“Bok Choy”,cat:“Vegetables”,phase:1,status:“NI”,cal:13,qty:100,unit:“gms”},
+{name:“Chow Chow”,cat:“Vegetables”,phase:2,status:“OK”,cal:19,qty:100,unit:“gms”},
+{name:“Asparagus”,cat:“Vegetables”,phase:1,status:“OK”,cal:20,qty:100,unit:“gms”},
+{name:“Mushroom”,cat:“Vegetables”,phase:2,status:“Retest”,cal:22,qty:100,unit:“gms”},
+{name:“Spinach”,cat:“Vegetables”,phase:1,status:“Retest”,cal:23,qty:100,unit:“gms”},
+{name:“Cabbage”,cat:“Vegetables”,phase:1,status:“OK”,cal:25,qty:100,unit:“gms”},
+{name:“Cauliflower”,cat:“Vegetables”,phase:1,status:“OK”,cal:25,qty:100,unit:“gms”},
+{name:“Ivy Gourd”,cat:“Vegetables”,phase:2,status:“OK”,cal:24,qty:100,unit:“gms”},
+{name:“Long Beans”,cat:“Vegetables”,phase:2,status:“Test”,cal:24.5,qty:100,unit:“gms”},
+{name:“Eggplant”,cat:“Vegetables”,phase:4,status:“Test”,cal:25,qty:100,unit:“gms”},
+{name:“Yellow Pumpkin”,cat:“Vegetables”,phase:2,status:“OK”,cal:26,qty:100,unit:“gms”},
+{name:“French Beans”,cat:“Vegetables”,phase:1,status:“OK”,cal:24,qty:100,unit:“gms”},
+{name:“Radish”,cat:“Vegetables”,phase:2,status:“Test”,cal:32.5,qty:100,unit:“gms”},
+{name:“Broccoli”,cat:“Vegetables”,phase:1,status:“OK”,cal:34,qty:100,unit:“gms”},
+{name:“Fenugreek Leaves”,cat:“Vegetables”,phase:2,status:“OK”,cal:34,qty:100,unit:“gms”},
+{name:“Carrot”,cat:“Vegetables”,phase:1,status:“OK”,cal:41,qty:100,unit:“gms”},
+{name:“Beetroot”,cat:“Vegetables”,phase:1,status:“OK”,cal:43,qty:100,unit:“gms”},
+{name:“Brussel Sprouts”,cat:“Vegetables”,phase:1,status:“OK”,cal:43,qty:100,unit:“gms”},
+{name:“Drumstick Leaves”,cat:“Vegetables”,phase:2,status:“Retest”,cal:67,qty:100,unit:“gms”},
+{name:“Bitter Gourd”,cat:“Vegetables”,phase:3,status:“Test”,cal:19,qty:100,unit:“gms”},
+{name:“Yam”,cat:“Vegetables”,phase:4,status:“OK”,cal:84,qty:100,unit:“gms”},
+{name:“Raw Banana”,cat:“Vegetables”,phase:3,status:“Test”,cal:89,qty:100,unit:“gms”},
+{name:“Sweet Potato”,cat:“Vegetables”,phase:4,status:“OK”,cal:109,qty:100,unit:“gms”},
+{name:“Potato”,cat:“Vegetables”,phase:4,status:“OK”,cal:77,qty:100,unit:“gms”},
+{name:“Peas”,cat:“Vegetables”,phase:2,status:“Retest”,cal:81.33,qty:100,unit:“gms”},
+{name:“Taro”,cat:“Vegetables”,phase:4,status:“Retest”,cal:112,qty:100,unit:“gms”},
+{name:“Spring Onion”,cat:“Vegetables”,phase:1,status:“OK”,cal:32,qty:100,unit:“gms”},
+{name:“Tomato”,cat:“Vegetables”,phase:4,status:“OK”,cal:19,qty:100,unit:“gms”},
+{name:“Onion”,cat:“Vegetables”,phase:1,status:“OK”,cal:40,qty:100,unit:“gms”},
+{name:“Ginger”,cat:“Vegetables”,phase:1,status:“OK”,cal:80,qty:100,unit:“gms”},
+{name:“Garlic”,cat:“Vegetables”,phase:1,status:“OK”,cal:149,qty:100,unit:“gms”},
+{name:“Red Chilly”,cat:“Vegetables”,phase:4,status:“OK”,cal:42,qty:100,unit:“gms”},
+{name:“Green Chilli”,cat:“Vegetables”,phase:4,status:“OK”,cal:237,qty:100,unit:“gms”},
+{name:“Broad Beans”,cat:“Vegetables”,phase:4,status:“Test”,cal:29,qty:100,unit:“gms”},
+{name:“Cluster Beans”,cat:“Vegetables”,phase:4,status:“Test”,cal:40,qty:100,unit:“gms”},
+{name:“Tapioca”,cat:“Vegetables”,phase:4,status:“Test”,cal:80,qty:100,unit:“gms”},
+{name:“Drumstick”,cat:“Vegetables”,phase:3,status:“Test”,cal:29,qty:100,unit:“gms”},
+{name:“Ladies Finger”,cat:“Vegetables”,phase:3,status:“Test”,cal:33,qty:100,unit:“gms”},
+{name:“Tamarind”,cat:“Vegetables”,phase:3,status:“Retest”,cal:240,qty:100,unit:“gms”},
+{name:“Paneer”,cat:“Dairy”,phase:2,status:“OK”,cal:285,qty:100,unit:“gms”},
+{name:“Curd”,cat:“Dairy”,phase:2,status:“OK”,cal:61.8,qty:100,unit:“gms”},
+{name:“Buttermilk”,cat:“Dairy”,phase:2,status:“Test”,cal:62,qty:100,unit:“ml”},
+{name:“Cheddar”,cat:“Dairy”,phase:2,status:“Retest”,cal:419,qty:100,unit:“gms”},
+{name:“Parmesan”,cat:“Dairy”,phase:2,status:“NI”,cal:371,qty:100,unit:“gms”},
+{name:“Feta”,cat:“Dairy”,phase:2,status:“Test”,cal:278,qty:100,unit:“gms”},
+{name:“Mozzarella”,cat:“Dairy”,phase:2,status:“Retest”,cal:328,qty:100,unit:“gms”},
+{name:“Gouda”,cat:“Dairy”,phase:2,status:“NI”,cal:369,qty:100,unit:“gms”},
+{name:“Almonds”,cat:“Nuts”,phase:3,status:“OK”,cal:580,qty:100,unit:“gms”},
+{name:“Walnuts”,cat:“Nuts”,phase:3,status:“OK”,cal:624,qty:100,unit:“gms”},
+{name:“Pistachios”,cat:“Nuts”,phase:3,status:“OK”,cal:649,qty:100,unit:“gms”},
+{name:“Brazil Nuts”,cat:“Nuts”,phase:3,status:“NI”,cal:683,qty:100,unit:“gms”},
+{name:“Hazelnuts”,cat:“Nuts”,phase:3,status:“NI”,cal:644,qty:100,unit:“gms”},
+{name:“Macadamia”,cat:“Nuts”,phase:3,status:“NI”,cal:725,qty:100,unit:“gms”},
+{name:“Pine Nuts”,cat:“Nuts”,phase:3,status:“NI”,cal:627,qty:100,unit:“gms”},
+{name:“Pecan Nuts”,cat:“Nuts”,phase:3,status:“NI”,cal:697.9,qty:100,unit:“gms”},
+{name:“Flax Seeds”,cat:“Seeds”,phase:3,status:“Test”,cal:505,qty:100,unit:“gms”},
+{name:“Sunflower Seeds”,cat:“Seeds”,phase:3,status:“OK”,cal:571,qty:100,unit:“gms”},
+{name:“Pumpkin Seeds”,cat:“Seeds”,phase:3,status:“OK”,cal:589,qty:100,unit:“gms”},
+{name:“Melon Seeds”,cat:“Seeds”,phase:3,status:“NI”,cal:468,qty:100,unit:“gms”},
+{name:“Sesame Seeds”,cat:“Seeds”,phase:3,status:“OK”,cal:572,qty:100,unit:“gms”},
+{name:“Coconut”,cat:“Fruits”,phase:2,status:“OK”,cal:355,qty:100,unit:“gms”},
+{name:“Gooseberries”,cat:“Fruits”,phase:1,status:“OK”,cal:24,qty:100,unit:“gms”},
+{name:“Raw Mango”,cat:“Fruits”,phase:1,status:“OK”,cal:60,qty:100,unit:“gms”},
+{name:“Olives”,cat:“Fruits”,phase:1,status:“OK”,cal:130,qty:100,unit:“gms”},
+{name:“Avocado”,cat:“Fruits”,phase:1,status:“OK”,cal:160,qty:100,unit:“gms”},
+{name:“Strawberry”,cat:“Fruits”,phase:3,status:“OK”,cal:41,qty:100,unit:“gms”},
+{name:“Blueberry”,cat:“Fruits”,phase:3,status:“NI”,cal:62,qty:100,unit:“gms”},
+{name:“Blackberry”,cat:“Fruits”,phase:3,status:“NI”,cal:43,qty:100,unit:“gms”},
+{name:“Raspberry”,cat:“Fruits”,phase:3,status:“NI”,cal:53,qty:100,unit:“gms”},
+{name:“MuscleBlaze”,cat:“Protein”,phase:1,status:“OK”,cal:93.9,qty:25,unit:“gms”},
+{name:“Whey Protein”,cat:“Protein”,phase:1,status:“OK”,cal:93.4,qty:25,unit:“gms”},
+{name:“Coconut Milk”,cat:“Vegetables”,phase:2,status:“OK”,cal:183,qty:100,unit:“ml”},
+{name:“Butter”,cat:“Oils”,phase:1,status:“OK”,cal:28.8,qty:1,unit:“Tsp”},
+{name:“Ghee”,cat:“Oils”,phase:1,status:“OK”,cal:38.67,qty:1,unit:“Tsp”},
+{name:“Coconut Oil”,cat:“Oils”,phase:1,status:“OK”,cal:38,qty:1,unit:“Tsp”},
+{name:“Olive Oil”,cat:“Oils”,phase:1,status:“OK”,cal:40,qty:1,unit:“Tsp”},
+{name:“Sesame Oil”,cat:“Oils”,phase:1,status:“OK”,cal:40,qty:1,unit:“Tsp”},
+{name:“Fibre Drink”,cat:“Other”,phase:1,status:“OK”,cal:28,qty:1,unit:“qty”},
+{name:“Epigamia high protein curd”,cat:“Protein”,phase:1,status:“OK”,cal:65,qty:1,unit:“gms”},
+{name:“High Protein Paneer”,cat:“Protein”,phase:1,status:“OK”,cal:173,qty:100,unit:“gms”},
 ];
 
 // ============================================================
 // FIREBASE & AUTH
 // ============================================================
-const ADMIN_EMAIL = 'sathyan85@gmail.com';
+const ADMIN_EMAIL = ‘sathyan85@gmail.com’;
 let db = null;
 let currentUser = null;
 let saveTimer = null;
 
 function bootFirebase() {
-  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-  db = firebase.firestore();
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) { currentUser = user; onSignedIn(user); }
-    else { currentUser = null; showLoginScreen(); }
-  });
+if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+db = firebase.firestore();
+firebase.auth().onAuthStateChanged(user => {
+if (user) { currentUser = user; onSignedIn(user); }
+else { currentUser = null; showLoginScreen(); }
+});
 }
 
 function showLoginScreen() {
-  document.getElementById('loginScreen').style.display = 'flex';
+document.getElementById(‘loginScreen’).style.display = ‘flex’;
 }
 
 function signInWithGoogle() {
-  document.getElementById('loginError').textContent = '';
-  const provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider).catch(err => {
-    document.getElementById('loginError').textContent = err.message;
-  });
+document.getElementById(‘loginError’).textContent = ‘’;
+const provider = new firebase.auth.GoogleAuthProvider();
+firebase.auth().signInWithPopup(provider).catch(err => {
+document.getElementById(‘loginError’).textContent = err.message;
+});
 }
 
 function signOut() {
-  firebase.auth().signOut();
-  closeUserMenu();
+firebase.auth().signOut();
+closeUserMenu();
 }
 
 function onSignedIn(user) {
-  document.getElementById('loginScreen').style.display = 'none';
-  const syncBar = document.getElementById('syncBar');
-  syncBar.style.display = 'flex';
-  document.getElementById('syncUser').textContent = user.email;
-  const img = document.getElementById('avatarImg');
-  const initial = document.getElementById('avatarInitial');
-  if (user.photoURL) {
-    img.src = user.photoURL; img.style.display = 'block'; initial.style.display = 'none';
-  } else {
-    initial.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
-  }
-  // Show admin tab only for admin
-  if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-    document.getElementById('nav-admin').style.display = 'flex';
-  }
-  appInit();
+document.getElementById(‘loginScreen’).style.display = ‘none’;
+const syncBar = document.getElementById(‘syncBar’);
+syncBar.style.display = ‘flex’;
+document.getElementById(‘syncUser’).textContent = user.email;
+const img = document.getElementById(‘avatarImg’);
+const initial = document.getElementById(‘avatarInitial’);
+if (user.photoURL) {
+img.src = user.photoURL; img.style.display = ‘block’; initial.style.display = ‘none’;
+} else {
+initial.textContent = (user.displayName || user.email || ‘?’)[0].toUpperCase();
+}
+// Show admin tab only for admin
+if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+document.getElementById(‘nav-admin’).style.display = ‘flex’;
+}
+appInit();
 }
 
 function showUserMenu() {
-  if (!currentUser) return;
-  document.getElementById('userMenuName').textContent = currentUser.displayName || 'User';
-  document.getElementById('userMenuEmail').textContent = currentUser.email;
-  document.getElementById('userMenu').style.display = 'block';
+if (!currentUser) return;
+document.getElementById(‘userMenuName’).textContent = currentUser.displayName || ‘User’;
+document.getElementById(‘userMenuEmail’).textContent = currentUser.email;
+document.getElementById(‘userMenu’).style.display = ‘block’;
 }
-function closeUserMenu() { document.getElementById('userMenu').style.display = 'none'; }
-document.addEventListener('click', e => {
-  if (!e.target.closest('#userMenu') && !e.target.closest('#avatarBtn')) closeUserMenu();
+function closeUserMenu() { document.getElementById(‘userMenu’).style.display = ‘none’; }
+document.addEventListener(‘click’, e => {
+if (!e.target.closest(’#userMenu’) && !e.target.closest(’#avatarBtn’)) closeUserMenu();
 });
 
 // Boot immediately on load
-window.addEventListener('load', () => {
-  if (typeof firebase === 'undefined') {
-    // Firebase SDKs failed to load (e.g. no internet, or opened locally)
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('loginError').innerHTML =
-      '⚠ Could not load Firebase.<br><span style="font-size:11px;color:#64748b;">Make sure you\'re connected to the internet and open this from<br><strong style="color:#6ee7b7;">sathyan-tech.github.io/amura-tracker</strong></span>';
-    return;
-  }
-  bootFirebase();
+window.addEventListener(‘load’, () => {
+if (typeof firebase === ‘undefined’) {
+// Firebase SDKs failed to load (e.g. no internet, or opened locally)
+document.getElementById(‘loginScreen’).style.display = ‘flex’;
+document.getElementById(‘loginError’).innerHTML =
+‘⚠ Could not load Firebase.<br><span style="font-size:11px;color:#64748b;">Make sure you're connected to the internet and open this from<br><strong style="color:#6ee7b7;">sathyan-tech.github.io/amura-tracker</strong></span>’;
+return;
+}
+bootFirebase();
 });
-
 
 // ============================================================
 // APP STATE
@@ -1020,209 +1097,200 @@ let dayLogs = {};
 let foodStatusOverrides = {};
 
 function getTodayStr() {
-  return new Date().toISOString().split('T')[0];
+return new Date().toISOString().split(‘T’)[0];
 }
 
-function userDoc() { return db.collection('users').doc(currentUser.uid); }
-function logsCol() { return userDoc().collection('logs'); }
+function userDoc() { return db.collection(‘users’).doc(currentUser.uid); }
+function logsCol() { return userDoc().collection(‘logs’); }
 
 async function loadAllFromFirestore() {
-  setSyncStatus('● Syncing…', '#f59e0b');
-  try {
-    const metaSnap = await userDoc().get();
-    if (metaSnap.exists) foodStatusOverrides = metaSnap.data().foodStatusOverrides || {};
-    const snap = await logsCol().get();
-    dayLogs = {};
-    snap.forEach(doc => { dayLogs[doc.id] = doc.data(); });
-    // Cache locally
-    localStorage.setItem('amura_logs_cache', JSON.stringify(dayLogs));
-    localStorage.setItem('amura_overrides_cache', JSON.stringify(foodStatusOverrides));
-    setSyncStatus('● Synced', '#6ee7b7');
-  } catch(e) {
-    setSyncStatus('⚠ Offline (cached)', '#f87171');
-    try {
-      const s = localStorage.getItem('amura_logs_cache');
-      if (s) dayLogs = JSON.parse(s);
-      const so = localStorage.getItem('amura_overrides_cache');
-      if (so) foodStatusOverrides = JSON.parse(so);
-    } catch(_) {}
-  }
+setSyncStatus(‘● Syncing…’, ‘#f59e0b’);
+try {
+const metaSnap = await userDoc().get();
+if (metaSnap.exists) foodStatusOverrides = metaSnap.data().foodStatusOverrides || {};
+const snap = await logsCol().get();
+dayLogs = {};
+snap.forEach(doc => { dayLogs[doc.id] = doc.data(); });
+// Cache locally
+localStorage.setItem(‘amura_logs_cache’, JSON.stringify(dayLogs));
+localStorage.setItem(‘amura_overrides_cache’, JSON.stringify(foodStatusOverrides));
+setSyncStatus(‘● Synced’, ‘#6ee7b7’);
+} catch(e) {
+setSyncStatus(‘⚠ Offline (cached)’, ‘#f87171’);
+try {
+const s = localStorage.getItem(‘amura_logs_cache’);
+if (s) dayLogs = JSON.parse(s);
+const so = localStorage.getItem(‘amura_overrides_cache’);
+if (so) foodStatusOverrides = JSON.parse(so);
+} catch(_) {}
+}
 }
 
 function saveLogs() {
-  try { localStorage.setItem('amura_logs_cache', JSON.stringify(dayLogs)); } catch(_) {}
-  clearTimeout(saveTimer);
-  setSyncStatus('● Saving…', '#f59e0b');
-  saveTimer = setTimeout(async () => {
-    if (!db || !currentUser) return;
-    try {
-      await logsCol().doc(currentDate).set(dayLogs[currentDate] || getEmptyLog());
-      setSyncStatus('● Synced', '#6ee7b7');
-    } catch(e) { setSyncStatus('⚠ Save failed', '#f87171'); }
-  }, 600);
+try { localStorage.setItem(‘amura_logs_cache’, JSON.stringify(dayLogs)); } catch(_) {}
+clearTimeout(saveTimer);
+setSyncStatus(‘● Saving…’, ‘#f59e0b’);
+saveTimer = setTimeout(async () => {
+if (!db || !currentUser) return;
+try {
+await logsCol().doc(currentDate).set(dayLogs[currentDate] || getEmptyLog());
+setSyncStatus(‘● Synced’, ‘#6ee7b7’);
+} catch(e) { setSyncStatus(‘⚠ Save failed’, ‘#f87171’); }
+}, 600);
 }
 
 function saveOverrides() {
-  try { localStorage.setItem('amura_overrides_cache', JSON.stringify(foodStatusOverrides)); } catch(_) {}
-  if (!db || !currentUser) return;
-  userDoc().set({ foodStatusOverrides }, { merge: true }).catch(() => {});
+try { localStorage.setItem(‘amura_overrides_cache’, JSON.stringify(foodStatusOverrides)); } catch(_) {}
+if (!db || !currentUser) return;
+userDoc().set({ foodStatusOverrides }, { merge: true }).catch(() => {});
 }
 
 function getEmptyLog() {
-  return { foods: [], meta: { phase:'', weight:'', bloodSugar:'', sleep:'', water:'', energy:'', fasting:'', bm:'', intro:'', impact:'', supplement:'' }};
+return { foods: [], meta: { phase:’’, weight:’’, bloodSugar:’’, sleep:’’, water:’’, energy:’’, fasting:’’, bm:’’, intro:’’, impact:’’, supplement:’’ }};
 }
 
 function getLog(date) {
-  if (!dayLogs[date]) dayLogs[date] = getEmptyLog();
-  return dayLogs[date];
+if (!dayLogs[date]) dayLogs[date] = getEmptyLog();
+return dayLogs[date];
 }
 
 function setSyncStatus(msg, color) {
-  const el = document.getElementById('syncStatus');
-  if (el) { el.textContent = msg; el.style.color = color; }
+const el = document.getElementById(‘syncStatus’);
+if (el) { el.textContent = msg; el.style.color = color; }
 }
 
 // ============================================================
 // INIT
 // ============================================================
 async function appInit() {
-  await loadAllFromFirestore();
-  await loadCustomFoods();
-  currentDate = getTodayStr();
-  document.getElementById('todayDate').value = currentDate;
-  updateTopbarDate();
-  loadDay();
-  buildCatFilters();
-  buildLookupCatFilter();
-  renderPhaseList('all', 'all');
-  renderHistory();
+await loadAllFromFirestore();
+await loadCustomFoods();
+currentDate = getTodayStr();
+document.getElementById(‘todayDate’).value = currentDate;
+updateTopbarDate();
+loadDay();
+buildCatFilters();
+buildLookupCatFilter();
+renderPhaseList(‘all’, ‘all’);
+renderHistory();
 }
 
 function updateTopbarDate() {
-  const d = new Date(currentDate + 'T00:00:00');
-  document.getElementById('topbarDate').textContent = d.toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short'});
+const d = new Date(currentDate + ‘T00:00:00’);
+document.getElementById(‘topbarDate’).textContent = d.toLocaleDateString(‘en-IN’, {weekday:‘short’, day:‘numeric’, month:‘short’});
 }
 
 function loadDay() {
-  currentDate = document.getElementById('todayDate').value || getTodayStr();
-  updateTopbarDate();
-  const log = getLog(currentDate);
-  // fill meta fields
-  document.getElementById('metWeight').value = log.meta.weight || '';
-  document.getElementById('metBloodSugar').value = log.meta.bloodSugar || '';
-  document.getElementById('metSleep').value = log.meta.sleep || '';
-  document.getElementById('metWater').value = log.meta.water || '';
-  document.getElementById('metEnergy').value = log.meta.energy || '';
-  document.getElementById('metFasting').value = log.meta.fasting || '';
-  document.getElementById('metIntro').value = log.meta.intro || '';
-  document.getElementById('metImpact').value = log.meta.impact || '';
-  document.getElementById('metSupplement').value = log.meta.supplement || '';
-  
-  // BM buttons
-  document.querySelectorAll('.select-chip[id^=bm-]').forEach(b => b.classList.remove('active'));
-  if (log.meta.bm) {
-    const btn = document.getElementById('bm-' + log.meta.bm.toLowerCase());
-    if (btn) btn.classList.add('active');
-  }
-  // Phase buttons
-  document.querySelectorAll('.select-chip[id^=ph-]').forEach(b => b.classList.remove('active'));
-  if (log.meta.phase) {
-    const btn = document.getElementById('ph-' + log.meta.phase.toLowerCase());
-    if (btn) btn.classList.add('active');
-  }
-  renderFoodLog();
+currentDate = document.getElementById(‘todayDate’).value || getTodayStr();
+updateTopbarDate();
+const log = getLog(currentDate);
+// fill meta fields
+document.getElementById(‘metWeight’).value = log.meta.weight || ‘’;
+document.getElementById(‘metBloodSugar’).value = log.meta.bloodSugar || ‘’;
+document.getElementById(‘metSleep’).value = log.meta.sleep || ‘’;
+document.getElementById(‘metWater’).value = log.meta.water || ‘’;
+document.getElementById(‘metEnergy’).value = log.meta.energy || ‘’;
+document.getElementById(‘metFasting’).value = log.meta.fasting || ‘’;
+document.getElementById(‘metIntro’).value = log.meta.intro || ‘’;
+document.getElementById(‘metImpact’).value = log.meta.impact || ‘’;
+document.getElementById(‘metSupplement’).value = log.meta.supplement || ‘’;
+
+// BM buttons
+document.querySelectorAll(’.select-chip[id^=bm-]’).forEach(b => b.classList.remove(‘active’));
+if (log.meta.bm) {
+const btn = document.getElementById(‘bm-’ + log.meta.bm.toLowerCase());
+if (btn) btn.classList.add(‘active’);
+}
+// Phase buttons
+document.querySelectorAll(’.select-chip[id^=ph-]’).forEach(b => b.classList.remove(‘active’));
+if (log.meta.phase) {
+const btn = document.getElementById(‘ph-’ + log.meta.phase.toLowerCase());
+if (btn) btn.classList.add(‘active’);
+}
+renderFoodLog();
 }
 
 function setBM(val) {
-  getLog(currentDate).meta.bm = val;
-  saveLogs();
-  document.querySelectorAll('.select-chip[id^=bm-]').forEach(b => b.classList.remove('active'));
-  document.getElementById('bm-' + val.toLowerCase()).classList.add('active');
+getLog(currentDate).meta.bm = val;
+saveLogs();
+document.querySelectorAll(’.select-chip[id^=bm-]’).forEach(b => b.classList.remove(‘active’));
+document.getElementById(‘bm-’ + val.toLowerCase()).classList.add(‘active’);
 }
 
 function setPhase(val) {
-  getLog(currentDate).meta.phase = val;
-  saveLogs();
-  document.querySelectorAll('.select-chip[id^=ph-]').forEach(b => b.classList.remove('active'));
-  document.getElementById('ph-' + val.toLowerCase()).classList.add('active');
+getLog(currentDate).meta.phase = val;
+saveLogs();
+document.querySelectorAll(’.select-chip[id^=ph-]’).forEach(b => b.classList.remove(‘active’));
+document.getElementById(‘ph-’ + val.toLowerCase()).classList.add(‘active’);
 }
 
 function saveDayMeta() {
-  const log = getLog(currentDate);
-  log.meta.weight = document.getElementById('metWeight').value;
-  log.meta.bloodSugar = document.getElementById('metBloodSugar').value;
-  log.meta.sleep = document.getElementById('metSleep').value;
-  log.meta.water = document.getElementById('metWater').value;
-  log.meta.energy = document.getElementById('metEnergy').value;
-  log.meta.fasting = document.getElementById('metFasting').value;
-  log.meta.intro = document.getElementById('metIntro').value;
-  log.meta.impact = document.getElementById('metImpact').value;
-  log.meta.supplement = document.getElementById('metSupplement').value;
-  saveLogs();
+const log = getLog(currentDate);
+log.meta.weight = document.getElementById(‘metWeight’).value;
+log.meta.bloodSugar = document.getElementById(‘metBloodSugar’).value;
+log.meta.sleep = document.getElementById(‘metSleep’).value;
+log.meta.water = document.getElementById(‘metWater’).value;
+log.meta.energy = document.getElementById(‘metEnergy’).value;
+log.meta.fasting = document.getElementById(‘metFasting’).value;
+log.meta.intro = document.getElementById(‘metIntro’).value;
+log.meta.impact = document.getElementById(‘metImpact’).value;
+log.meta.supplement = document.getElementById(‘metSupplement’).value;
+saveLogs();
 }
 
 // ============================================================
 // FOOD LOG RENDERING
 // ============================================================
 function calcCalories(food, qty) {
-  // food.cal is per food.qty units (e.g. 41 kcal per 100 gms)
-  // qty entered by user is in same units (e.g. 100 gms)
-  return Math.round((food.cal / food.qty) * qty * 10) / 10;
+// food.cal is per food.qty units (e.g. 41 kcal per 100 gms)
+// qty entered by user is in same units (e.g. 100 gms)
+return Math.round((food.cal / food.qty) * qty * 10) / 10;
 }
 
 function renderFoodLog() {
-  const log = getLog(currentDate);
-  const target = 850;
-  let consumed = 0;
-  log.foods.forEach(f => consumed += f.calories);
-  consumed = Math.round(consumed);
-  const avail = target - consumed;
+const log = getLog(currentDate);
+const target = 850;
+let consumed = 0;
+log.foods.forEach(f => consumed += f.calories);
+consumed = Math.round(consumed);
+const avail = target - consumed;
 
-  // Update ring
-  document.getElementById('calConsumedBig').textContent = consumed;
-  document.getElementById('calTargetDisplay').textContent = target;
-  document.getElementById('calAvailDisplay').textContent = avail;
-  document.getElementById('calTarget2').textContent = target;
-  document.getElementById('calConsumed2').textContent = consumed;
-  document.getElementById('calAvail2').textContent = avail;
+// Update ring
+document.getElementById(‘calConsumedBig’).textContent = consumed;
+document.getElementById(‘calTargetDisplay’).textContent = target;
+document.getElementById(‘calAvailDisplay’).textContent = avail;
+document.getElementById(‘calTarget2’).textContent = target;
+document.getElementById(‘calConsumed2’).textContent = consumed;
+document.getElementById(‘calAvail2’).textContent = avail;
 
-  const pct = Math.min(consumed / target, 1);
-  const circ = 289;
-  const over = consumed > target;
-  if (!over) {
-    document.getElementById('calorieRingFill').style.strokeDashoffset = circ - (circ * pct);
-    document.getElementById('calorieRingOver').style.opacity = 0;
-  } else {
-    document.getElementById('calorieRingFill').style.strokeDashoffset = 0;
-    document.getElementById('calorieRingOver').style.opacity = 1;
-    const overPct = Math.min((consumed - target) / target, 1);
-    document.getElementById('calorieRingOver').style.strokeDashoffset = circ - (circ * overPct);
-  }
+const pct = Math.min(consumed / target, 1);
+const circ = 289;
+const over = consumed > target;
+if (!over) {
+document.getElementById(‘calorieRingFill’).style.strokeDashoffset = circ - (circ * pct);
+document.getElementById(‘calorieRingOver’).style.opacity = 0;
+} else {
+document.getElementById(‘calorieRingFill’).style.strokeDashoffset = 0;
+document.getElementById(‘calorieRingOver’).style.opacity = 1;
+const overPct = Math.min((consumed - target) / target, 1);
+document.getElementById(‘calorieRingOver’).style.strokeDashoffset = circ - (circ * overPct);
+}
 
-  // Food items
-  const logEl = document.getElementById('foodLog');
-  if (log.foods.length === 0) {
-    logEl.innerHTML = '<div class="empty-state">No food logged yet.<br>Add food below.</div>';
-    return;
-  }
-  logEl.innerHTML = log.foods.map((f, i) => `
-    <div class="food-item">
-      <div style="flex:1">
-        <div class="food-item-name">${f.name}</div>
-        <div class="food-item-qty">${f.qtyDisplay}</div>
-      </div>
-      <div class="food-item-cal">${f.calories} kcal</div>
-      <button class="food-item-del" onclick="removeFoodItem(${i})">✕</button>
-    </div>
-  `).join('');
+// Food items
+const logEl = document.getElementById(‘foodLog’);
+if (log.foods.length === 0) {
+logEl.innerHTML = ‘<div class="empty-state">No food logged yet.<br>Add food below.</div>’;
+return;
+}
+logEl.innerHTML = log.foods.map((f, i) => `<div class="food-item"> <div style="flex:1"> <div class="food-item-name">${f.name}</div> <div class="food-item-qty">${f.qtyDisplay}</div> </div> <div class="food-item-cal">${f.calories} kcal</div> <button class="food-item-del" onclick="removeFoodItem(${i})">✕</button> </div>`).join(’’);
 }
 
 function removeFoodItem(i) {
-  getLog(currentDate).foods.splice(i, 1);
-  saveLogs();
-  renderFoodLog();
-  renderHistory();
-  showToast('Removed');
+getLog(currentDate).foods.splice(i, 1);
+saveLogs();
+renderFoodLog();
+renderHistory();
+showToast(‘Removed’);
 }
 
 // ============================================================
@@ -1231,189 +1299,155 @@ function removeFoodItem(i) {
 let selectedFood = null;
 
 function searchFood() {
-  const q = document.getElementById('foodSearchInput').value.toLowerCase().trim();
-  const sugg = document.getElementById('foodSuggestions');
-  selectedFood = null;
-  document.getElementById('selectedFoodName').classList.remove('show');
-  document.getElementById('qtyRow').style.display = 'none';
+const q = document.getElementById(‘foodSearchInput’).value.toLowerCase().trim();
+const sugg = document.getElementById(‘foodSuggestions’);
+selectedFood = null;
+document.getElementById(‘selectedFoodName’).classList.remove(‘show’);
+document.getElementById(‘qtyRow’).style.display = ‘none’;
 
-  if (q.length < 1) { sugg.classList.remove('show'); return; }
-  const matches = CALORIE_DB.filter(f => f.name.toLowerCase().includes(q)).slice(0, 12);
-  if (!matches.length) { sugg.innerHTML = '<div style="padding:10px 14px;color:var(--muted);font-size:13px;">No matches</div>'; sugg.classList.add('show'); return; }
-  sugg.innerHTML = matches.map(f => `
-    <div class="food-suggestion-item" onclick="selectFood('${f.name.replace(/'/g,"\\'")}')">
-      <div>
-        <div style="font-weight:600">${f.name}</div>
-        <div style="font-size:11px;color:var(--muted)">${f.cat} · Phase ${f.phase} · <span style="font-weight:700;color:${statusColor(f.status)}">${f.status === 'NI' ? 'Not Interested' : f.status}</span></div>
-      </div>
-      <div style="text-align:right">
-        <div class="food-suggestion-cal">${f.cal} kcal</div>
-        <div class="food-suggestion-unit">per ${f.qty}${f.unit}</div>
-      </div>
-    </div>
-  `).join('');
-  sugg.classList.add('show');
+if (q.length < 1) { sugg.classList.remove(‘show’); return; }
+const matches = CALORIE_DB.filter(f => f.name.toLowerCase().includes(q)).slice(0, 12);
+if (!matches.length) { sugg.innerHTML = ‘<div style="padding:10px 14px;color:var(--muted);font-size:13px;">No matches</div>’; sugg.classList.add(‘show’); return; }
+sugg.innerHTML = matches.map(f => `<div class="food-suggestion-item" onclick="selectFood('${f.name.replace(/'/g,"\\'")}')"> <div> <div style="font-weight:600">${f.name}</div> <div style="font-size:11px;color:var(--muted)">${f.cat} · Phase ${f.phase} · <span style="font-weight:700;color:${statusColor(f.status)}">${f.status === 'NI' ? 'Not Interested' : f.status}</span></div> </div> <div style="text-align:right"> <div class="food-suggestion-cal">${f.cal} kcal</div> <div class="food-suggestion-unit">per ${f.qty}${f.unit}</div> </div> </div>`).join(’’);
+sugg.classList.add(‘show’);
 }
 
 function selectFood(name) {
-  selectedFood = CALORIE_DB.find(f => f.name === name);
-  if (!selectedFood) return;
-  document.getElementById('foodSuggestions').classList.remove('show');
-  document.getElementById('foodSearchInput').value = '';
-  const sfn = document.getElementById('selectedFoodName');
-  sfn.textContent = `${selectedFood.name} · ${selectedFood.cal} kcal per ${selectedFood.qty}${selectedFood.unit}`;
-  sfn.classList.add('show');
-  document.getElementById('qtyRow').style.display = 'flex';
-  document.getElementById('foodQty').value = selectedFood.qty;
-  document.getElementById('foodQty').focus();
+selectedFood = CALORIE_DB.find(f => f.name === name);
+if (!selectedFood) return;
+document.getElementById(‘foodSuggestions’).classList.remove(‘show’);
+document.getElementById(‘foodSearchInput’).value = ‘’;
+const sfn = document.getElementById(‘selectedFoodName’);
+sfn.textContent = `${selectedFood.name} · ${selectedFood.cal} kcal per ${selectedFood.qty}${selectedFood.unit}`;
+sfn.classList.add(‘show’);
+document.getElementById(‘qtyRow’).style.display = ‘flex’;
+document.getElementById(‘foodQty’).value = selectedFood.qty;
+document.getElementById(‘foodQty’).focus();
 }
 
 function addFoodItem() {
-  if (!selectedFood) return;
-  const qty = parseFloat(document.getElementById('foodQty').value);
-  if (!qty || qty <= 0) { showToast('Enter a valid quantity'); return; }
-  const cal = calcCalories(selectedFood, qty);
-  const qtyDisplay = `${qty} ${selectedFood.unit}`;
-  getLog(currentDate).foods.push({ name: selectedFood.name, qty, qtyDisplay, calories: cal });
-  saveLogs();
-  renderFoodLog();
-  renderHistory();
-  selectedFood = null;
-  document.getElementById('selectedFoodName').classList.remove('show');
-  document.getElementById('qtyRow').style.display = 'none';
-  document.getElementById('foodQty').value = '';
-  showToast(`Added ${cal} kcal`);
+if (!selectedFood) return;
+const qty = parseFloat(document.getElementById(‘foodQty’).value);
+if (!qty || qty <= 0) { showToast(‘Enter a valid quantity’); return; }
+const cal = calcCalories(selectedFood, qty);
+const qtyDisplay = `${qty} ${selectedFood.unit}`;
+getLog(currentDate).foods.push({ name: selectedFood.name, qty, qtyDisplay, calories: cal });
+saveLogs();
+renderFoodLog();
+renderHistory();
+selectedFood = null;
+document.getElementById(‘selectedFoodName’).classList.remove(‘show’);
+document.getElementById(‘qtyRow’).style.display = ‘none’;
+document.getElementById(‘foodQty’).value = ‘’;
+showToast(`Added ${cal} kcal`);
 }
 
 // ============================================================
 // PHASE/STATUS TRACKER
 // ============================================================
-let currentPhaseFilter = 'all';
-let currentCatFilter = 'all';
+let currentPhaseFilter = ‘all’;
+let currentCatFilter = ‘all’;
 
 function buildCatFilters() {
-  const cats = ['all', ...new Set(CALORIE_DB.map(f => f.cat))];
-  document.getElementById('catFilter').innerHTML = cats.map(c =>
-    `<div class="cat-chip ${c==='all'?'active':''}" onclick="filterCat('${c}',this)">${c==='all'?'All Categories':c}</div>`
-  ).join('');
+const cats = [‘all’, …new Set(CALORIE_DB.map(f => f.cat))];
+document.getElementById(‘catFilter’).innerHTML = cats.map(c =>
+`<div class="cat-chip ${c==='all'?'active':''}" onclick="filterCat('${c}',this)">${c==='all'?'All Categories':c}</div>`
+).join(’’);
 }
 
 function filterPhase(ph) {
-  currentPhaseFilter = ph;
-  document.querySelectorAll('.select-chip[id^=fphase-]').forEach(b => b.classList.remove('active'));
-  document.getElementById('fphase-' + ph).classList.add('active');
-  renderPhaseList(currentPhaseFilter, currentCatFilter);
+currentPhaseFilter = ph;
+document.querySelectorAll(’.select-chip[id^=fphase-]’).forEach(b => b.classList.remove(‘active’));
+document.getElementById(‘fphase-’ + ph).classList.add(‘active’);
+renderPhaseList(currentPhaseFilter, currentCatFilter);
 }
 
 function filterCat(cat, el) {
-  currentCatFilter = cat;
-  document.querySelectorAll('#catFilter .cat-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderPhaseList(currentPhaseFilter, currentCatFilter);
+currentCatFilter = cat;
+document.querySelectorAll(’#catFilter .cat-chip’).forEach(c => c.classList.remove(‘active’));
+el.classList.add(‘active’);
+renderPhaseList(currentPhaseFilter, currentCatFilter);
 }
 
 function cycleStatus(name) {
-  const statuses = ['OK','Test','Retest','Failed','NI'];
-  const food = CALORIE_DB.find(f => f.name === name);
-  const current = foodStatusOverrides[name] || food.status;
-  const idx = statuses.indexOf(current);
-  foodStatusOverrides[name] = statuses[(idx + 1) % statuses.length];
-  saveOverrides();
-  renderPhaseList(currentPhaseFilter, currentCatFilter);
+const statuses = [‘OK’,‘Test’,‘Retest’,‘Failed’,‘NI’];
+const food = CALORIE_DB.find(f => f.name === name);
+const current = foodStatusOverrides[name] || food.status;
+const idx = statuses.indexOf(current);
+foodStatusOverrides[name] = statuses[(idx + 1) % statuses.length];
+saveOverrides();
+renderPhaseList(currentPhaseFilter, currentCatFilter);
 }
 
 function renderPhaseList(phFilter, catFilter) {
-  let items = CALORIE_DB.filter(f => {
-    if (phFilter !== 'all' && String(f.phase) !== phFilter) return false;
-    if (catFilter !== 'all' && f.cat !== catFilter) return false;
-    return true;
-  });
+let items = CALORIE_DB.filter(f => {
+if (phFilter !== ‘all’ && String(f.phase) !== phFilter) return false;
+if (catFilter !== ‘all’ && f.cat !== catFilter) return false;
+return true;
+});
 
-  // Group by category
-  const grouped = {};
-  items.forEach(f => {
-    const status = foodStatusOverrides[f.name] || f.status;
-    if (!grouped[f.cat]) grouped[f.cat] = [];
-    grouped[f.cat].push({...f, status});
-  });
+// Group by category
+const grouped = {};
+items.forEach(f => {
+const status = foodStatusOverrides[f.name] || f.status;
+if (!grouped[f.cat]) grouped[f.cat] = [];
+grouped[f.cat].push({…f, status});
+});
 
-  const el = document.getElementById('phaseList');
-  if (!items.length) { el.innerHTML = '<div class="empty-state">No foods match filters</div>'; return; }
+const el = document.getElementById(‘phaseList’);
+if (!items.length) { el.innerHTML = ‘<div class="empty-state">No foods match filters</div>’; return; }
 
-  el.innerHTML = Object.entries(grouped).map(([cat, foods]) => `
-    <div class="food-test-card">
-      <div class="food-test-header">
-        <h3>${cat}</h3>
-        <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">${foods.length} items</span>
-      </div>
-      <div class="test-items">
-        ${foods.map(f => `
-          <div class="test-item status-${f.status.toLowerCase()}" onclick="cycleStatus('${f.name.replace(/'/g,"\\'")}')">
-            <div class="status-dot"></div>
-            ${f.name}${f.status === 'NI' ? ' <span style="font-size:9px;opacity:0.7">(not interested)</span>' : ''}
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
+el.innerHTML = Object.entries(grouped).map(([cat, foods]) => `<div class="food-test-card"> <div class="food-test-header"> <h3>${cat}</h3> <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">${foods.length} items</span> </div> <div class="test-items"> ${foods.map(f =>`
+<div class=“test-item status-${f.status.toLowerCase()}” onclick=“cycleStatus(’${f.name.replace(/’/g,”\’”)}’)”>
+<div class="status-dot"></div>
+${f.name}${f.status === ‘NI’ ? ’ <span style="font-size:9px;opacity:0.7">(not interested)</span>’ : ‘’}
+</div>
+`).join('')} </div> </div> `).join(’’);
 }
 
 // ============================================================
 // CALORIE LOOKUP
 // ============================================================
-let lookupCat = 'all';
+let lookupCat = ‘all’;
 
 function buildLookupCatFilter() {
-  const cats = ['all', ...new Set(CALORIE_DB.map(f => f.cat))];
-  document.getElementById('lookupCatFilter').innerHTML = cats.map(c =>
-    `<div class="cat-chip ${c==='all'?'active':''}" onclick="setLookupCat('${c}',this)">${c==='all'?'All':c}</div>`
-  ).join('');
-  runLookup();
+const cats = [‘all’, …new Set(CALORIE_DB.map(f => f.cat))];
+document.getElementById(‘lookupCatFilter’).innerHTML = cats.map(c =>
+`<div class="cat-chip ${c==='all'?'active':''}" onclick="setLookupCat('${c}',this)">${c==='all'?'All':c}</div>`
+).join(’’);
+runLookup();
 }
 
 function setLookupCat(cat, el) {
-  lookupCat = cat;
-  document.querySelectorAll('#lookupCatFilter .cat-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  runLookup();
+lookupCat = cat;
+document.querySelectorAll(’#lookupCatFilter .cat-chip’).forEach(c => c.classList.remove(‘active’));
+el.classList.add(‘active’);
+runLookup();
 }
 
 function runLookup() {
-  const q = document.getElementById('lookupInput').value.toLowerCase();
-  let items = CALORIE_DB.filter(f => {
-    if (lookupCat !== 'all' && f.cat !== lookupCat) return false;
-    if (q && !f.name.toLowerCase().includes(q)) return false;
-    return true;
-  });
-  // Also include custom foods from customFoods array
-  const allItems = [...items, ...customFoods.filter(f => {
-    if (lookupCat !== 'all' && f.cat !== lookupCat) return false;
-    if (q && !f.name.toLowerCase().includes(q)) return false;
-    return true;
-  })];
+const q = document.getElementById(‘lookupInput’).value.toLowerCase();
+let items = CALORIE_DB.filter(f => {
+if (lookupCat !== ‘all’ && f.cat !== lookupCat) return false;
+if (q && !f.name.toLowerCase().includes(q)) return false;
+return true;
+});
+// Also include custom foods from customFoods array
+const allItems = […items, …customFoods.filter(f => {
+if (lookupCat !== ‘all’ && f.cat !== lookupCat) return false;
+if (q && !f.name.toLowerCase().includes(q)) return false;
+return true;
+})];
 
-  const el = document.getElementById('lookupResults');
-  if (!allItems.length) { el.innerHTML = '<div class="empty-state">No results</div>'; return; }
+const el = document.getElementById(‘lookupResults’);
+if (!allItems.length) { el.innerHTML = ‘<div class="empty-state">No results</div>’; return; }
 
-  el.innerHTML = allItems.map(f => {
-    const status = foodStatusOverrides[f.name] || f.status;
-    const sc = status === 'OK' ? 's-ok' : status === 'Test' ? 's-test' : status === 'Retest' ? 's-retest' : status === 'Failed' ? 's-failed' : 's-ni';
-    const statusLabel = status === 'NI' ? 'Not Interested' : status;
-    const isCustom = f._custom ? '✦ ' : '';
-    return `
-    <div class="lookup-result-row" style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px;border-bottom:1px solid var(--border);">
-      <div style="flex:1;min-width:0;">
-        <div class="lookup-result-name">${isCustom}${f.name}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">${f.cat} · Phase ${f.phase}</div>
-      </div>
-      <div class="lookup-result-meta" style="margin-left:8px;">
-        <div class="lookup-result-cal">${f.cal} kcal</div>
-        <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">per ${f.qty} ${f.unit}</div>
-        <div class="lookup-result-status ${sc}" style="margin-top:3px;">${statusLabel}</div>
-      </div>
-      <button class="edit-btn" style="margin-left:10px;" onclick="openFoodEditor('${f.name.replace(/'/g,"\\'")}')">✏ Edit</button>
-    </div>
-  `}).join('');
+el.innerHTML = allItems.map(f => {
+const status = foodStatusOverrides[f.name] || f.status;
+const sc = status === ‘OK’ ? ‘s-ok’ : status === ‘Test’ ? ‘s-test’ : status === ‘Retest’ ? ‘s-retest’ : status === ‘Failed’ ? ‘s-failed’ : ‘s-ni’;
+const statusLabel = status === ‘NI’ ? ‘Not Interested’ : status;
+const isCustom = f._custom ? ‘✦ ’ : ‘’;
+return `<div class="lookup-result-row" style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px;border-bottom:1px solid var(--border);"> <div style="flex:1;min-width:0;"> <div class="lookup-result-name">${isCustom}${f.name}</div> <div style="font-size:11px;color:var(--muted);margin-top:2px">${f.cat} · Phase ${f.phase}</div> </div> <div class="lookup-result-meta" style="margin-left:8px;"> <div class="lookup-result-cal">${f.cal} kcal</div> <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">per ${f.qty} ${f.unit}</div> <div class="lookup-result-status ${sc}" style="margin-top:3px;">${statusLabel}</div> </div> <button class="edit-btn" style="margin-left:10px;" onclick="openFoodEditor('${f.name.replace(/'/g,"\\'")}')">✏ Edit</button> </div>`}).join(’’);
 }
 
 // ============================================================
@@ -1423,157 +1457,137 @@ let customFoods = []; // user-added foods stored in Firestore
 let editingFoodName = null; // null = adding new, string = editing existing
 
 async function loadCustomFoods() {
-  if (!db || !currentUser) return;
-  try {
-    const snap = await userDoc().collection('customFoods').get();
-    customFoods = [];
-    snap.forEach(doc => customFoods.push({ ...doc.data(), _custom: true }));
-    // Also merge into search so food log autocomplete picks them up
-    customFoods.forEach(cf => {
-      if (!CALORIE_DB.find(f => f.name === cf.name)) CALORIE_DB.push(cf);
-    });
-  } catch(e) { console.warn('Could not load custom foods', e); }
+if (!db || !currentUser) return;
+try {
+const snap = await userDoc().collection(‘customFoods’).get();
+customFoods = [];
+snap.forEach(doc => customFoods.push({ …doc.data(), _custom: true }));
+// Also merge into search so food log autocomplete picks them up
+customFoods.forEach(cf => {
+if (!CALORIE_DB.find(f => f.name === cf.name)) CALORIE_DB.push(cf);
+});
+} catch(e) { console.warn(‘Could not load custom foods’, e); }
 }
 
 async function saveCustomFood(food) {
-  if (!db || !currentUser) return;
-  await userDoc().collection('customFoods').doc(food.name).set(food);
+if (!db || !currentUser) return;
+await userDoc().collection(‘customFoods’).doc(food.name).set(food);
 }
 
 async function deleteCustomFood(name) {
-  if (!db || !currentUser) return;
-  await userDoc().collection('customFoods').doc(name).delete();
+if (!db || !currentUser) return;
+await userDoc().collection(‘customFoods’).doc(name).delete();
 }
 
 function openFoodEditor(foodName) {
-  editingFoodName = foodName;
-  const modal = document.getElementById('foodEditorModal');
-  const title = document.getElementById('foodEditorTitle');
-  document.getElementById('fe_error').style.display = 'none';
+editingFoodName = foodName;
+const modal = document.getElementById(‘foodEditorModal’);
+const title = document.getElementById(‘foodEditorTitle’);
+document.getElementById(‘fe_error’).style.display = ‘none’;
 
-  if (foodName) {
-    // Editing existing
-    title.textContent = '✏ Edit Food';
-    const f = [...CALORIE_DB, ...customFoods].find(x => x.name === foodName);
-    if (!f) return;
-    document.getElementById('fe_name').value = f.name;
-    document.getElementById('fe_cal').value = f.cal;
-    document.getElementById('fe_qty').value = f.qty;
-    document.getElementById('fe_unit').value = f.unit;
-    document.getElementById('fe_phase').value = f.phase;
-    document.getElementById('fe_cat').value = f.cat;
-    document.getElementById('fe_status').value = foodStatusOverrides[f.name] || f.status;
-    document.getElementById('fe_name').disabled = !f._custom; // can't rename built-in foods
-  } else {
-    // Adding new
-    title.textContent = '+ Add Food';
-    document.getElementById('fe_name').value = '';
-    document.getElementById('fe_name').disabled = false;
-    document.getElementById('fe_cal').value = '';
-    document.getElementById('fe_qty').value = '100';
-    document.getElementById('fe_unit').value = 'gms';
-    document.getElementById('fe_phase').value = '1';
-    document.getElementById('fe_cat').value = 'Vegetables';
-    document.getElementById('fe_status').value = 'NI';
-  }
+if (foodName) {
+// Editing existing
+title.textContent = ‘✏ Edit Food’;
+const f = […CALORIE_DB, …customFoods].find(x => x.name === foodName);
+if (!f) return;
+document.getElementById(‘fe_name’).value = f.name;
+document.getElementById(‘fe_cal’).value = f.cal;
+document.getElementById(‘fe_qty’).value = f.qty;
+document.getElementById(‘fe_unit’).value = f.unit;
+document.getElementById(‘fe_phase’).value = f.phase;
+document.getElementById(‘fe_cat’).value = f.cat;
+document.getElementById(‘fe_status’).value = foodStatusOverrides[f.name] || f.status;
+document.getElementById(‘fe_name’).disabled = !f._custom; // can’t rename built-in foods
+} else {
+// Adding new
+title.textContent = ‘+ Add Food’;
+document.getElementById(‘fe_name’).value = ‘’;
+document.getElementById(‘fe_name’).disabled = false;
+document.getElementById(‘fe_cal’).value = ‘’;
+document.getElementById(‘fe_qty’).value = ‘100’;
+document.getElementById(‘fe_unit’).value = ‘gms’;
+document.getElementById(‘fe_phase’).value = ‘1’;
+document.getElementById(‘fe_cat’).value = ‘Vegetables’;
+document.getElementById(‘fe_status’).value = ‘NI’;
+}
 
-  modal.style.display = 'flex';
+modal.style.display = ‘flex’;
 }
 
 function closeFoodEditor() {
-  document.getElementById('foodEditorModal').style.display = 'none';
+document.getElementById(‘foodEditorModal’).style.display = ‘none’;
 }
 
 async function saveFoodEditor() {
-  const errEl = document.getElementById('fe_error');
-  errEl.style.display = 'none';
+const errEl = document.getElementById(‘fe_error’);
+errEl.style.display = ‘none’;
 
-  const name = document.getElementById('fe_name').value.trim();
-  const cal  = parseFloat(document.getElementById('fe_cal').value);
-  const qty  = parseFloat(document.getElementById('fe_qty').value);
-  const unit = document.getElementById('fe_unit').value;
-  const phase = document.getElementById('fe_phase').value;
-  const cat  = document.getElementById('fe_cat').value;
-  const status = document.getElementById('fe_status').value;
+const name = document.getElementById(‘fe_name’).value.trim();
+const cal  = parseFloat(document.getElementById(‘fe_cal’).value);
+const qty  = parseFloat(document.getElementById(‘fe_qty’).value);
+const unit = document.getElementById(‘fe_unit’).value;
+const phase = document.getElementById(‘fe_phase’).value;
+const cat  = document.getElementById(‘fe_cat’).value;
+const status = document.getElementById(‘fe_status’).value;
 
-  if (!name) { errEl.textContent = 'Food name is required'; errEl.style.display = 'block'; return; }
-  if (isNaN(cal) || cal < 0) { errEl.textContent = 'Enter a valid calorie value'; errEl.style.display = 'block'; return; }
-  if (isNaN(qty) || qty <= 0) { errEl.textContent = 'Enter a valid quantity'; errEl.style.display = 'block'; return; }
+if (!name) { errEl.textContent = ‘Food name is required’; errEl.style.display = ‘block’; return; }
+if (isNaN(cal) || cal < 0) { errEl.textContent = ‘Enter a valid calorie value’; errEl.style.display = ‘block’; return; }
+if (isNaN(qty) || qty <= 0) { errEl.textContent = ‘Enter a valid quantity’; errEl.style.display = ‘block’; return; }
 
-  const isBuiltIn = CALORIE_DB.find(f => f.name === name && !f._custom);
+const isBuiltIn = CALORIE_DB.find(f => f.name === name && !f._custom);
 
-  if (isBuiltIn) {
-    // For built-in foods, only update the status override + save cal/qty/phase to a custom overlay
-    foodStatusOverrides[name] = status;
-    // Update in-memory CALORIE_DB entry
-    const idx = CALORIE_DB.findIndex(f => f.name === name);
-    if (idx >= 0) Object.assign(CALORIE_DB[idx], { cal, qty, unit, phase, cat });
-    saveOverrides();
-    // Save override data as a custom food entry too so edits persist
-    await saveCustomFood({ name, cal, qty, unit, phase: String(phase), cat, status, _custom: true });
-    const existing = customFoods.findIndex(f => f.name === name);
-    const updated = { name, cal, qty, unit, phase: String(phase), cat, status, _custom: true };
-    if (existing >= 0) customFoods[existing] = updated; else customFoods.push(updated);
-  } else {
-    // Custom food — save fully
-    const food = { name, cal, qty, unit, phase: String(phase), cat, status, _custom: true };
-    await saveCustomFood(food);
-    // Update in-memory
-    const existingDB = CALORIE_DB.findIndex(f => f.name === name);
-    if (existingDB >= 0) Object.assign(CALORIE_DB[existingDB], food);
-    else CALORIE_DB.push(food);
-    const existingCF = customFoods.findIndex(f => f.name === name);
-    if (existingCF >= 0) customFoods[existingCF] = food; else customFoods.push(food);
-    // Update status override
-    foodStatusOverrides[name] = status;
-    saveOverrides();
-  }
-
-  closeFoodEditor();
-  showToast(`${name} saved!`);
-  runLookup();
-  buildCatFilters();
-  buildLookupCatFilter();
+if (isBuiltIn) {
+// For built-in foods, only update the status override + save cal/qty/phase to a custom overlay
+foodStatusOverrides[name] = status;
+// Update in-memory CALORIE_DB entry
+const idx = CALORIE_DB.findIndex(f => f.name === name);
+if (idx >= 0) Object.assign(CALORIE_DB[idx], { cal, qty, unit, phase, cat });
+saveOverrides();
+// Save override data as a custom food entry too so edits persist
+await saveCustomFood({ name, cal, qty, unit, phase: String(phase), cat, status, _custom: true });
+const existing = customFoods.findIndex(f => f.name === name);
+const updated = { name, cal, qty, unit, phase: String(phase), cat, status, _custom: true };
+if (existing >= 0) customFoods[existing] = updated; else customFoods.push(updated);
+} else {
+// Custom food — save fully
+const food = { name, cal, qty, unit, phase: String(phase), cat, status, _custom: true };
+await saveCustomFood(food);
+// Update in-memory
+const existingDB = CALORIE_DB.findIndex(f => f.name === name);
+if (existingDB >= 0) Object.assign(CALORIE_DB[existingDB], food);
+else CALORIE_DB.push(food);
+const existingCF = customFoods.findIndex(f => f.name === name);
+if (existingCF >= 0) customFoods[existingCF] = food; else customFoods.push(food);
+// Update status override
+foodStatusOverrides[name] = status;
+saveOverrides();
 }
 
+closeFoodEditor();
+showToast(`${name} saved!`);
+runLookup();
+buildCatFilters();
+buildLookupCatFilter();
+}
 
 function renderHistory() {
-  const el = document.getElementById('historyList');
-  const dates = Object.keys(dayLogs).sort((a,b) => b.localeCompare(a));
-  if (!dates.length) { el.innerHTML = '<div class="empty-state">No history yet.<br>Start logging today!</div>'; return; }
-  el.innerHTML = dates.map(d => {
-    const log = dayLogs[d];
-    const consumed = Math.round(log.foods.reduce((s,f) => s+f.calories, 0));
-    const dt = new Date(d + 'T00:00:00');
-    const dateStr = dt.toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
-    const diff = 850 - consumed;
-    return `
-    <div class="history-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-          <div class="history-date" style="margin-bottom:0">${dateStr}</div>
-          <button onclick="showDuplicateModal('${d}')" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--accent2);border-radius:8px;padding:4px 10px;font-size:11px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;">⧉ Copy</button>
-        </div>
-        <div onclick="jumpToDate('${d}')" style="cursor:pointer">
-        ${log.meta.phase ? `<div class="phase-badge" style="margin-bottom:8px;font-size:10px;padding:3px 10px">Phase ${log.meta.phase}</div>` : ''}
-        <div class="history-metrics">
-          <div><div class="history-metric-label">CALORIES</div><div class="history-cal">${consumed} <span style="font-size:11px;color:${diff>=0?'var(--green)':'var(--red)'}">/ 850</span></div></div>
-          ${log.meta.weight ? `<div><div class="history-metric-label">WEIGHT</div><div class="history-metric-val">${log.meta.weight} kg</div></div>` : ''}
-          ${log.meta.bloodSugar ? `<div><div class="history-metric-label">B.SUGAR</div><div class="history-metric-val">${log.meta.bloodSugar}</div></div>` : ''}
-          ${log.meta.bm ? `<div><div class="history-metric-label">BM</div><div class="history-metric-val">${log.meta.bm}</div></div>` : ''}
-          ${log.meta.sleep ? `<div><div class="history-metric-label">SLEEP</div><div class="history-metric-val">${log.meta.sleep}</div></div>` : ''}
-        </div>
-        ${log.meta.intro ? `<div style="margin-top:8px;font-size:11px;color:var(--accent2)">🆕 ${log.meta.intro}</div>` : ''}
-        ${log.meta.impact ? `<div style="font-size:11px;color:var(--orange)">⚠ ${log.meta.impact}</div>` : ''}
-        </div>
-      </div>
-    `;
-  }).join('');
+const el = document.getElementById(‘historyList’);
+const dates = Object.keys(dayLogs).sort((a,b) => b.localeCompare(a));
+if (!dates.length) { el.innerHTML = ‘<div class="empty-state">No history yet.<br>Start logging today!</div>’; return; }
+el.innerHTML = dates.map(d => {
+const log = dayLogs[d];
+const consumed = Math.round(log.foods.reduce((s,f) => s+f.calories, 0));
+const dt = new Date(d + ‘T00:00:00’);
+const dateStr = dt.toLocaleDateString(‘en-IN’, {weekday:‘short’, day:‘numeric’, month:‘short’, year:‘numeric’});
+const diff = 850 - consumed;
+return `<div class="history-card"> <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"> <div class="history-date" style="margin-bottom:0">${dateStr}</div> <button onclick="showDuplicateModal('${d}')" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--accent2);border-radius:8px;padding:4px 10px;font-size:11px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;">⧉ Copy</button> </div> <div onclick="jumpToDate('${d}')" style="cursor:pointer"> ${log.meta.phase ?`<div class="phase-badge" style="margin-bottom:8px;font-size:10px;padding:3px 10px">Phase ${log.meta.phase}</div>`: ''} <div class="history-metrics"> <div><div class="history-metric-label">CALORIES</div><div class="history-cal">${consumed} <span style="font-size:11px;color:${diff>=0?'var(--green)':'var(--red)'}">/ 850</span></div></div> ${log.meta.weight ?`<div><div class="history-metric-label">WEIGHT</div><div class="history-metric-val">${log.meta.weight} kg</div></div>`: ''} ${log.meta.bloodSugar ?`<div><div class="history-metric-label">B.SUGAR</div><div class="history-metric-val">${log.meta.bloodSugar}</div></div>`: ''} ${log.meta.bm ?`<div><div class="history-metric-label">BM</div><div class="history-metric-val">${log.meta.bm}</div></div>`: ''} ${log.meta.sleep ?`<div><div class="history-metric-label">SLEEP</div><div class="history-metric-val">${log.meta.sleep}</div></div>`: ''} </div> ${log.meta.intro ?`<div style="margin-top:8px;font-size:11px;color:var(--accent2)">🆕 ${log.meta.intro}</div>`: ''} ${log.meta.impact ?`<div style="font-size:11px;color:var(--orange)">⚠ ${log.meta.impact}</div>`: ''} </div> </div>`;
+}).join(’’);
 }
 
 function jumpToDate(d) {
-  document.getElementById('todayDate').value = d;
-  switchPage('today');
-  loadDay();
+document.getElementById(‘todayDate’).value = d;
+switchPage(‘today’);
+loadDay();
 }
 
 // ============================================================
@@ -1582,98 +1596,98 @@ function jumpToDate(d) {
 let dupOpts = { foods: true, metrics: false, phase: false };
 
 function showDuplicateModal(fromDate) {
-  const src = fromDate || currentDate;
-  document.getElementById('dupFromDate').textContent = src;
-  document.getElementById('dupModal').style.display = 'flex';
-  // Default target = tomorrow of source
-  const d = new Date(src + 'T00:00:00');
-  d.setDate(d.getDate() + 1);
-  document.getElementById('dupTargetDate').value = d.toISOString().split('T')[0];
-  dupOpts = { foods: true, metrics: false, phase: false };
-  ['foods','metrics','phase'].forEach(k => {
-    document.getElementById('dup-'+k).classList.toggle('checked', dupOpts[k]);
-  });
-  checkDupWarning(src);
-  // store source
-  document.getElementById('dupModal').dataset.src = src;
+const src = fromDate || currentDate;
+document.getElementById(‘dupFromDate’).textContent = src;
+document.getElementById(‘dupModal’).style.display = ‘flex’;
+// Default target = tomorrow of source
+const d = new Date(src + ‘T00:00:00’);
+d.setDate(d.getDate() + 1);
+document.getElementById(‘dupTargetDate’).value = d.toISOString().split(‘T’)[0];
+dupOpts = { foods: true, metrics: false, phase: false };
+[‘foods’,‘metrics’,‘phase’].forEach(k => {
+document.getElementById(‘dup-’+k).classList.toggle(‘checked’, dupOpts[k]);
+});
+checkDupWarning(src);
+// store source
+document.getElementById(‘dupModal’).dataset.src = src;
 }
 
 function toggleDupOpt(key) {
-  dupOpts[key] = !dupOpts[key];
-  document.getElementById('dup-'+key).classList.toggle('checked', dupOpts[key]);
+dupOpts[key] = !dupOpts[key];
+document.getElementById(‘dup-’+key).classList.toggle(‘checked’, dupOpts[key]);
 }
 
 function closeDupModal() {
-  document.getElementById('dupModal').style.display = 'none';
+document.getElementById(‘dupModal’).style.display = ‘none’;
 }
 
 function checkDupWarning(src) {
-  const target = document.getElementById('dupTargetDate').value;
-  const hasData = dayLogs[target] && (dayLogs[target].foods.length > 0);
-  document.getElementById('dupWarning').style.display = hasData ? 'block' : 'none';
+const target = document.getElementById(‘dupTargetDate’).value;
+const hasData = dayLogs[target] && (dayLogs[target].foods.length > 0);
+document.getElementById(‘dupWarning’).style.display = hasData ? ‘block’ : ‘none’;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('dupTargetDate').addEventListener('change', () => {
-    checkDupWarning(document.getElementById('dupModal').dataset.src);
-  });
+document.addEventListener(‘DOMContentLoaded’, () => {
+document.getElementById(‘dupTargetDate’).addEventListener(‘change’, () => {
+checkDupWarning(document.getElementById(‘dupModal’).dataset.src);
+});
 });
 
 function executeDuplicate() {
-  const src = document.getElementById('dupModal').dataset.src;
-  const target = document.getElementById('dupTargetDate').value;
-  if (!target) { showToast('Pick a target date'); return; }
-  if (target === src) { showToast('Source and target are the same'); return; }
+const src = document.getElementById(‘dupModal’).dataset.src;
+const target = document.getElementById(‘dupTargetDate’).value;
+if (!target) { showToast(‘Pick a target date’); return; }
+if (target === src) { showToast(‘Source and target are the same’); return; }
 
-  const srcLog = getLog(src);
-  const tgtLog = getLog(target);
+const srcLog = getLog(src);
+const tgtLog = getLog(target);
 
-  if (dupOpts.foods) {
-    // Merge: add foods from src that aren't already in target (by name)
-    const existingNames = new Set(tgtLog.foods.map(f => f.name));
-    const toAdd = srcLog.foods.filter(f => !existingNames.has(f.name));
-    tgtLog.foods = [...tgtLog.foods, ...toAdd.map(f => ({...f}))];
-  }
-  if (dupOpts.metrics) {
-    const m = srcLog.meta;
-    tgtLog.meta = {...tgtLog.meta, weight: m.weight, bloodSugar: m.bloodSugar, sleep: m.sleep, water: m.water, energy: m.energy, fasting: m.fasting, bm: m.bm, supplement: m.supplement};
-  }
-  if (dupOpts.phase) {
-    tgtLog.meta.phase = srcLog.meta.phase;
-  }
-
-  // Save target date to Firestore
-  const prevDate = currentDate;
-  currentDate = target;
-  saveLogs();
-  currentDate = prevDate;
-  closeDupModal();
-  // Navigate to target date
-  document.getElementById('todayDate').value = target;
-  loadDay();
-  showToast(`Copied to ${target}`);
-  renderHistory();
+if (dupOpts.foods) {
+// Merge: add foods from src that aren’t already in target (by name)
+const existingNames = new Set(tgtLog.foods.map(f => f.name));
+const toAdd = srcLog.foods.filter(f => !existingNames.has(f.name));
+tgtLog.foods = […tgtLog.foods, …toAdd.map(f => ({…f}))];
+}
+if (dupOpts.metrics) {
+const m = srcLog.meta;
+tgtLog.meta = {…tgtLog.meta, weight: m.weight, bloodSugar: m.bloodSugar, sleep: m.sleep, water: m.water, energy: m.energy, fasting: m.fasting, bm: m.bm, supplement: m.supplement};
+}
+if (dupOpts.phase) {
+tgtLog.meta.phase = srcLog.meta.phase;
 }
 
+// Save target date to Firestore
+const prevDate = currentDate;
+currentDate = target;
+saveLogs();
+currentDate = prevDate;
+closeDupModal();
+// Navigate to target date
+document.getElementById(‘todayDate’).value = target;
+loadDay();
+showToast(`Copied to ${target}`);
+renderHistory();
+}
 
 function switchPage(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  document.getElementById('nav-' + page).classList.add('active');
-  if (page === 'history') renderHistory();
-  if (page === 'admin') loadAdminData();
+document.querySelectorAll(’.page’).forEach(p => p.classList.remove(‘active’));
+document.querySelectorAll(’.nav-btn’).forEach(b => b.classList.remove(‘active’));
+document.getElementById(‘page-’ + page).classList.add(‘active’);
+document.getElementById(‘nav-’ + page).classList.add(‘active’);
+if (page === ‘history’) renderHistory();
+if (page === ‘admin’) loadAdminData();
+if (page === ‘dashboard’) renderDashboard();
 }
 
 function statusColor(s) {
-  return s === 'OK' ? 'var(--green)' : s === 'Test' ? 'var(--accent3)' : s === 'Retest' ? 'var(--orange)' : s === 'Failed' ? 'var(--red)' : 'var(--muted)';
+return s === ‘OK’ ? ‘var(–green)’ : s === ‘Test’ ? ‘var(–accent3)’ : s === ‘Retest’ ? ‘var(–orange)’ : s === ‘Failed’ ? ‘var(–red)’ : ‘var(–muted)’;
 }
 
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 1800);
+const t = document.getElementById(‘toast’);
+t.textContent = msg;
+t.classList.add(‘show’);
+setTimeout(() => t.classList.remove(‘show’), 1800);
 }
 
 // ============================================================
@@ -1682,140 +1696,145 @@ function showToast(msg) {
 let adminUsers = [];
 
 async function loadAdminData() {
-  if (!db || !currentUser) return;
-  if (currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return;
+if (!db || !currentUser) return;
+if (currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return;
 
-  document.getElementById('adminUserList').innerHTML = '<div class="empty-state">Loading...</div>';
-  document.getElementById('adminUserDetail').style.display = 'none';
+document.getElementById(‘adminUserList’).innerHTML = ‘<div class="empty-state">Loading…</div>’;
+document.getElementById(‘adminUserDetail’).style.display = ‘none’;
 
-  try {
-    // Load all users collection
-    const usersSnap = await db.collection('users').get();
-    adminUsers = [];
-    const today = getTodayStr();
-    let totalDays = 0;
-    let activeToday = 0;
+try {
+// Load all users collection
+const usersSnap = await db.collection(‘users’).get();
+adminUsers = [];
+const today = getTodayStr();
+let totalDays = 0;
+let activeToday = 0;
 
-    for (const userDoc of usersSnap.docs) {
-      const uid = userDoc.id;
-      const meta = userDoc.data();
-      // Load their logs
-      const logsSnap = await db.collection('users').doc(uid).collection('logs').get();
-      const logs = {};
-      logsSnap.forEach(d => { logs[d.id] = d.data(); });
-      const dayCount = Object.keys(logs).length;
-      totalDays += dayCount;
+```
+for (const userDoc of usersSnap.docs) {
+  const uid = userDoc.id;
+  const meta = userDoc.data();
+  // Load their logs
+  const logsSnap = await db.collection('users').doc(uid).collection('logs').get();
+  const logs = {};
+  logsSnap.forEach(d => { logs[d.id] = d.data(); });
+  const dayCount = Object.keys(logs).length;
+  totalDays += dayCount;
 
-      // Last active = most recent log date
-      const dates = Object.keys(logs).sort((a,b) => b.localeCompare(a));
-      const lastActive = dates[0] || '—';
-      if (lastActive === today) activeToday++;
+  // Last active = most recent log date
+  const dates = Object.keys(logs).sort((a,b) => b.localeCompare(a));
+  const lastActive = dates[0] || '—';
+  if (lastActive === today) activeToday++;
 
-      // Avg calories
-      let totalCal = 0, calDays = 0;
-      dates.forEach(d => {
-        const cal = Math.round((logs[d].foods || []).reduce((s,f) => s + f.calories, 0));
-        if (cal > 0) { totalCal += cal; calDays++; }
-      });
-      const avgCal = calDays > 0 ? Math.round(totalCal / calDays) : 0;
+  // Avg calories
+  let totalCal = 0, calDays = 0;
+  dates.forEach(d => {
+    const cal = Math.round((logs[d].foods || []).reduce((s,f) => s + f.calories, 0));
+    if (cal > 0) { totalCal += cal; calDays++; }
+  });
+  const avgCal = calDays > 0 ? Math.round(totalCal / calDays) : 0;
 
-      adminUsers.push({ uid, email: meta.email || uid, displayName: meta.displayName || '', logs, dayCount, lastActive, avgCal });
-    }
+  adminUsers.push({ uid, email: meta.email || uid, displayName: meta.displayName || '', logs, dayCount, lastActive, avgCal });
+}
 
-    // Update stats
-    document.getElementById('stat-users').textContent = adminUsers.length;
-    document.getElementById('stat-days').textContent = totalDays;
-    document.getElementById('stat-active').textContent = activeToday;
+// Update stats
+document.getElementById('stat-users').textContent = adminUsers.length;
+document.getElementById('stat-days').textContent = totalDays;
+document.getElementById('stat-active').textContent = activeToday;
 
-    // Render user list
-    if (!adminUsers.length) {
-      document.getElementById('adminUserList').innerHTML = '<div class="empty-state">No users yet</div>';
-      return;
-    }
+// Render user list
+if (!adminUsers.length) {
+  document.getElementById('adminUserList').innerHTML = '<div class="empty-state">No users yet</div>';
+  return;
+}
 
-    // Sort by last active
-    adminUsers.sort((a,b) => b.lastActive.localeCompare(a.lastActive));
+// Sort by last active
+adminUsers.sort((a,b) => b.lastActive.localeCompare(a.lastActive));
 
-    document.getElementById('adminUserList').innerHTML = adminUsers.map((u, i) => `
-      <div onclick="viewAdminUser(${i})" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <div style="font-size:14px;font-weight:800;">${u.email === currentUser.email ? '👑 ' : '👤 '}${u.email}</div>
-          <div style="font-size:11px;font-family:'DM Mono',monospace;color:${u.lastActive === today ? '#6ee7b7' : 'var(--muted)'};">${u.lastActive === today ? '● Active today' : u.lastActive}</div>
-        </div>
-        <div style="display:flex;gap:16px;">
-          <div style="font-size:12px;color:var(--muted);">📅 <strong style="color:var(--text)">${u.dayCount}</strong> days logged</div>
-          <div style="font-size:12px;color:var(--muted);">🔥 <strong style="color:var(--accent2)">${u.avgCal}</strong> avg kcal</div>
-        </div>
-      </div>
-    `).join('');
+document.getElementById('adminUserList').innerHTML = adminUsers.map((u, i) => `
+  <div onclick="viewAdminUser(${i})" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='var(--border)'">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div style="font-size:14px;font-weight:800;">${u.email === currentUser.email ? '👑 ' : '👤 '}${u.email}</div>
+      <div style="font-size:11px;font-family:'DM Mono',monospace;color:${u.lastActive === today ? '#6ee7b7' : 'var(--muted)'};">${u.lastActive === today ? '● Active today' : u.lastActive}</div>
+    </div>
+    <div style="display:flex;gap:16px;">
+      <div style="font-size:12px;color:var(--muted);">📅 <strong style="color:var(--text)">${u.dayCount}</strong> days logged</div>
+      <div style="font-size:12px;color:var(--muted);">🔥 <strong style="color:var(--accent2)">${u.avgCal}</strong> avg kcal</div>
+    </div>
+  </div>
+`).join('');
+```
 
-  } catch(e) {
-    document.getElementById('adminUserList').innerHTML = `<div class="empty-state" style="color:var(--red);">⚠ Error loading users.<br><span style="font-size:11px;">Make sure Firestore rules allow admin access.</span></div>`;
-    console.error('Admin load error:', e);
-  }
+} catch(e) {
+document.getElementById(‘adminUserList’).innerHTML = `<div class="empty-state" style="color:var(--red);">⚠ Error loading users.<br><span style="font-size:11px;">Make sure Firestore rules allow admin access.</span></div>`;
+console.error(‘Admin load error:’, e);
+}
 }
 
 function viewAdminUser(idx) {
-  const u = adminUsers[idx];
-  document.getElementById('adminUserList').style.display = 'none';
-  document.getElementById('adminStats').style.display = 'none';
-  document.getElementById('adminUserDetail').style.display = 'block';
-  document.getElementById('adminDetailName').textContent = u.email;
+const u = adminUsers[idx];
+document.getElementById(‘adminUserList’).style.display = ‘none’;
+document.getElementById(‘adminStats’).style.display = ‘none’;
+document.getElementById(‘adminUserDetail’).style.display = ‘block’;
+document.getElementById(‘adminDetailName’).textContent = u.email;
 
-  const dates = Object.keys(u.logs).sort((a,b) => b.localeCompare(a));
-  if (!dates.length) {
-    document.getElementById('adminDetailHistory').innerHTML = '<div class="empty-state">No logs yet</div>';
-    return;
-  }
+const dates = Object.keys(u.logs).sort((a,b) => b.localeCompare(a));
+if (!dates.length) {
+document.getElementById(‘adminDetailHistory’).innerHTML = ‘<div class="empty-state">No logs yet</div>’;
+return;
+}
 
-  document.getElementById('adminDetailHistory').innerHTML = dates.map(d => {
-    const log = u.logs[d];
-    const consumed = Math.round((log.foods || []).reduce((s,f) => s + f.calories, 0));
-    const m = log.meta || {};
-    const dt = new Date(d + 'T00:00:00');
-    const dateStr = dt.toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
-    const diff = 850 - consumed;
-    const diffColor = diff >= 0 ? 'var(--green)' : 'var(--red)';
+document.getElementById(‘adminDetailHistory’).innerHTML = dates.map(d => {
+const log = u.logs[d];
+const consumed = Math.round((log.foods || []).reduce((s,f) => s + f.calories, 0));
+const m = log.meta || {};
+const dt = new Date(d + ‘T00:00:00’);
+const dateStr = dt.toLocaleDateString(‘en-IN’, {weekday:‘short’, day:‘numeric’, month:‘short’, year:‘numeric’});
+const diff = 850 - consumed;
+const diffColor = diff >= 0 ? ‘var(–green)’ : ‘var(–red)’;
 
-    return `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="font-size:13px;font-weight:800;">${dateStr}</div>
-          ${m.phase ? `<span style="background:rgba(110,231,183,0.15);color:#6ee7b7;border:1px solid rgba(110,231,183,0.3);border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;">Phase ${m.phase}</span>` : ''}
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
-          <div style="font-size:12px;"><span style="color:var(--muted)">Calories: </span><strong style="color:var(--accent)">${consumed}</strong> kcal</div>
-          <div style="font-size:12px;"><span style="color:var(--muted)">vs target: </span><strong style="color:${diffColor}">${diff >= 0 ? '+' : ''}${diff}</strong></div>
-          ${m.weight ? `<div style="font-size:12px;"><span style="color:var(--muted)">Weight: </span><strong>${m.weight} kg</strong></div>` : ''}
-          ${m.bloodSugar ? `<div style="font-size:12px;"><span style="color:var(--muted)">BS: </span><strong>${m.bloodSugar}</strong></div>` : ''}
-          ${m.sleep ? `<div style="font-size:12px;"><span style="color:var(--muted)">Sleep: </span><strong>${m.sleep}h</strong></div>` : ''}
-          ${m.energy ? `<div style="font-size:12px;"><span style="color:var(--muted)">Energy: </span><strong>${m.energy}/5</strong></div>` : ''}
-        </div>
-        ${(log.foods || []).length > 0 ? `
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-family:'DM Mono',monospace;">FOOD LOG</div>
-          ${(log.foods || []).map(f => `
-            <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);">
-              <span>${f.name} <span style="color:var(--muted)">${f.qtyDisplay}</span></span>
-              <span style="color:var(--accent2);font-weight:700;">${f.calories} kcal</span>
-            </div>`).join('')}
-        ` : ''}
-        ${m.impact ? `<div style="margin-top:6px;font-size:11px;color:var(--orange);">⚠ ${m.impact}</div>` : ''}
-        ${m.intro ? `<div style="font-size:11px;color:var(--accent2);">🆕 ${m.intro}</div>` : ''}
-      </div>
-    `;
-  }).join('');
+```
+return `
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:13px;font-weight:800;">${dateStr}</div>
+      ${m.phase ? `<span style="background:rgba(110,231,183,0.15);color:#6ee7b7;border:1px solid rgba(110,231,183,0.3);border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;">Phase ${m.phase}</span>` : ''}
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+      <div style="font-size:12px;"><span style="color:var(--muted)">Calories: </span><strong style="color:var(--accent)">${consumed}</strong> kcal</div>
+      <div style="font-size:12px;"><span style="color:var(--muted)">vs target: </span><strong style="color:${diffColor}">${diff >= 0 ? '+' : ''}${diff}</strong></div>
+      ${m.weight ? `<div style="font-size:12px;"><span style="color:var(--muted)">Weight: </span><strong>${m.weight} kg</strong></div>` : ''}
+      ${m.bloodSugar ? `<div style="font-size:12px;"><span style="color:var(--muted)">BS: </span><strong>${m.bloodSugar}</strong></div>` : ''}
+      ${m.sleep ? `<div style="font-size:12px;"><span style="color:var(--muted)">Sleep: </span><strong>${m.sleep}h</strong></div>` : ''}
+      ${m.energy ? `<div style="font-size:12px;"><span style="color:var(--muted)">Energy: </span><strong>${m.energy}/5</strong></div>` : ''}
+    </div>
+    ${(log.foods || []).length > 0 ? `
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-family:'DM Mono',monospace;">FOOD LOG</div>
+      ${(log.foods || []).map(f => `
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);">
+          <span>${f.name} <span style="color:var(--muted)">${f.qtyDisplay}</span></span>
+          <span style="color:var(--accent2);font-weight:700;">${f.calories} kcal</span>
+        </div>`).join('')}
+    ` : ''}
+    ${m.impact ? `<div style="margin-top:6px;font-size:11px;color:var(--orange);">⚠ ${m.impact}</div>` : ''}
+    ${m.intro ? `<div style="font-size:11px;color:var(--accent2);">🆕 ${m.intro}</div>` : ''}
+  </div>
+`;
+```
+
+}).join(’’);
 }
 
 function closeAdminDetail() {
-  document.getElementById('adminUserDetail').style.display = 'none';
-  document.getElementById('adminUserList').style.display = 'block';
-  document.getElementById('adminStats').style.display = 'grid';
+document.getElementById(‘adminUserDetail’).style.display = ‘none’;
+document.getElementById(‘adminUserList’).style.display = ‘block’;
+document.getElementById(‘adminStats’).style.display = ‘grid’;
 }
 
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.add-food-panel')) {
-    document.getElementById('foodSuggestions').classList.remove('show');
-  }
+document.addEventListener(‘click’, function(e) {
+if (!e.target.closest(’.add-food-panel’)) {
+document.getElementById(‘foodSuggestions’).classList.remove(‘show’);
+}
 });
 
 // ============================================================
@@ -1825,179 +1844,409 @@ let snapshotBlob = null;
 let snapshotDataUrl = null;
 
 function shareSnapshot() {
-  snapshotBlob = null;
-  snapshotDataUrl = null;
+snapshotBlob = null;
+snapshotDataUrl = null;
 
-  // Build the snapshot card content
-  const log = getLog(currentDate);
-  const consumed = Math.round(log.foods.reduce((s, f) => s + f.calories, 0));
-  const target = 850;
-  const avail = target - consumed;
-  const pct = Math.min(consumed / target, 1);
-  const over = consumed > target;
-  const m = log.meta;
+// Build the snapshot card content
+const log = getLog(currentDate);
+const consumed = Math.round(log.foods.reduce((s, f) => s + f.calories, 0));
+const target = 850;
+const avail = target - consumed;
+const pct = Math.min(consumed / target, 1);
+const over = consumed > target;
+const m = log.meta;
 
-  // Format date nicely
-  const [y, mo, d] = currentDate.split('-');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const dateObj = new Date(+y, +mo - 1, +d);
-  const dateStr = `${days[dateObj.getDay()]}, ${d} ${months[+mo-1]} ${y}`;
+// Format date nicely
+const [y, mo, d] = currentDate.split(’-’);
+const months = [‘Jan’,‘Feb’,‘Mar’,‘Apr’,‘May’,‘Jun’,‘Jul’,‘Aug’,‘Sep’,‘Oct’,‘Nov’,‘Dec’];
+const days = [‘Sun’,‘Mon’,‘Tue’,‘Wed’,‘Thu’,‘Fri’,‘Sat’];
+const dateObj = new Date(+y, +mo - 1, +d);
+const dateStr = `${days[dateObj.getDay()]}, ${d} ${months[+mo-1]} ${y}`;
 
-  // Calorie ring SVG
-  const circ = 2 * Math.PI * 46; // 289
-  const ringOffset = circ - circ * pct;
-  const ringColor = over ? '#f87171' : '#6ee7b7';
+// Calorie ring SVG
+const circ = 2 * Math.PI * 46; // 289
+const ringOffset = circ - circ * pct;
+const ringColor = over ? ‘#f87171’ : ‘#6ee7b7’;
 
-  const metricsHtml = [
-    m.weight     ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">⚖ Weight</span><span style="font-weight:700;font-size:13px">${m.weight} kg</span></div>` : '',
-    m.bloodSugar ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">🩸 Blood Sugar</span><span style="font-weight:700;font-size:13px">${m.bloodSugar} mg/dL</span></div>` : '',
-    m.sleep      ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">😴 Sleep</span><span style="font-weight:700;font-size:13px">${m.sleep} hrs</span></div>` : '',
-    m.water      ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">💧 Water</span><span style="font-weight:700;font-size:13px">${m.water} L</span></div>` : '',
-    m.energy     ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">⚡ Energy</span><span style="font-weight:700;font-size:13px">${m.energy}/5</span></div>` : '',
-    m.fasting    ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">⏱ Fasting</span><span style="font-weight:700;font-size:13px">${m.fasting} hrs</span></div>` : '',
-    m.bm         ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #2a2f3f"><span style="color:#64748b;font-size:13px">🚽 Bowel Movement</span><span style="font-weight:700;font-size:13px">${m.bm}</span></div>` : '',
-  ].filter(Boolean).join('');
+const metricItems = [
+m.weight     ? {icon:‘⚖’, label:‘Weight’,       val:`${m.weight} kg`}       : null,
+m.bloodSugar ? {icon:‘🩸’, label:‘Blood Sugar’,  val:`${m.bloodSugar} mg/dL`}: null,
+m.sleep      ? {icon:‘😴’, label:‘Sleep’,        val:`${m.sleep} hrs`}        : null,
+m.water      ? {icon:‘💧’, label:‘Water’,        val:`${m.water} L`}          : null,
+m.energy     ? {icon:‘⚡’, label:‘Energy’,       val:`${m.energy}/5`}         : null,
+m.fasting    ? {icon:‘⏱’, label:‘Fasting’,      val:`${m.fasting} hrs`}      : null,
+m.bm         ? {icon:‘🚽’, label:‘BM’,           val:m.bm}                    : null,
+m.phase      ? {icon:‘📋’, label:‘Phase’,        val:m.phase}                 : null,
+].filter(Boolean);
 
-  const foodsHtml = log.foods.length === 0
-    ? '<div style="color:#64748b;font-size:13px;padding:8px 0">No food logged</div>'
-    : log.foods.map(f => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #1e2230">
-          <div>
-            <div style="font-size:13px;font-weight:600">${f.name}</div>
-            <div style="font-size:11px;color:#64748b">${f.qtyDisplay}</div>
-          </div>
-          <div style="font-size:13px;font-weight:700;color:#6ee7b7">${f.calories} kcal</div>
-        </div>`).join('');
+// 2-column grid for metrics
+const metricsHtml = metricItems.length === 0 ? ‘’ : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;"> ${metricItems.map(item =>`
+<div style="background:#161922;border:1px solid #2a2f3f;border-radius:10px;padding:10px 12px;">
+<div style="font-size:10px;color:#64748b;margin-bottom:3px;">${item.icon} ${item.label.toUpperCase()}</div>
+<div style="font-size:14px;font-weight:800;color:#e2e8f0;">${item.val}</div>
+</div>`).join('')} </div>`;
 
-  const phaseHtml = m.phase
-    ? `<span style="background:rgba(110,231,183,0.15);color:#6ee7b7;border:1px solid rgba(110,231,183,0.3);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;margin-left:8px">Phase ${m.phase}</span>`
-    : '';
+const foodsHtml = log.foods.length === 0
+? ‘<div style="color:#64748b;font-size:13px;padding:8px 0">No food logged</div>’
+: log.foods.map(f => ` <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #1e2230"> <div> <div style="font-size:13px;font-weight:600">${f.name}</div> <div style="font-size:11px;color:#64748b">${f.qtyDisplay}</div> </div> <div style="font-size:13px;font-weight:700;color:#6ee7b7">${f.calories} kcal</div> </div>`).join(’’);
 
-  const card = document.getElementById('snapshotCard');
-  card.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div>
-        <div style="font-size:17px;font-weight:800;color:#6ee7b7">🌿 Sathyan's Amura Tracker</div>
-        <div style="font-size:12px;color:#64748b;margin-top:2px;font-family:'DM Mono',monospace">${dateStr} ${phaseHtml}</div>
-      </div>
+const phaseHtml = m.phase
+? `<span style="background:rgba(110,231,183,0.15);color:#6ee7b7;border:1px solid rgba(110,231,183,0.3);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;margin-left:8px">Phase ${m.phase}</span>`
+: ‘’;
+
+const card = document.getElementById(‘snapshotCard’);
+card.innerHTML = `
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+<div>
+<div style="font-size:17px;font-weight:800;color:#6ee7b7">🌿 Sathyan’s Amura Tracker</div>
+<div style="font-size:12px;color:#64748b;margin-top:2px;font-family:'DM Mono',monospace">${dateStr} ${phaseHtml}</div>
+</div>
+</div>
+
+```
+<!-- Calorie Summary -->
+<div style="background:#161922;border:1px solid #2a2f3f;border-radius:16px;padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:20px">
+  <svg viewBox="0 0 110 110" width="100" height="100" style="flex-shrink:0">
+    <circle cx="55" cy="55" r="46" fill="none" stroke="#1e2230" stroke-width="10"/>
+    <circle cx="55" cy="55" r="46" fill="none" stroke="${ringColor}" stroke-width="10"
+      stroke-linecap="round"
+      stroke-dasharray="${circ}"
+      stroke-dashoffset="${ringOffset}"
+      transform="rotate(-90 55 55)"/>
+    <text x="55" y="50" text-anchor="middle" fill="#e2e8f0" font-size="18" font-weight="800" font-family="Syne,sans-serif">${consumed}</text>
+    <text x="55" y="63" text-anchor="middle" fill="#64748b" font-size="9" font-family="Syne,sans-serif">KCAL</text>
+  </svg>
+  <div style="flex:1">
+    <div style="margin-bottom:8px">
+      <div style="font-size:11px;color:#64748b;margin-bottom:2px">TARGET</div>
+      <div style="font-size:18px;font-weight:800">${target} <span style="font-size:12px;color:#64748b">kcal</span></div>
     </div>
-
-    <!-- Calorie Summary -->
-    <div style="background:#161922;border:1px solid #2a2f3f;border-radius:16px;padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:20px">
-      <svg viewBox="0 0 110 110" width="100" height="100" style="flex-shrink:0">
-        <circle cx="55" cy="55" r="46" fill="none" stroke="#1e2230" stroke-width="10"/>
-        <circle cx="55" cy="55" r="46" fill="none" stroke="${ringColor}" stroke-width="10"
-          stroke-linecap="round"
-          stroke-dasharray="${circ}"
-          stroke-dashoffset="${ringOffset}"
-          transform="rotate(-90 55 55)"/>
-        <text x="55" y="50" text-anchor="middle" fill="#e2e8f0" font-size="18" font-weight="800" font-family="Syne,sans-serif">${consumed}</text>
-        <text x="55" y="63" text-anchor="middle" fill="#64748b" font-size="9" font-family="Syne,sans-serif">KCAL</text>
-      </svg>
-      <div style="flex:1">
-        <div style="margin-bottom:8px">
-          <div style="font-size:11px;color:#64748b;margin-bottom:2px">TARGET</div>
-          <div style="font-size:18px;font-weight:800">${target} <span style="font-size:12px;color:#64748b">kcal</span></div>
-        </div>
-        <div style="margin-bottom:8px">
-          <div style="font-size:11px;color:#64748b;margin-bottom:2px">CONSUMED</div>
-          <div style="font-size:18px;font-weight:800;color:#6ee7b7">${consumed} <span style="font-size:12px;color:#64748b">kcal</span></div>
-        </div>
-        <div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:2px">REMAINING</div>
-          <div style="font-size:18px;font-weight:800;color:${over?'#f87171':'#e2e8f0'}">${avail} <span style="font-size:12px;color:#64748b">kcal</span></div>
-        </div>
-      </div>
+    <div style="margin-bottom:8px">
+      <div style="font-size:11px;color:#64748b;margin-bottom:2px">CONSUMED</div>
+      <div style="font-size:18px;font-weight:800;color:#6ee7b7">${consumed} <span style="font-size:12px;color:#64748b">kcal</span></div>
     </div>
-
-    <!-- Metrics -->
-    ${metricsHtml ? `<div style="background:#161922;border:1px solid #2a2f3f;border-radius:16px;padding:14px 16px;margin-bottom:16px">${metricsHtml}</div>` : ''}
-
-    <!-- Notes -->
-    ${m.intro ? `<div style="background:rgba(110,231,183,0.07);border:1px solid rgba(110,231,183,0.2);border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px"><span style="color:#6ee7b7;font-weight:700">🆕 New: </span>${m.intro}</div>` : ''}
-    ${m.impact ? `<div style="background:rgba(251,146,60,0.07);border:1px solid rgba(251,146,60,0.25);border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px"><span style="color:#fb923c;font-weight:700">⚠ Impact: </span>${m.impact}</div>` : ''}
-    ${m.supplement ? `<div style="background:rgba(96,165,250,0.07);border:1px solid rgba(96,165,250,0.2);border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px"><span style="color:#60a5fa;font-weight:700">💊 Supplement: </span>${m.supplement}</div>` : ''}
-
-    <!-- Food Log -->
-    <div style="background:#161922;border:1px solid #2a2f3f;border-radius:16px;padding:14px 16px">
-      <div style="font-size:12px;font-weight:800;letter-spacing:1px;color:#64748b;margin-bottom:8px">FOOD LOG</div>
-      ${foodsHtml}
+    <div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:2px">REMAINING</div>
+      <div style="font-size:18px;font-weight:800;color:${over?'#f87171':'#e2e8f0'}">${avail} <span style="font-size:12px;color:#64748b">kcal</span></div>
     </div>
+  </div>
+</div>
 
-    <!-- Footer -->
-    <div style="margin-top:16px;text-align:center;font-size:10px;color:#2a2f3f;font-family:'DM Mono',monospace">
-      Generated by Sathyan's Amura Tracker
-    </div>
-  `;
+<!-- Metrics -->
+${metricsHtml}
 
-  // Show modal with spinner
-  const modal = document.getElementById('shareModal');
-  modal.style.display = 'flex';
-  document.getElementById('snapshotPreview').style.display = 'none';
-  document.getElementById('snapshotSpinner').style.display = 'block';
+<!-- Notes -->
+${m.intro ? `<div style="background:rgba(110,231,183,0.07);border:1px solid rgba(110,231,183,0.2);border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px"><span style="color:#6ee7b7;font-weight:700">🆕 New: </span>${m.intro}</div>` : ''}
+${m.impact ? `<div style="background:rgba(251,146,60,0.07);border:1px solid rgba(251,146,60,0.25);border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px"><span style="color:#fb923c;font-weight:700">⚠ Impact: </span>${m.impact}</div>` : ''}
+${m.supplement ? `<div style="background:rgba(96,165,250,0.07);border:1px solid rgba(96,165,250,0.2);border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px"><span style="color:#60a5fa;font-weight:700">💊 Supplement: </span>${m.supplement}</div>` : ''}
 
-  // Render after DOM paint
-  setTimeout(() => {
-    html2canvas(card, {
-      backgroundColor: '#0d0f14',
-      scale: 2,
-      useCORS: true,
-      logging: false,
-    }).then(canvas => {
-      snapshotDataUrl = canvas.toDataURL('image/png');
-      // Convert to blob for Web Share API
-      canvas.toBlob(blob => {
-        snapshotBlob = blob;
-        // Show preview
-        const preview = document.getElementById('snapshotPreview');
-        preview.src = snapshotDataUrl;
-        preview.style.display = 'block';
-        document.getElementById('snapshotSpinner').style.display = 'none';
-        // Hide share button if Web Share not supported
-        document.getElementById('btnNativeShare').style.display =
-          (navigator.share && navigator.canShare) ? 'flex' : 'none';
-      }, 'image/png');
-    }).catch(() => {
-      document.getElementById('snapshotSpinner').textContent = 'Preview unavailable';
-    });
-  }, 100);
+<!-- Food Log -->
+<div style="background:#161922;border:1px solid #2a2f3f;border-radius:16px;padding:14px 16px">
+  <div style="font-size:12px;font-weight:800;letter-spacing:1px;color:#64748b;margin-bottom:8px">FOOD LOG</div>
+  ${foodsHtml}
+</div>
+
+<!-- Footer -->
+<div style="margin-top:16px;text-align:center;font-size:10px;color:#2a2f3f;font-family:'DM Mono',monospace">
+  Generated by Sathyan's Amura Tracker
+</div>
+```
+
+`;
+
+// Show modal with spinner
+const modal = document.getElementById(‘shareModal’);
+modal.style.display = ‘flex’;
+document.getElementById(‘snapshotPreview’).style.display = ‘none’;
+document.getElementById(‘snapshotSpinner’).style.display = ‘block’;
+
+// Render after DOM paint
+setTimeout(() => {
+html2canvas(card, {
+backgroundColor: ‘#0d0f14’,
+scale: 2,
+useCORS: true,
+logging: false,
+}).then(canvas => {
+snapshotDataUrl = canvas.toDataURL(‘image/png’);
+// Convert to blob for Web Share API
+canvas.toBlob(blob => {
+snapshotBlob = blob;
+// Show preview
+const preview = document.getElementById(‘snapshotPreview’);
+preview.src = snapshotDataUrl;
+preview.style.display = ‘block’;
+document.getElementById(‘snapshotSpinner’).style.display = ‘none’;
+// Hide share button if Web Share not supported
+document.getElementById(‘btnNativeShare’).style.display =
+(navigator.share && navigator.canShare) ? ‘flex’ : ‘none’;
+}, ‘image/png’);
+}).catch(() => {
+document.getElementById(‘snapshotSpinner’).textContent = ‘Preview unavailable’;
+});
+}, 100);
 }
 
 function closeShareModal() {
-  document.getElementById('shareModal').style.display = 'none';
+document.getElementById(‘shareModal’).style.display = ‘none’;
 }
 
 async function doNativeShare() {
-  if (!snapshotBlob) return;
-  const [y, mo, d] = currentDate.split('-');
-  const file = new File([snapshotBlob], `amura-${currentDate}.png`, { type: 'image/png' });
-  const shareData = {
-    title: "Sathyan's Amura Tracker",
-    text: `My Amura diet log for ${d}/${mo}/${y} 🌿`,
-    files: [file],
-  };
-  try {
-    if (navigator.canShare && navigator.canShare(shareData)) {
-      await navigator.share(shareData);
-    } else {
-      // Fallback: share just text + URL
-      await navigator.share({ title: shareData.title, text: shareData.text });
+if (!snapshotBlob) return;
+const [y, mo, d] = currentDate.split(’-’);
+const file = new File([snapshotBlob], `amura-${currentDate}.png`, { type: ‘image/png’ });
+const shareData = {
+title: “Sathyan’s Amura Tracker”,
+text: `My Amura diet log for ${d}/${mo}/${y} 🌿`,
+files: [file],
+};
+try {
+if (navigator.canShare && navigator.canShare(shareData)) {
+await navigator.share(shareData);
+} else {
+// Fallback: share just text + URL
+await navigator.share({ title: shareData.title, text: shareData.text });
+}
+} catch (e) {
+if (e.name !== ‘AbortError’) showToast(‘Share failed — try Save instead’);
+}
+}
+
+// ============================================================
+// SCRAPED HISTORICAL DATA
+// ============================================================
+const SCRAPED_LOGS = {“2025-12-22”:{“foods”:[],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:””,“bm”:“850”,“supplement”:””,“water”:””,“fasting”:“3”,“impact”:“3”}},“2025-12-23”:{“foods”:[],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:””,“bm”:“850”,“supplement”:””,“water”:””,“fasting”:“3”,“impact”:“3”}},“2025-12-24”:{“foods”:[],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:””,“bm”:“850”,“supplement”:””,“water”:””,“fasting”:“3”,“impact”:“3”}},“2025-12-25”:{“foods”:[],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:””,“bm”:“850”,“supplement”:””,“water”:””,“fasting”:“3”,“impact”:“3”}},“2026-01-06”:{“foods”:[],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:””,“bm”:“850”,“supplement”:””,“water”:””,“fasting”:“3”,“impact”:“3”}},“2026-01-07”:{“foods”:[],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:””,“bm”:“850”,“supplement”:””,“water”:””,“fasting”:“3”,“impact”:“3”}},“2026-01-08”:{“foods”:[],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:””,“bm”:“850”,“supplement”:””,“water”:””,“fasting”:“3”,“impact”:“3”}},“2026-01-09”:{“foods”:[],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:””,“bm”:“850”,“supplement”:””,“water”:””,“fasting”:“3”,“impact”:“3”}},“2026-01-10”:{“foods”:[],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:””,“bm”:“850”,“supplement”:””,“water”:””,“fasting”:“3”,“impact”:“1”}},“2026-01-11”:{“foods”:[],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:””,“bm”:“850”,“supplement”:””,“water”:””,“fasting”:“3”,“impact”:“3”}},“2026-01-12”:{“foods”:[{“name”:“Carrot”,“qty”:1.93,“qtyDisplay”:“1.93”,“calories”:0},{“name”:“French Beans”,“qty”:3.0,“qtyDisplay”:“3”,“calories”:0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1”,“calories”:0},{“name”:“Asparagus”,“qty”:2.0,“qtyDisplay”:“2”,“calories”:0},{“name”:“Cabbage”,“qty”:1.81,“qtyDisplay”:“1.81”,“calories”:0},{“name”:“Spring Onion”,“qty”:0.4,“qtyDisplay”:“0.4”,“calories”:0},{“name”:“Olive Oil”,“qty”:2.0,“qtyDisplay”:“2”,“calories”:0},{“name”:“Gooseberries”,“qty”:1.31,“qtyDisplay”:“1.31”,“calories”:0},{“name”:“Garlic”,“qty”:0.16,“qtyDisplay”:“0.16”,“calories”:0}],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:“3”,“bm”:””,“supplement”:“New Supplement”,“water”:””,“fasting”:“Calorie (Kcal)”,“impact”:””}},“2026-01-13”:{“foods”:[{“name”:“Carrot”,“qty”:2.8,“qtyDisplay”:“280 gms”,“calories”:115.0},{“name”:“French Beans”,“qty”:2.5,“qtyDisplay”:“250 gms”,“calories”:60.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Avocado”,“qty”:0.75,“qtyDisplay”:“75 gms”,“calories”:120.0},{“name”:“Asparagus”,“qty”:0.78,“qtyDisplay”:“78 gms”,“calories”:16.0},{“name”:“Butter”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:29.0}],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:“3”,“bm”:“44”,“supplement”:“New Supplement”,“water”:””,“fasting”:“Calorie (Kcal)”,“impact”:“116”}},“2026-01-14”:{“foods”:[{“name”:“Carrot”,“qty”:3.0,“qtyDisplay”:“300 gms”,“calories”:123.0},{“name”:“French Beans”,“qty”:2.73,“qtyDisplay”:“273 gms”,“calories”:66.0},{“name”:“Sesame Oil”,“qty”:2.0,“qtyDisplay”:“2 Tsp”,“calories”:80.0},{“name”:“Brussel Sprouts”,“qty”:1.15,“qtyDisplay”:“115 gms”,“calories”:50.0},{“name”:“Broccoli”,“qty”:2.05,“qtyDisplay”:“205 gms”,“calories”:70.0},{“name”:“White Pumpkin”,“qty”:2.05,“qtyDisplay”:“205 gms”,“calories”:35.0}],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:“3”,“bm”:“0”,“supplement”:“New Supplement”,“water”:””,“fasting”:“Calorie (Kcal)”,“impact”:“116”}},“2026-01-15”:{“foods”:[{“name”:“Carrot”,“qty”:3.0,“qtyDisplay”:“300 gms”,“calories”:123.0},{“name”:“French Beans”,“qty”:2.35,“qtyDisplay”:“235 gms”,“calories”:57.0},{“name”:“Sesame Oil”,“qty”:2.0,“qtyDisplay”:“2 Tsp”,“calories”:80.0},{“name”:“Cabbage”,“qty”:1.5,“qtyDisplay”:“150 gms”,“calories”:38.0},{“name”:“Broccoli”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:68.0},{“name”:“Raw Mango”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:60.0}],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:“3”,“bm”:“0”,“supplement”:“New Supplement”,“water”:””,“fasting”:“Calorie (Kcal)”,“impact”:“114”}},“2026-01-16”:{“foods”:[{“name”:“Carrot”,“qty”:3.08,“qtyDisplay”:“308 gms”,“calories”:127.0},{“name”:“French Beans”,“qty”:3.2,“qtyDisplay”:“320 gms”,“calories”:77.0},{“name”:“Sesame Oil”,“qty”:2.0,“qtyDisplay”:“2 Tsp”,“calories”:80.0},{“name”:“Cabbage”,“qty”:3.0,“qtyDisplay”:“300 gms”,“calories”:75.0},{“name”:“Olives”,“qty”:0.5,“qtyDisplay”:“50 gms”,“calories”:65.0}],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:“3”,“bm”:“0”,“supplement”:“New Supplement”,“water”:””,“fasting”:“Calorie (Kcal)”,“impact”:“116”}},“2026-01-17”:{“foods”:[{“name”:“Carrot”,“qty”:1.87,“qtyDisplay”:“187 gms”,“calories”:77.0},{“name”:“French Beans”,“qty”:2.5,“qtyDisplay”:“250 gms”,“calories”:60.0},{“name”:“Sesame Oil”,“qty”:2.0,“qtyDisplay”:“2 Tsp”,“calories”:80.0},{“name”:“Cabbage”,“qty”:3.1,“qtyDisplay”:“310 gms”,“calories”:78.0},{“name”:“Cucumber”,“qty”:3.4,“qtyDisplay”:“340 gms”,“calories”:51.0}],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:“5”,“bm”:“0”,“supplement”:“New Supplement”,“water”:””,“fasting”:“Calorie (Kcal)”,“impact”:“194”}},“2026-01-18”:{“foods”:[{“name”:“Lettuce”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:28.0},{“name”:“French Beans”,“qty”:2.5,“qtyDisplay”:“250 gms”,“calories”:60.0},{“name”:“Sesame Oil”,“qty”:2.0,“qtyDisplay”:“2 Tsp”,“calories”:80.0},{“name”:“Raw Mango”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:120.0},{“name”:“Onion”,“qty”:0.48,“qtyDisplay”:“48 gms”,“calories”:20.0},{“name”:“Olives”,“qty”:0.27,“qtyDisplay”:“27 gms”,“calories”:36.0},{“name”:“Olive Oil”,“qty”:2.0,“qtyDisplay”:“2 Tsp”,“calories”:80.0}],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:“3”,“bm”:“0”,“supplement”:“New Supplement”,“water”:””,“fasting”:“Calorie (Kcal)”,“impact”:“116”}},“2026-01-19”:{“foods”:[{“name”:“Cauliflower”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:125.0},{“name”:“French Beans”,“qty”:2.5,“qtyDisplay”:“250 gms”,“calories”:60.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Broccoli”,“qty”:2.5,“qtyDisplay”:“250 gms”,“calories”:85.0},{“name”:“Olives”,“qty”:0.62,“qtyDisplay”:“62 gms”,“calories”:81.0},{“name”:“Broccoli”,“qty”:0.97,“qtyDisplay”:“97 gms”,“calories”:33.0}],“meta”:{“phase”:””,“weight”:””,“bloodSugar”:””,“sleep”:””,“energy”:””,“intro”:“3”,“bm”:“0”,“supplement”:“New Supplement”,“water”:””,“fasting”:“Calorie (Kcal)”,“impact”:“116”}},“2026-01-20”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Cabbage”,“qty”:1.45,“qtyDisplay”:“145 gms”,“calories”:37.0},{“name”:“French Beans”,“qty”:3.69,“qtyDisplay”:“369 gms”,“calories”:89.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Broccoli”,“qty”:2.73,“qtyDisplay”:“273 gms”,“calories”:93.0},{“name”:“Curd”,“qty”:1.5,“qtyDisplay”:“150 gms”,“calories”:93.0},{“name”:“Asparagus”,“qty”:1.88,“qtyDisplay”:“188 gms”,“calories”:38.0},{“name”:“Butter”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:29.0}],“meta”:{“phase”:“V2”,“weight”:88.3,“bloodSugar”:102.0,“sleep”:“7”,“energy”:“Good”,“intro”:“Curd”,“bm”:“No”,“supplement”:””,“water”:”>3L”,“fasting”:“11hrs”,“impact”:””}},“2026-01-21”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:1.0,“qtyDisplay”:“25 gms”,“calories”:94.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:26.0},{“name”:“French Beans”,“qty”:4.0,“qtyDisplay”:“400 gms”,“calories”:96.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Broccoli”,“qty”:2.64,“qtyDisplay”:“264 gms”,“calories”:90.0},{“name”:“Epigamia high protein curd”,“qty”:3.3,“qtyDisplay”:“3.3 gms”,“calories”:215.0},{“name”:“Asparagus”,“qty”:1.79,“qtyDisplay”:“179 gms”,“calories”:36.0},{“name”:“Brussel Sprouts”,“qty”:0.98,“qtyDisplay”:“98 gms”,“calories”:43.0},{“name”:“Butter”,“qty”:2.0,“qtyDisplay”:“2 Tsp”,“calories”:58.0},{“name”:“garlic”,“qty”:0.05,“qtyDisplay”:“5 gms”,“calories”:8.0}],“meta”:{“phase”:“V2”,“weight”:87.65,“bloodSugar”:96.0,“sleep”:“7”,“energy”:“Good”,“intro”:“Yellow Pumpkin”,“bm”:“Yes”,“supplement”:””,“water”:”>3L”,“fasting”:“11hrs”,“impact”:””}},“2026-01-22”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Curd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:124.0},{“name”:“French Beans”,“qty”:4.0,“qtyDisplay”:“400 gms”,“calories”:96.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Paneer”,“qty”:0.5,“qtyDisplay”:“50 gms”,“calories”:143.0},{“name”:“Cabbage”,“qty”:1.22,“qtyDisplay”:“122 gms”,“calories”:31.0}],“meta”:{“phase”:“V2”,“weight”:87.6,“bloodSugar”:106.0,“sleep”:“7”,“energy”:“Good”,“intro”:“Paneer”,“bm”:“Yes”,“supplement”:””,“water”:”>3L”,“fasting”:“12hrs”,“impact”:””}},“2026-01-23”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Curd”,“qty”:2.47,“qtyDisplay”:“247 gms”,“calories”:153.0},{“name”:“French Beans”,“qty”:4.0,“qtyDisplay”:“400 gms”,“calories”:96.0},{“name”:“Coconut”,“qty”:0.4,“qtyDisplay”:“40 gms”,“calories”:142.0},{“name”:“Cabbage”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:25.0}],“meta”:{“phase”:“V2”,“weight”:87.7,“bloodSugar”:106.0,“sleep”:“4”,“energy”:“Good”,“intro”:“Coconut”,“bm”:“No”,“supplement”:””,“water”:””,“fasting”:“12hrs”,“impact”:””}},“2026-01-24”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Curd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:124.0},{“name”:“French Beans”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:48.0},{“name”:“Cheddar”,“qty”:0.4,“qtyDisplay”:“40 gms”,“calories”:168.0},{“name”:“Cucumber”,“qty”:2.65,“qtyDisplay”:“265 gms”,“calories”:40.0},{“name”:“Coconut Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:38.0}],“meta”:{“phase”:“V2”,“weight”:87.55,“bloodSugar”:103.0,“sleep”:“7.5”,“energy”:“High”,“intro”:“Cheddar”,“bm”:“Yes”,“supplement”:””,“water”:””,“fasting”:“13hrs”,“impact”:””}},“2026-01-25”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Curd”,“qty”:2.5,“qtyDisplay”:“250 gms”,“calories”:155.0},{“name”:“French Beans”,“qty”:2.1,“qtyDisplay”:“210 gms”,“calories”:51.0},{“name”:“Mozzarella”,“qty”:0.4,“qtyDisplay”:“40 gms”,“calories”:132.0},{“name”:“Cucumber”,“qty”:2.65,“qtyDisplay”:“265 gms”,“calories”:40.0},{“name”:“Coconut Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:38.0}],“meta”:{“phase”:“V2”,“weight”:87.75,“bloodSugar”:103.0,“sleep”:“7.5”,“energy”:“High”,“intro”:“Mozzarella”,“bm”:“No”,“supplement”:””,“water”:”>3L”,“fasting”:“13hrs”,“impact”:””}},“2026-01-26”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Curd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:124.0},{“name”:“Carrot”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:82.0},{“name”:“Cheddar”,“qty”:0.415,“qtyDisplay”:“41.5 gms”,“calories”:174.0},{“name”:“Cucumber”,“qty”:2.5,“qtyDisplay”:“250 gms”,“calories”:38.0}],“meta”:{“phase”:“V2”,“weight”:87.8,“bloodSugar”:103.0,“sleep”:“5.5”,“energy”:“High”,“intro”:””,“bm”:“No”,“supplement”:””,“water”:”>3L”,“fasting”:“13hrs”,“impact”:””}},“2026-01-27”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Curd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:124.0},{“name”:“Avocado”,“qty”:1.12,“qtyDisplay”:“112 gms”,“calories”:180.0},{“name”:“Cucumber”,“qty”:3.35,“qtyDisplay”:“335 gms”,“calories”:51.0},{“name”:“Asparagus”,“qty”:1.66,“qtyDisplay”:“166 gms”,“calories”:34.0},{“name”:“Butter”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:29.0}],“meta”:{“phase”:“V2”,“weight”:86.75,“bloodSugar”:97.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:””,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“12hrs”,“impact”:””}},“2026-01-28”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Curd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:124.0},{“name”:“Avocado”,“qty”:1.12,“qtyDisplay”:“112 gms”,“calories”:180.0},{“name”:“Cucumber”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:15.0},{“name”:“Asparagus”,“qty”:1.1,“qtyDisplay”:“110 gms”,“calories”:22.0},{“name”:“Butter”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:29.0},{“name”:“Ivy gourd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:48.0}],“meta”:{“phase”:“V2”,“weight”:86.0,“bloodSugar”:92.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:“Ivy Gourd”,“bm”:“Yes”,“supplement”:””,“water”:”>3L”,“fasting”:“12hrs”,“impact”:””}},“2026-01-29”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Curd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:124.0},{“name”:“Avocado”,“qty”:1.12,“qtyDisplay”:“112 gms”,“calories”:180.0},{“name”:“Cucumber”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:15.0},{“name”:“Broccoli”,“qty”:1.1,“qtyDisplay”:“110 gms”,“calories”:38.0},{“name”:“Ridge gourd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:26.0},{“name”:“Olives”,“qty”:0.31,“qtyDisplay”:“31 gms”,“calories”:41.0}],“meta”:{“phase”:“V2”,“weight”:85.95,“bloodSugar”:93.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:“Ridge Gourd”,“bm”:“Yes”,“supplement”:””,“water”:”>3L”,“fasting”:“12hrs”,“impact”:””}},“2026-01-30”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Sesame Oil”,“qty”:2.0,“qtyDisplay”:“2 Tsp”,“calories”:80.0},{“name”:“Paneer”,“qty”:0.858,“qtyDisplay”:“85.8 gms”,“calories”:245.0},{“name”:“Cucumber”,“qty”:1.4,“qtyDisplay”:“140 gms”,“calories”:21.0},{“name”:“Fenugreek Leaves”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:34.0},{“name”:“Curd”,“qty”:0.5,“qtyDisplay”:“50 gms”,“calories”:31.0},{“name”:“Onion”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:40.0}],“meta”:{“phase”:“V2”,“weight”:85.4,“bloodSugar”:100.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:“Fenugreek leaves”,“bm”:“Yes”,“supplement”:””,“water”:“2.5L”,“fasting”:“12hrs”,“impact”:””}},“2026-01-31”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Raw Mango”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:120.0},{“name”:“Cucumber”,“qty”:2.65,“qtyDisplay”:“265 gms”,“calories”:40.0},{“name”:“Bottle gourd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:22.0},{“name”:“Curd”,“qty”:1.5,“qtyDisplay”:“150 gms”,“calories”:93.0},{“name”:“Coconut”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:71.0},{“name”:“Yellow Pumpkin”,“qty”:3.0,“qtyDisplay”:“300 gms”,“calories”:78.0}],“meta”:{“phase”:“V2”,“weight”:84.95,“bloodSugar”:93.0,“sleep”:“9hrs”,“energy”:“High”,“intro”:“Bottle gourd”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“16hrs”,“impact”:””}},“2026-02-01”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Butter”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:29.0},{“name”:“Mushroom”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:44.0},{“name”:“Curd”,“qty”:2.52,“qtyDisplay”:“252 gms”,“calories”:156.0},{“name”:“Yellow Pumpkin”,“qty”:7.5,“qtyDisplay”:“750 gms”,“calories”:195.0}],“meta”:{“phase”:“V2”,“weight”:84.6,“bloodSugar”:85.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:“Mushroom”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“15hrs”,“impact”:“Loose motion Bloating”}},“2026-02-02”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Curd”,“qty”:2.5,“qtyDisplay”:“250 gms”,“calories”:155.0},{“name”:“Yellow Pumpkin”,“qty”:7.66,“qtyDisplay”:“766 gms”,“calories”:200.0},{“name”:“Asparagus”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:40.0},{“name”:“Butter”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:29.0}],“meta”:{“phase”:“V2”,“weight”:85.1,“bloodSugar”:97.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:””,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“13hrs”,“impact”:””}},“2026-02-03”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Coconut”,“qty”:0.15,“qtyDisplay”:“15 gms”,“calories”:54.0},{“name”:“Yellow Pumpkin”,“qty”:7.5,“qtyDisplay”:“750 gms”,“calories”:195.0},{“name”:“Asparagus”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:20.0},{“name”:“Butter”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:29.0},{“name”:“Chow Chow”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:38.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Olives”,“qty”:0.365,“qtyDisplay”:“36.5 gms”,“calories”:48.0}],“meta”:{“phase”:“V2”,“weight”:84.25,“bloodSugar”:102.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:“Chow chow”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“13hrs”,“impact”:””}},“2026-02-04”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Coconut Milk”,“qty”:0.5,“qtyDisplay”:“50 ml”,“calories”:92.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Carrot”,“qty”:1.38,“qtyDisplay”:“138 gms”,“calories”:57.0},{“name”:“French Beans”,“qty”:1.42,“qtyDisplay”:“142 gms”,“calories”:35.0},{“name”:“Broccoli”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:34.0},{“name”:“Olives”,“qty”:0.58,“qtyDisplay”:“58 gms”,“calories”:76.0}],“meta”:{“phase”:“V2”,“weight”:84.1,“bloodSugar”:110.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:“Coconut milk”,“bm”:“No”,“supplement”:””,“water”:“3L”,“fasting”:“13hrs”,“impact”:””}},“2026-02-05”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:3.0,“qtyDisplay”:“75 gms”,“calories”:282.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Peas”,“qty”:1.5,“qtyDisplay”:“150 gms”,“calories”:122.0},{“name”:“Yellow Pumpkin”,“qty”:6.0,“qtyDisplay”:“600 gms”,“calories”:156.0},{“name”:“Onion”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:40.0},{“name”:“Garlic”,“qty”:0.1,“qtyDisplay”:“10 gms”,“calories”:15.0},{“name”:“Olives”,“qty”:0.7,“qtyDisplay”:“70 gms”,“calories”:91.0}],“meta”:{“phase”:“V2”,“weight”:84.0,“bloodSugar”:102.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:“Peas”,“bm”:“No”,“supplement”:””,“water”:””,“fasting”:“13hrs”,“impact”:””}},“2026-02-06”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:10.38,“qtyDisplay”:“1038 gms”,“calories”:270.0},{“name”:“Cucumber”,“qty”:4.25,“qtyDisplay”:“425 gms”,“calories”:64.0},{“name”:“Curd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:124.0}],“meta”:{“phase”:“V2”,“weight”:84.95,“bloodSugar”:103.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:””,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“13hrs”,“impact”:””}},“2026-02-07”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:10.38,“qtyDisplay”:“1038 gms”,“calories”:270.0},{“name”:“Cucumber”,“qty”:4.25,“qtyDisplay”:“425 gms”,“calories”:64.0},{“name”:“Curd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:124.0}],“meta”:{“phase”:“V2”,“weight”:84.95,“bloodSugar”:105.0,“sleep”:“6hrs”,“energy”:“Average”,“intro”:””,“bm”:“No”,“supplement”:””,“water”:””,“fasting”:“12hrs”,“impact”:””}},“2026-02-08”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“French Beans”,“qty”:2.48,“qtyDisplay”:“248 gms”,“calories”:60.0},{“name”:“Cucumber”,“qty”:6.2,“qtyDisplay”:“620 gms”,“calories”:93.0},{“name”:“Curd”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:62.0},{“name”:“Coconut”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:71.0},{“name”:“Ivy Gourd”,“qty”:2.41,“qtyDisplay”:“241 gms”,“calories”:58.0},{“name”:“Onion”,“qty”:1.46,“qtyDisplay”:“146 gms”,“calories”:59.0},{“name”:“Garlic”,“qty”:0.1,“qtyDisplay”:“10 gms”,“calories”:15.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0}],“meta”:{“phase”:“V2”,“weight”:83.1,“bloodSugar”:104.0,“sleep”:“8hrs”,“energy”:“Average”,“intro”:””,“bm”:“Yes”,“supplement”:””,“water”:”>3L”,“fasting”:“15hrs”,“impact”:””}},“2026-02-09”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“French Beans”,“qty”:2.48,“qtyDisplay”:“248 gms”,“calories”:60.0},{“name”:“Almonds”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:116.0},{“name”:“Curd”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:62.0},{“name”:“Coconut”,“qty”:0.15,“qtyDisplay”:“15 gms”,“calories”:54.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Yellow Pumpkin”,“qty”:4.0,“qtyDisplay”:“400 gms”,“calories”:104.0},{“name”:“Olives”,“qty”:0.13,“qtyDisplay”:“13 gms”,“calories”:17.0}],“meta”:{“phase”:“V3”,“weight”:83.0,“bloodSugar”:100.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:“Almonds”,“bm”:“No”,“supplement”:””,“water”:”>3L”,“fasting”:“13hrs”,“impact”:””}},“2026-02-10”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“French Beans”,“qty”:3.83,“qtyDisplay”:“383 gms”,“calories”:92.0},{“name”:“Walnuts”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:125.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Coconut”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:71.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0}],“meta”:{“phase”:“V3”,“weight”:82.9,“bloodSugar”:105.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:“Walnut”,“bm”:“No”,“supplement”:””,“water”:“3L”,“fasting”:“13hrs”,“impact”:””}},“2026-02-11”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Olives”,“qty”:0.565,“qtyDisplay”:“56.5 gms”,“calories”:74.0},{“name”:“Pistachios”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:130.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Curd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:124.0}],“meta”:{“phase”:“V3”,“weight”:82.9,“bloodSugar”:105.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:“Pistachios”,“bm”:“No”,“supplement”:””,“water”:“3L”,“fasting”:“13hrs”,“impact”:””}},“2026-02-12”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Avocado”,“qty”:0.9,“qtyDisplay”:“90 gms”,“calories”:144.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“French Beans”,“qty”:2.72,“qtyDisplay”:“272 gms”,“calories”:66.0},{“name”:“Coconut”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:71.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Olives”,“qty”:0.05,“qtyDisplay”:“5 gms”,“calories”:7.0}],“meta”:{“phase”:“V3”,“weight”:83.25,“bloodSugar”:94.0,“sleep”:“9hrs”,“energy”:“High”,“intro”:””,“bm”:“No”,“supplement”:””,“water”:“3L”,“fasting”:“13hrs”,“impact”:””}},“2026-02-13”:{“foods”:[],“meta”:{“phase”:“V3”,“weight”:83.15,“bloodSugar”:90.0,“sleep”:“9hrs”,“energy”:“High”,“intro”:””,“bm”:“No”,“supplement”:””,“water”:“3L”,“fasting”:“24hrs”,“impact”:””}},“2026-02-14”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:1.32,“qtyDisplay”:“33 gms”,“calories”:124.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:5.42,“qtyDisplay”:“542 gms”,“calories”:141.0},{“name”:“Curd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:124.0}],“meta”:{“phase”:“V3”,“weight”:82.9,“bloodSugar”:90.0,“sleep”:“9hrs”,“energy”:“High”,“intro”:””,“bm”:“No”,“supplement”:””,“water”:“4L”,“fasting”:“46.5hrs”,“impact”:””}},“2026-02-15”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:1.32,“qtyDisplay”:“33 gms”,“calories”:124.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Sunflower Seeds”,“qty”:0.25,“qtyDisplay”:“25 gms”,“calories”:143.0},{“name”:“Almonds”,“qty”:0.3,“qtyDisplay”:“30 gms”,“calories”:174.0},{“name”:“Yellow Pumpkin”,“qty”:3.5,“qtyDisplay”:“350 gms”,“calories”:91.0},{“name”:“Olives”,“qty”:0.28,“qtyDisplay”:“28 gms”,“calories”:37.0}],“meta”:{“phase”:“V3”,“weight”:82.5,“bloodSugar”:88.0,“sleep”:“9hrs”,“energy”:“High”,“intro”:“Sunflower seeds”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“13hrs”,“impact”:””}},“2026-02-16”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:1.32,“qtyDisplay”:“33 gms”,“calories”:124.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:5.23,“qtyDisplay”:“523 gms”,“calories”:136.0},{“name”:“Pumpkin Seeds”,“qty”:0.25,“qtyDisplay”:“25 gms”,“calories”:148.0},{“name”:“Avocado”,“qty”:1.59,“qtyDisplay”:“159 gms”,“calories”:255.0},{“name”:“Olive Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Olives”,“qty”:0.02,“qtyDisplay”:“2 gms”,“calories”:3.0}],“meta”:{“phase”:“V3”,“weight”:82.45,“bloodSugar”:103.0,“sleep”:“5hrs”,“energy”:“High”,“intro”:“Pumpkin seeds”,“bm”:“Yes”,“supplement”:””,“water”:”>3L”,“fasting”:“13hrs”,“impact”:””}},“2026-02-17”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:1.32,“qtyDisplay”:“33 gms”,“calories”:124.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:5.02,“qtyDisplay”:“502 gms”,“calories”:131.0},{“name”:“Strawberry”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:41.0},{“name”:“Avocado”,“qty”:1.3,“qtyDisplay”:“130 gms”,“calories”:208.0},{“name”:“Sunflower Seeds”,“qty”:0.32,“qtyDisplay”:“32 gms”,“calories”:183.0},{“name”:“Curd”,“qty”:0.3,“qtyDisplay”:“30 gms”,“calories”:19.0}],“meta”:{“phase”:“V3”,“weight”:82.35,“bloodSugar”:100.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:“Strawberry”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“13hrs”,“impact”:“No Discomfort”}},“2026-02-18”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:1.32,“qtyDisplay”:“33 gms”,“calories”:124.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Almonds”,“qty”:0.06,“qtyDisplay”:“6 gms”,“calories”:35.0},{“name”:“Paneer”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:285.0},{“name”:“Fenugreek Leaves”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:34.0},{“name”:“Sesame Seeds”,“qty”:0.25,“qtyDisplay”:“25 gms”,“calories”:143.0},{“name”:“Onion”,“qty”:1.06,“qtyDisplay”:“106 gms”,“calories”:43.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0}],“meta”:{“phase”:“V3”,“weight”:82.3,“bloodSugar”:94.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:“Sesame seeds”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“13hrs”,“impact”:“No Discomfort”}},“2026-02-19”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:1.32,“qtyDisplay”:“33 gms”,“calories”:124.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Almonds”,“qty”:0.08,“qtyDisplay”:“8 gms”,“calories”:47.0},{“name”:“Coconut”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:71.0},{“name”:“Drumstick Leaves”,“qty”:0.93,“qtyDisplay”:“93 gms”,“calories”:63.0},{“name”:“Onion”,“qty”:0.93,“qtyDisplay”:“93 gms”,“calories”:38.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Cucumber”,“qty”:4.0,“qtyDisplay”:“400 gms”,“calories”:60.0},{“name”:“Curd”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:124.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0}],“meta”:{“phase”:“V3”,“weight”:81.5,“bloodSugar”:95.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:“Drumstick leaves”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“13hrs”,“impact”:“Dysentery”}},“2026-02-20”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:1.32,“qtyDisplay”:“33 gms”,“calories”:124.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“French Beans”,“qty”:2.21,“qtyDisplay”:“221 gms”,“calories”:54.0},{“name”:“Coconut”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:71.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Yellow Pumpkin”,“qty”:5.4,“qtyDisplay”:“540 gms”,“calories”:141.0}],“meta”:{“phase”:“V3”,“weight”:82.5,“bloodSugar”:91.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:””,“bm”:“Yes”,“supplement”:””,“water”:””,“fasting”:“24hrs”,“impact”:””}},“2026-02-21”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:5.04,“qtyDisplay”:“504 gms”,“calories”:132.0},{“name”:“Coconut”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:71.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Olives”,“qty”:0.46,“qtyDisplay”:“46 gms”,“calories”:60.0},{“name”:“Tamarind”,“qty”:0.1,“qtyDisplay”:“10 gms”,“calories”:24.0}],“meta”:{“phase”:“V3”,“weight”:82.4,“bloodSugar”:91.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:“Tamarind”,“bm”:“No”,“supplement”:””,“water”:“3L”,“fasting”:“12hrs”,“impact”:“Bloating”}},“2026-02-22”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Coconut”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:71.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Broccoli”,“qty”:3.85,“qtyDisplay”:“385 gms”,“calories”:131.0},{“name”:“Onion”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:40.0},{“name”:“Garlic”,“qty”:0.3,“qtyDisplay”:“30 gms”,“calories”:45.0}],“meta”:{“phase”:“V4”,“weight”:83.0,“bloodSugar”:92.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:””,“bm”:“No”,“supplement”:””,“water”:“3L”,“fasting”:“14hrs”,“impact”:””}},“2026-02-23”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:7.0,“qtyDisplay”:“700 gms”,“calories”:182.0},{“name”:“Almonds”,“qty”:0.09,“qtyDisplay”:“9 gms”,“calories”:53.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Carrot”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:41.0},{“name”:“Onion”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:40.0},{“name”:“Garlic”,“qty”:0.3,“qtyDisplay”:“30 gms”,“calories”:45.0},{“name”:“Cabbage”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:25.0},{“name”:“French Beans”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:24.0},{“name”:“Ginger”,“qty”:0.1,“qtyDisplay”:“10 gms”,“calories”:8.0}],“meta”:{“phase”:“V4”,“weight”:82.8,“bloodSugar”:100.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:””,“bm”:“No”,“supplement”:””,“water”:””,“fasting”:“14hrs”,“impact”:””}},“2026-02-25”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:5.75,“qtyDisplay”:“575 gms”,“calories”:150.0},{“name”:“Almonds”,“qty”:0.25,“qtyDisplay”:“25 gms”,“calories”:145.0},{“name”:“Carrot”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:41.0},{“name”:“Cabbage”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:25.0},{“name”:“French Beans”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:24.0},{“name”:“Ginger”,“qty”:0.06,“qtyDisplay”:“6 gms”,“calories”:5.0},{“name”:“Garlic”,“qty”:0.1,“qtyDisplay”:“10 gms”,“calories”:15.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0}],“meta”:{“phase”:“V4”,“weight”:81.9,“bloodSugar”:102.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:””,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“14hrs”,“impact”:””}},“2026-02-26”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:6.0,“qtyDisplay”:“600 gms”,“calories”:156.0},{“name”:“Pumpkin Seeds”,“qty”:0.15,“qtyDisplay”:“15 gms”,“calories”:89.0},{“name”:“Carrot”,“qty”:0.94,“qtyDisplay”:“94 gms”,“calories”:39.0},{“name”:“Cabbage”,“qty”:1.5,“qtyDisplay”:“150 gms”,“calories”:38.0},{“name”:“French Beans”,“qty”:1.24,“qtyDisplay”:“124 gms”,“calories”:30.0},{“name”:“Ginger”,“qty”:0.12,“qtyDisplay”:“12 gms”,“calories”:10.0},{“name”:“Garlic”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:30.0},{“name”:“Red Chilly”,“qty”:0.01,“qtyDisplay”:“1 gms”,“calories”:1.0},{“name”:“Curd”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:62.0}],“meta”:{“phase”:“V4”,“weight”:81.4,“bloodSugar”:94.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:“Red Chilli”,“bm”:“Yes”,“supplement”:””,“water”:“2.5L”,“fasting”:“14hrs”,“impact”:””}},“2026-02-27”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Cabbage”,“qty”:2.46,“qtyDisplay”:“246 gms”,“calories”:62.0},{“name”:“Green Chilli”,“qty”:0.12,“qtyDisplay”:“12 gms”,“calories”:29.0},{“name”:“Coconut”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:71.0},{“name”:“Onion”,“qty”:0.54,“qtyDisplay”:“54 gms”,“calories”:22.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Almonds”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:116.0},{“name”:“Ivy Gourd”,“qty”:4.0,“qtyDisplay”:“400 gms”,“calories”:96.0}],“meta”:{“phase”:“V4”,“weight”:81.2,“bloodSugar”:106.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:“Green Chilli”,“bm”:“No”,“supplement”:””,“water”:”>3L”,“fasting”:“14hrs”,“impact”:””}},“2026-02-28”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Tomato”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:19.0},{“name”:“Green Chilli”,“qty”:0.1,“qtyDisplay”:“10 gms”,“calories”:24.0},{“name”:“Onion”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:40.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Chow Chow”,“qty”:2.5,“qtyDisplay”:“250 gms”,“calories”:48.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Beetroot”,“qty”:2.0,“qtyDisplay”:“200 gms”,“calories”:86.0},{“name”:“Coconut”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:71.0}],“meta”:{“phase”:“V4”,“weight”:81.0,“bloodSugar”:101.0,“sleep”:“8hrs”,“energy”:“High”,“intro”:“Tomato”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“14hrs”,“impact”:””}},“2026-03-01”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yam”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:84.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Avocado”,“qty”:1.01,“qtyDisplay”:“101 gms”,“calories”:162.0},{“name”:“Green Chilli”,“qty”:0.01,“qtyDisplay”:“1 gms”,“calories”:3.0},{“name”:“Onion”,“qty”:0.44,“qtyDisplay”:“44 gms”,“calories”:18.0},{“name”:“Tomato”,“qty”:0.44,“qtyDisplay”:“44 gms”,“calories”:9.0},{“name”:“Almonds”,“qty”:0.24,“qtyDisplay”:“24 gms”,“calories”:140.0}],“meta”:{“phase”:“V4”,“weight”:80.75,“bloodSugar”:105.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:“Yam”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“14hrs”,“impact”:””}},“2026-03-02”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Sweet Potato”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:109.0},{“name”:“Yellow Pumpkin”,“qty”:5.2,“qtyDisplay”:“520 gms”,“calories”:136.0},{“name”:“Green Chilli”,“qty”:0.01,“qtyDisplay”:“1 gms”,“calories”:3.0},{“name”:“Onion”,“qty”:0.3,“qtyDisplay”:“30 gms”,“calories”:12.0},{“name”:“Tomato”,“qty”:0.5,“qtyDisplay”:“50 gms”,“calories”:10.0},{“name”:“Avocado”,“qty”:1.1,“qtyDisplay”:“110 gms”,“calories”:176.0}],“meta”:{“phase”:“V4”,“weight”:80.45,“bloodSugar”:95.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:“Sweet Potato”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“14hrs”,“impact”:””}},“2026-03-03”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:1.32,“qtyDisplay”:“33 gms”,“calories”:124.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Potato”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:77.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Yellow Pumpkin”,“qty”:5.2,“qtyDisplay”:“520 gms”,“calories”:136.0},{“name”:“High Protein Paneer”,“qty”:1.09,“qtyDisplay”:“109 gms”,“calories”:189.0},{“name”:“Almonds”,“qty”:0.24,“qtyDisplay”:“24 gms”,“calories”:140.0}],“meta”:{“phase”:“V4”,“weight”:80.35,“bloodSugar”:100.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:“Potato”,“bm”:“No”,“supplement”:””,“water”:“3L”,“fasting”:“14hrs”,“impact”:””}},“2026-03-04”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Taro”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:112.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Yellow Pumpkin”,“qty”:5.59,“qtyDisplay”:“559 gms”,“calories”:146.0},{“name”:“Avocado”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:160.0},{“name”:“Green Chilli”,“qty”:0.01,“qtyDisplay”:“1 gms”,“calories”:3.0}],“meta”:{“phase”:“V4”,“weight”:80.2,“bloodSugar”:106.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:“Taro”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“14hrs”,“impact”:””}},“2026-03-06”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Raw Banana”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:89.0},{“name”:“Avocado”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:160.0},{“name”:“Green Chilli”,“qty”:0.01,“qtyDisplay”:“1 gms”,“calories”:3.0},{“name”:“Tomato”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:19.0},{“name”:“Onion”,“qty”:0.5,“qtyDisplay”:“50 gms”,“calories”:20.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Almonds”,“qty”:0.06,“qtyDisplay”:“6 gms”,“calories”:35.0}],“meta”:{“phase”:“V4”,“weight”:80.0,“bloodSugar”:93.0,“sleep”:“6hrs”,“energy”:“Very Low”,“intro”:“Raw Banana”,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“14hrs”,“impact”:””}},“2026-03-07”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Capsicum”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:16.0},{“name”:“Sesame Oil”,“qty”:1.0,“qtyDisplay”:“1 Tsp”,“calories”:40.0},{“name”:“Avocado”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:160.0},{“name”:“Green Chilli”,“qty”:0.01,“qtyDisplay”:“1 gms”,“calories”:3.0},{“name”:“Tomato”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:19.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Cucumber”,“qty”:6.0,“qtyDisplay”:“600 gms”,“calories”:90.0}],“meta”:{“phase”:“V4”,“weight”:79.85,“bloodSugar”:116.0,“sleep”:“6hrs”,“energy”:“High”,“intro”:“Capsicum”,“bm”:“Yes”,“supplement”:””,“water”:””,“fasting”:“14hrs”,“impact”:””}},“2026-03-08”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Tapioca”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:80.0},{“name”:“Avocado”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:160.0},{“name”:“Green Chilli”,“qty”:0.01,“qtyDisplay”:“1 gms”,“calories”:3.0},{“name”:“Tomato”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:19.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Onion”,“qty”:0.5,“qtyDisplay”:“50 gms”,“calories”:20.0}],“meta”:{“phase”:“V4”,“weight”:80.15,“bloodSugar”:113.0,“sleep”:“6hrs”,“energy”:“High”,“intro”:””,“bm”:“Yes”,“supplement”:””,“water”:””,“fasting”:“14hrs”,“impact”:””}},“2026-03-09”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Sweet Potato”,“qty”:1.15,“qtyDisplay”:“115 gms”,“calories”:126.0},{“name”:“Avocado”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:160.0},{“name”:“Green Chilli”,“qty”:0.01,“qtyDisplay”:“1 gms”,“calories”:3.0},{“name”:“Tomato”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:19.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Onion”,“qty”:0.5,“qtyDisplay”:“50 gms”,“calories”:20.0}],“meta”:{“phase”:“V4”,“weight”:80.35,“bloodSugar”:97.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:””,“bm”:“No”,“supplement”:””,“water”:“3L”,“fasting”:“14hrs”,“impact”:””}},“2026-03-10”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Sweet Potato”,“qty”:0.69,“qtyDisplay”:“69 gms”,“calories”:76.0},{“name”:“Raw Banana”,“qty”:1.3,“qtyDisplay”:“130 gms”,“calories”:116.0},{“name”:“Yellow Pumpkin”,“qty”:5.48,“qtyDisplay”:“548 gms”,“calories”:143.0},{“name”:“Onion”,“qty”:0.5,“qtyDisplay”:“50 gms”,“calories”:20.0}],“meta”:{“phase”:“V4”,“weight”:80.15,“bloodSugar”:94.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:””,“bm”:“No”,“supplement”:””,“water”:””,“fasting”:“14hrs”,“impact”:””}},“2026-03-11”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Sweet Potato”,“qty”:0.69,“qtyDisplay”:“69 gms”,“calories”:76.0},{“name”:“Raw Banana”,“qty”:1.3,“qtyDisplay”:“130 gms”,“calories”:116.0},{“name”:“Yellow Pumpkin”,“qty”:5.48,“qtyDisplay”:“548 gms”,“calories”:143.0},{“name”:“Onion”,“qty”:0.5,“qtyDisplay”:“50 gms”,“calories”:20.0}],“meta”:{“phase”:“V4”,“weight”:80.15,“bloodSugar”:94.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:””,“bm”:“No”,“supplement”:””,“water”:””,“fasting”:“14hrs”,“impact”:””}},“2026-03-05”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:5.0,“qtyDisplay”:“500 gms”,“calories”:130.0},{“name”:“Avocado”,“qty”:1.75,“qtyDisplay”:“175 gms”,“calories”:280.0},{“name”:“Green Chilli”,“qty”:0.01,“qtyDisplay”:“1 gms”,“calories”:3.0},{“name”:“Tomato”,“qty”:1.0,“qtyDisplay”:“100 gms”,“calories”:19.0},{“name”:“Onion”,“qty”:0.5,“qtyDisplay”:“50 gms”,“calories”:20.0}],“meta”:{“phase”:“V4”,“weight”:80.35,“bloodSugar”:111.0,“sleep”:“5hrs”,“energy”:“High”,“intro”:””,“bm”:“No”,“supplement”:””,“water”:“3L”,“fasting”:“14hrs”,“impact”:””}},“2026-02-24”:{“foods”:[{“name”:“Ghee”,“qty”:3.0,“qtyDisplay”:“3 Tsp”,“calories”:116.0},{“name”:“MuscleBlaze”,“qty”:2.64,“qtyDisplay”:“66 gms”,“calories”:248.0},{“name”:“Fibre Drink”,“qty”:1.0,“qtyDisplay”:“1 qty”,“calories”:28.0},{“name”:“Yellow Pumpkin”,“qty”:5.25,“qtyDisplay”:“525 gms”,“calories”:137.0},{“name”:“Almonds”,“qty”:0.2,“qtyDisplay”:“20 gms”,“calories”:116.0},{“name”:“Avocado”,“qty”:0.87,“qtyDisplay”:“87 gms”,“calories”:140.0},{“name”:“Olives”,“qty”:0.5,“qtyDisplay”:“50 gms”,“calories”:65.0}],“meta”:{“phase”:“V4”,“weight”:82.35,“bloodSugar”:89.0,“sleep”:“7hrs”,“energy”:“High”,“intro”:””,“bm”:“Yes”,“supplement”:””,“water”:“3L”,“fasting”:“14hrs”,“impact”:””}}};
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+let dashRange = 30;
+let dashCharts = {};
+
+function setDashRange(days, btn) {
+dashRange = days;
+document.querySelectorAll(’#page-dashboard .select-chip’).forEach(b => b.classList.remove(‘active’));
+btn.classList.add(‘active’);
+renderDashboard();
+}
+
+function getAllLogs() {
+// Merge Firestore logs (allLogs) with scraped data; Firestore takes priority
+const merged = Object.assign({}, SCRAPED_LOGS);
+Object.keys(allLogs).forEach(dk => {
+const fl = allLogs[dk];
+const hasRealData = (fl.foods && fl.foods.length > 0) || fl.meta?.weight || fl.meta?.bloodSugar;
+if (hasRealData) merged[dk] = fl;
+});
+return merged;
+}
+
+function parseSleep(s) {
+if (!s) return null;
+const n = parseFloat(String(s).replace(/[^0-9.]/g,’’));
+return (n > 0 && n <= 24) ? n : null;
+}
+
+function renderDashboard() {
+const all = getAllLogs();
+const sorted = Object.keys(all).sort();
+const cutoff = dashRange === 90 ? null : (() => {
+const d = new Date(); d.setDate(d.getDate() - dashRange);
+return d.toISOString().split(‘T’)[0];
+})();
+const filtered = sorted.filter(dk => !cutoff || dk >= cutoff);
+
+// Build series
+const weightPts = [], bsPts = [], calPts = [], sleepPts = [];
+filtered.forEach(dk => {
+const v = all[dk];
+const m = v.meta || {};
+const label = dk.slice(5); // MM-DD
+const w = typeof m.weight === ‘number’ ? m.weight : parseFloat(m.weight);
+const bs = typeof m.bloodSugar === ‘number’ ? m.bloodSugar : parseFloat(m.bloodSugar);
+const cal = Math.round((v.foods||[]).reduce((s,f)=>s+f.calories,0));
+const sl = parseSleep(m.sleep);
+if (!isNaN(w) && w > 40 && w < 200) weightPts.push({x:dk, y:w});
+if (!isNaN(bs) && bs > 30 && bs < 500) bsPts.push({x:dk, y:bs});
+if (cal > 0) calPts.push({x:dk, y:cal});
+if (sl) sleepPts.push({x:dk, y:sl});
+});
+
+// Summary stats
+const latestW = weightPts.length ? weightPts[weightPts.length-1].y : null;
+const firstW = weightPts.length > 1 ? weightPts[0].y : null;
+const latestBS = bsPts.length ? bsPts[bsPts.length-1].y : null;
+const avgCal = calPts.length ? Math.round(calPts.reduce((s,p)=>s+p.y,0)/calPts.length) : null;
+
+document.getElementById(‘dash-avgcal’).textContent = avgCal || ‘—’;
+document.getElementById(‘dash-weight’).textContent = latestW ?
+(firstW ? `${latestW} (${latestW < firstW ? '▼' : '▲'}${Math.abs(latestW-firstW).toFixed(1)})` : latestW) : ‘—’;
+document.getElementById(‘dash-bs’).textContent = latestBS || ‘—’;
+document.getElementById(‘dash-days’).textContent = filtered.length;
+
+// Thin out labels for readability
+function thinLabels(pts, max=20) {
+if (pts.length <= max) return pts.map(p=>p.x.slice(5));
+const step = Math.ceil(pts.length/max);
+return pts.map((p,i) => i%step===0 ? p.x.slice(5) : ‘’);
+}
+
+const chartDefaults = {
+responsive: true,
+animation: false,
+plugins: { legend: { display: false }, tooltip: {
+backgroundColor: ‘#1a1f2e’, titleColor: ‘#6ee7b7’, bodyColor: ‘#e2e8f0’,
+borderColor: ‘#2a2f3f’, borderWidth: 1,
+callbacks: { title: (items) => items[0].raw.x || items[0].label }
+}},
+scales: {
+x: { ticks: { color: ‘#64748b’, font: { size: 9, family: ‘DM Mono’ }, maxRotation: 0 }, grid: { color: ‘#1a1f2e’ } },
+y: { ticks: { color: ‘#64748b’, font: { size: 9, family: ‘DM Mono’ } }, grid: { color: ‘#1a1f2e’ } }
+}
+};
+
+function makeChart(id, type, data, color, opts={}) {
+if (dashCharts[id]) dashCharts[id].destroy();
+const ctx = document.getElementById(id).getContext(‘2d’);
+dashCharts[id] = new Chart(ctx, {
+type,
+data,
+options: Object.assign(JSON.parse(JSON.stringify(chartDefaults)), opts)
+});
+}
+
+// Weight chart — line with gradient fill
+makeChart(‘weightChart’, ‘line’, {
+labels: thinLabels(weightPts),
+datasets: [{
+data: weightPts.map(p=>p.y), borderColor: ‘#60a5fa’, backgroundColor: ‘rgba(96,165,250,0.08)’,
+borderWidth: 2, pointRadius: 3, pointBackgroundColor: ‘#60a5fa’, tension: 0.3, fill: true
+}]
+}, ‘#60a5fa’, {
+scales: {
+x: chartDefaults.scales.x,
+y: { …chartDefaults.scales.y, title: { display: true, text: ‘kg’, color: ‘#64748b’, font: { size: 10 } } }
+},
+plugins: { …chartDefaults.plugins }
+});
+
+// Blood sugar chart
+makeChart(‘bsChart’, ‘line’, {
+labels: thinLabels(bsPts),
+datasets: [{
+data: bsPts.map(p=>p.y), borderColor: ‘#f87171’, backgroundColor: ‘rgba(248,113,113,0.08)’,
+borderWidth: 2, pointRadius: 3, pointBackgroundColor: ‘#f87171’, tension: 0.3, fill: true
+}]
+}, ‘#f87171’, {
+scales: {
+x: chartDefaults.scales.x,
+y: { …chartDefaults.scales.y,
+title: { display: true, text: ‘mg/dL’, color: ‘#64748b’, font: { size: 10 } }
+}
+},
+plugins: {
+…chartDefaults.plugins,
+annotation: undefined
+}
+});
+
+// Calories chart — bar with target line
+makeChart(‘calChart’, ‘bar’, {
+labels: thinLabels(calPts),
+datasets: [
+{
+data: calPts.map(p=>p.y),
+backgroundColor: calPts.map(p => p.y > 850 ? ‘rgba(248,113,113,0.7)’ : ‘rgba(110,231,183,0.7)’),
+borderRadius: 4, borderSkipped: false
+},
+{
+type: ‘line’, data: calPts.map(()=>850),
+borderColor: ‘rgba(245,158,11,0.6)’, borderWidth: 1.5, borderDash: [4,4],
+pointRadius: 0, fill: false
+}
+]
+}, ‘#6ee7b7’);
+
+// Sleep chart
+makeChart(‘sleepChart’, ‘bar’, {
+labels: thinLabels(sleepPts),
+datasets: [{
+data: sleepPts.map(p=>p.y),
+backgroundColor: sleepPts.map(p => p.y >= 7 ? ‘rgba(110,231,183,0.7)’ : p.y >= 6 ? ‘rgba(245,158,11,0.7)’ : ‘rgba(248,113,113,0.7)’),
+borderRadius: 4
+}]
+}, ‘#a78bfa’, {
+scales: {
+x: chartDefaults.scales.x,
+y: { …chartDefaults.scales.y, min: 0, max: 12,
+title: { display: true, text: ‘hrs’, color: ‘#64748b’, font: { size: 10 } }
+}
+},
+plugins: { …chartDefaults.plugins }
+});
+
+// Phase timeline
+const phaseColors = { V1:’#6ee7b7’, V2:’#60a5fa’, V3:’#f59e0b’, V4:’#f87171’ };
+const phaseDays = {};
+filtered.forEach(dk => {
+const ph = (all[dk].meta||{}).phase;
+if (ph && ph.startsWith(‘V’)) {
+if (!phaseDays[ph]) phaseDays[ph] = [];
+phaseDays[ph].push(dk);
+}
+});
+const ptHtml = Object.entries(phaseDays).sort().map(([ph, days]) => {
+const col = phaseColors[ph] || ‘#888’;
+const start = days[0].slice(5);
+const end = days[days.length-1].slice(5);
+return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);"> <div style="width:36px;height:36px;border-radius:50%;background:${col};color:#0d0f14;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">${ph}</div> <div> <div style="font-weight:700;font-size:13px;">${ph} — ${days.length} days</div> <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;">${start} → ${end}</div> </div> <div style="margin-left:auto;font-size:20px;font-weight:800;color:${col};">${days.length}</div> </div>`;
+}).join(’’);
+document.getElementById(‘phaseTimeline’).innerHTML = ptHtml || ‘<div class="empty-state">No phase data</div>’;
+}
+
+async function importHistoricalData() {
+if (!db || !currentUser) { showToast(‘Please sign in first’); return; }
+const btn = document.getElementById(‘importBtn’);
+btn.textContent = ‘⏳ Importing…’;
+btn.disabled = true;
+
+try {
+let count = 0;
+const batch_size = 10;
+const entries = Object.entries(SCRAPED_LOGS);
+
+```
+for (let i = 0; i < entries.length; i += batch_size) {
+  const chunk = entries.slice(i, i + batch_size);
+  await Promise.all(chunk.map(async ([dk, v]) => {
+    // Only import if no existing Firestore data for that day
+    const existing = allLogs[dk];
+    const hasReal = existing && ((existing.foods||[]).length > 0 || existing.meta?.weight);
+    if (!hasReal) {
+      const ref = db.collection('users').doc(currentUser.uid).collection('logs').doc(dk);
+      await ref.set(v, { merge: true });
+      allLogs[dk] = v;
+      count++;
     }
-  } catch (e) {
-    if (e.name !== 'AbortError') showToast('Share failed — try Save instead');
-  }
+  }));
 }
 
-function doDownload() {
-  if (!snapshotDataUrl) return;
-  const a = document.createElement('a');
-  a.href = snapshotDataUrl;
-  a.download = `amura-${currentDate}.png`;
-  a.click();
-  showToast('Image saved!');
+btn.textContent = `✅ ${count} days imported!`;
+btn.style.background = '#6ee7b7';
+setTimeout(() => { btn.textContent = '⬆ Import Spreadsheet'; btn.disabled = false; btn.style.background = '#f59e0b'; }, 3000);
+renderDashboard();
+showToast(`Imported ${count} historical days`);
+```
+
+} catch(e) {
+btn.textContent = ‘❌ Error’;
+btn.disabled = false;
+console.error(e);
+showToast(‘Import failed — check console’);
+setTimeout(() => { btn.textContent = ‘⬆ Import Spreadsheet’; btn.style.background = ‘#f59e0b’; }, 3000);
 }
+}
+
 </script>
-
 </body>
 </html>
