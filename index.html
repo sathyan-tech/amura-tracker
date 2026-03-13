@@ -461,14 +461,14 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
       </svg>
       <div class="ring-info">
         <h2 id="calConsumedBig">0</h2>
-        <div class="ring-sub">KCAL CONSUMED</div>
+        <div class="ring-sub" id="ringSubLabel">KCAL CONSUMED</div>
         <div class="ring-avail">Target: <span id="calTargetDisplay" onclick="openTargetEditor()" style="cursor:pointer;text-decoration:underline dotted;color:var(--accent2);">850</span> kcal <span style="font-size:10px;color:var(--muted);">✏</span></div>
         <div class="ring-avail">Remaining: <span id="calAvailDisplay">850</span> kcal</div>
       </div>
     </div>
     <div class="cal-stats">
       <div class="cal-stat"><div class="cal-stat-val" id="calTarget2">850</div><div class="cal-stat-lbl">TARGET</div></div>
-      <div class="cal-stat"><div class="cal-stat-val" id="calConsumed2" style="color:var(--accent)">0</div><div class="cal-stat-lbl">CONSUMED</div></div>
+      <div class="cal-stat"><div class="cal-stat-val" id="calConsumed2" style="color:var(--accent)">0</div><div class="cal-stat-lbl" id="statConsumedLabel">CONSUMED</div></div>
       <div class="cal-stat"><div class="cal-stat-val" id="calAvail2" style="color:var(--accent2)">850</div><div class="cal-stat-lbl">REMAINING</div></div>
     </div>
   </div>
@@ -1467,6 +1467,9 @@ function renderFoodLog() {
 
   // Update ring
   document.getElementById('calConsumedBig').textContent = consumed;
+  const isToday = currentDate === getTodayStr();
+  document.getElementById('ringSubLabel').textContent = isToday ? 'KCAL PLANNED' : 'KCAL CONSUMED';
+  document.getElementById('statConsumedLabel').textContent = isToday ? 'PLANNED' : 'CONSUMED';
   document.getElementById('calTargetDisplay').textContent = target;
   document.getElementById('calAvailDisplay').textContent = avail;
   document.getElementById('calTarget2').textContent = target;
