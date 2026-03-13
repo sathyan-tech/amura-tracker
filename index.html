@@ -2540,6 +2540,8 @@ function shareSnapshot() {
   const pct = Math.min(consumed / target, 1);
   const over = consumed > target;
   const m = log.meta;
+  const isToday = currentDate === getTodayStr();
+  const consumedLabel = isToday ? 'PLANNED' : 'CONSUMED';
 
   // Format date nicely
   const [y, mo, d] = currentDate.split('-');
@@ -2617,7 +2619,7 @@ function shareSnapshot() {
           <div style="font-size:18px;font-weight:800">${target} <span style="font-size:12px;color:#64748b">kcal</span></div>
         </div>
         <div style="margin-bottom:8px">
-          <div style="font-size:11px;color:#64748b;margin-bottom:2px">CONSUMED</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:2px">${consumedLabel}</div>
           <div style="font-size:18px;font-weight:800;color:#6ee7b7">${consumed} <span style="font-size:12px;color:#64748b">kcal</span></div>
         </div>
         <div>
