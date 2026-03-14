@@ -1351,7 +1351,10 @@ function saveLogs() {
 function saveOverrides() {
   try { localStorage.setItem('amura_overrides_cache', JSON.stringify(foodStatusOverrides)); } catch(_) {}
   if (!db || !currentUser) return;
-  userDoc().set({ foodStatusOverrides }, { merge: true }).catch(() => {});
+  setSyncStatus('● Saving…', '#f59e0b');
+  userDoc().set({ foodStatusOverrides }, { merge: true })
+    .then(() => setSyncStatus('● Synced', '#6ee7b7'))
+    .catch(e => { console.error('saveOverrides failed', e); setSyncStatus('⚠ Save failed', '#f87171'); });
 }
 
 function getEmptyLog() {
@@ -1727,8 +1730,20 @@ function cycleStatus(name) {
   const food = CALORIE_DB.find(f => f.name === name);
   const current = foodStatusOverrides[name] || food.status;
   const idx = statuses.indexOf(current);
-  foodStatusOverrides[name] = statuses[(idx + 1) % statuses.length];
+  const newStatus = statuses[(idx + 1) % statuses.length];
+  foodStatusOverrides[name] = newStatus;
   saveOverrides();
+  // Also persist into customFoods collection so status survives across sessions
+  const existingCustom = customFoods.find(f => f.name === name);
+  if (existingCustom) {
+    existingCustom.status = newStatus;
+    saveCustomFood(existingCustom).catch(() => {});
+  } else {
+    // Create a custom entry to hold the status override persistently
+    const entry = { ...food, status: newStatus, _custom: true, phase: String(food.phase) };
+    customFoods.push(entry);
+    saveCustomFood(entry).catch(() => {});
+  }
   renderPhaseList(currentPhaseFilter, currentCatFilter);
 }
 
@@ -1896,21 +1911,36 @@ async function loadCustomFoods() {
     const snap = await userDoc().collection('customFoods').get();
     customFoods = [];
     snap.forEach(doc => customFoods.push({ ...doc.data(), _custom: true }));
-    // Also merge into search so food log autocomplete picks them up
+
     customFoods.forEach(cf => {
-      if (!CALORIE_DB.find(f => f.name === cf.name)) CALORIE_DB.push(cf);
+      const idx = CALORIE_DB.findIndex(f => f.name === cf.name);
+      if (idx >= 0) {
+        // Update existing built-in entry with saved edits (cal, qty, unit, phase, cat)
+        Object.assign(CALORIE_DB[idx], { cal: cf.cal, qty: cf.qty, unit: cf.unit, phase: cf.phase, cat: cf.cat, _custom: true });
+      } else {
+        // Brand new custom food — add to DB
+        CALORIE_DB.push(cf);
+      }
+      // Restore status override from the saved custom food record
+      // (only if not already set from foodStatusOverrides doc to avoid conflicts)
+      if (!foodStatusOverrides[cf.name] && cf.status) {
+        foodStatusOverrides[cf.name] = cf.status;
+      }
     });
   } catch(e) { console.warn('Could not load custom foods', e); }
 }
 
 async function saveCustomFood(food) {
   if (!db || !currentUser) return;
-  await userDoc().collection('customFoods').doc(food.name).set(food);
+  // Firestore doc IDs can't contain '/', so sanitise the name
+  const docId = food.name.replace(/\//g, '_');
+  await userDoc().collection('customFoods').doc(docId).set({ ...food, _docId: docId });
 }
 
 async function deleteCustomFood(name) {
   if (!db || !currentUser) return;
-  await userDoc().collection('customFoods').doc(name).delete();
+  const docId = name.replace(/\//g, '_');
+  await userDoc().collection('customFoods').doc(docId).delete();
 }
 
 function openFoodEditor(foodName) {
@@ -1999,10 +2029,12 @@ async function saveFoodEditor() {
   }
 
   closeFoodEditor();
-  showToast(`${name} saved!`);
+  showToast(`${name} saved! ✓`);
   runLookup();
+  renderPhaseList(currentPhaseFilter, currentCatFilter);
   buildCatFilters();
   buildLookupCatFilter();
+  setSyncStatus('● Synced', '#6ee7b7');
 }
 
 
