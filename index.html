@@ -997,6 +997,11 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
     style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
     ＋ Add Food
   </button>
+  <button onclick="seedMasterFoods()"
+    style="background:#1e2230;border:1px solid #a78bfa;color:#a78bfa;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;"
+    title="Push all seed foods to Firestore master list">
+    ⬆ Seed All
+  </button>
   <button onclick="openPhaseEditor()"
     style="background:#a78bfa;color:#0d0f14;border:none;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
     ⚙ Phases
@@ -1211,9 +1216,81 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 // ============================================================
 // CALORIE DATABASE from spreadsheet
 // ============================================================
-// CALORIE_DB is fully managed via Firestore /masterFoods
-// Starts empty — populated by loadMasterFoods() on every login
-let CALORIE_DB = [];
+// CALORIE_DB: seed data embedded as fallback so the app works even before
+// /masterFoods is populated in Firestore. loadMasterFoods() will override/add to this.
+// Admin can use "Seed Master Foods" in Admin tab to push all these to Firestore.
+let CALORIE_DB = [
+  {name:"Bottle Gourd",cat:"Vegetables",phase:2,status:"Retest",cal:11,qty:100,unit:"gms"},
+  {name:"Snake Gourd",cat:"Vegetables",phase:2,status:"Test",cal:12,qty:100,unit:"gms"},
+  {name:"Ridge Gourd",cat:"Vegetables",phase:2,status:"OK",cal:13,qty:100,unit:"gms"},
+  {name:"Celery",cat:"Vegetables",phase:1,status:"NI",cal:14,qty:100,unit:"gms"},
+  {name:"Cucumber",cat:"Vegetables",phase:1,status:"OK",cal:15,qty:100,unit:"gms"},
+  {name:"Lettuce",cat:"Vegetables",phase:1,status:"Retest",cal:14,qty:100,unit:"gms"},
+  {name:"Capsicum",cat:"Vegetables",phase:4,status:"OK",cal:16,qty:100,unit:"gms"},
+  {name:"White Pumpkin",cat:"Vegetables",phase:1,status:"OK",cal:17,qty:100,unit:"gms"},
+  {name:"Zucchini",cat:"Vegetables",phase:1,status:"NI",cal:20,qty:100,unit:"gms"},
+  {name:"Knol Khol",cat:"Vegetables",phase:2,status:"Test",cal:16,qty:100,unit:"gms"},
+  {name:"Bok Choy",cat:"Vegetables",phase:1,status:"NI",cal:13,qty:100,unit:"gms"},
+  {name:"Chow Chow",cat:"Vegetables",phase:2,status:"OK",cal:19,qty:100,unit:"gms"},
+  {name:"Asparagus",cat:"Vegetables",phase:1,status:"OK",cal:20,qty:100,unit:"gms"},
+  {name:"Mushroom",cat:"Vegetables",phase:2,status:"Retest",cal:22,qty:100,unit:"gms"},
+  {name:"Spinach",cat:"Vegetables",phase:1,status:"Retest",cal:23,qty:100,unit:"gms"},
+  {name:"Cabbage",cat:"Vegetables",phase:1,status:"OK",cal:25,qty:100,unit:"gms"},
+  {name:"Cauliflower",cat:"Vegetables",phase:1,status:"OK",cal:25,qty:100,unit:"gms"},
+  {name:"Ivy Gourd",cat:"Vegetables",phase:2,status:"OK",cal:24,qty:100,unit:"gms"},
+  {name:"Long Beans",cat:"Vegetables",phase:2,status:"Test",cal:24.5,qty:100,unit:"gms"},
+  {name:"Eggplant",cat:"Vegetables",phase:4,status:"Test",cal:25,qty:100,unit:"gms"},
+  {name:"Yellow Pumpkin",cat:"Vegetables",phase:2,status:"OK",cal:26,qty:100,unit:"gms"},
+  {name:"French Beans",cat:"Vegetables",phase:1,status:"OK",cal:24,qty:100,unit:"gms"},
+  {name:"Radish",cat:"Vegetables",phase:2,status:"Test",cal:32.5,qty:100,unit:"gms"},
+  {name:"Broccoli",cat:"Vegetables",phase:1,status:"OK",cal:34,qty:100,unit:"gms"},
+  {name:"Fenugreek Leaves",cat:"Vegetables",phase:2,status:"OK",cal:34,qty:100,unit:"gms"},
+  {name:"Carrot",cat:"Vegetables",phase:1,status:"OK",cal:41,qty:100,unit:"gms"},
+  {name:"Beetroot",cat:"Vegetables",phase:3,status:"OK",cal:43,qty:100,unit:"gms"},
+  {name:"Brussel Sprouts",cat:"Vegetables",phase:1,status:"OK",cal:43,qty:100,unit:"gms"},
+  {name:"Drumstick Leaves",cat:"Vegetables",phase:3,status:"Retest",cal:68,qty:100,unit:"gms"},
+  {name:"Bitter Gourd",cat:"Vegetables",phase:4,status:"Test",cal:19,qty:100,unit:"gms"},
+  {name:"Yam",cat:"Vegetables",phase:4,status:"OK",cal:84,qty:100,unit:"gms"},
+  {name:"Raw Banana",cat:"Vegetables",phase:4,status:"OK",cal:89,qty:100,unit:"gms"},
+  {name:"Sweet Potato",cat:"Vegetables",phase:4,status:"OK",cal:109,qty:100,unit:"gms"},
+  {name:"Potato",cat:"Vegetables",phase:4,status:"OK",cal:77,qty:100,unit:"gms"},
+  {name:"Peas",cat:"Vegetables",phase:3,status:"OK",cal:81,qty:100,unit:"gms"},
+  {name:"Taro",cat:"Vegetables",phase:4,status:"OK",cal:112,qty:100,unit:"gms"},
+  {name:"Tomato",cat:"Vegetables",phase:4,status:"OK",cal:19,qty:100,unit:"gms"},
+  {name:"Onion",cat:"Vegetables",phase:3,status:"OK",cal:40,qty:100,unit:"gms"},
+  {name:"Garlic",cat:"Vegetables",phase:3,status:"OK",cal:150,qty:100,unit:"gms"},
+  {name:"Ginger",cat:"Vegetables",phase:3,status:"OK",cal:80,qty:100,unit:"gms"},
+  {name:"Green Chilli",cat:"Vegetables",phase:4,status:"OK",cal:40,qty:100,unit:"gms"},
+  {name:"Red Chilly",cat:"Vegetables",phase:4,status:"OK",cal:31,qty:100,unit:"gms"},
+  {name:"Spring Onion",cat:"Vegetables",phase:2,status:"Test",cal:32,qty:100,unit:"gms"},
+  {name:"Tapioca",cat:"Vegetables",phase:4,status:"OK",cal:80,qty:100,unit:"gms"},
+  {name:"Avocado",cat:"Fruits",phase:1,status:"OK",cal:160,qty:100,unit:"gms"},
+  {name:"Raw Mango",cat:"Fruits",phase:2,status:"OK",cal:60,qty:100,unit:"gms"},
+  {name:"Coconut",cat:"Fruits",phase:2,status:"OK",cal:354,qty:100,unit:"gms"},
+  {name:"Gooseberries",cat:"Fruits",phase:2,status:"Test",cal:44,qty:100,unit:"gms"},
+  {name:"Strawberry",cat:"Fruits",phase:3,status:"OK",cal:41,qty:100,unit:"gms"},
+  {name:"Tamarind",cat:"Fruits",phase:3,status:"Retest",cal:239,qty:100,unit:"gms"},
+  {name:"Olives",cat:"Fruits",phase:1,status:"OK",cal:116,qty:100,unit:"gms"},
+  {name:"Ghee",cat:"Oils",phase:1,status:"OK",cal:116,qty:3,unit:"Tsp"},
+  {name:"Sesame Oil",cat:"Oils",phase:1,status:"OK",cal:40,qty:1,unit:"Tsp"},
+  {name:"Olive Oil",cat:"Oils",phase:1,status:"OK",cal:40,qty:1,unit:"Tsp"},
+  {name:"Coconut Oil",cat:"Oils",phase:1,status:"OK",cal:38,qty:1,unit:"Tsp"},
+  {name:"Butter",cat:"Oils",phase:1,status:"OK",cal:34,qty:1,unit:"Tsp"},
+  {name:"Curd",cat:"Dairy",phase:2,status:"OK",cal:62,qty:100,unit:"gms"},
+  {name:"Paneer",cat:"Dairy",phase:3,status:"OK",cal:265,qty:100,unit:"gms"},
+  {name:"Cheddar",cat:"Dairy",phase:3,status:"OK",cal:420,qty:100,unit:"gms"},
+  {name:"Mozzarella",cat:"Dairy",phase:3,status:"OK",cal:330,qty:100,unit:"gms"},
+  {name:"High Protein Paneer",cat:"Dairy",phase:3,status:"OK",cal:175,qty:100,unit:"gms"},
+  {name:"Almonds",cat:"Nuts",phase:3,status:"OK",cal:579,qty:100,unit:"gms"},
+  {name:"Walnuts",cat:"Nuts",phase:3,status:"OK",cal:654,qty:100,unit:"gms"},
+  {name:"Coconut Milk",cat:"Dairy",phase:2,status:"OK",cal:185,qty:100,unit:"ml"},
+  {name:"Pistachios",cat:"Nuts",phase:3,status:"OK",cal:562,qty:100,unit:"gms"},
+  {name:"Pumpkin Seeds",cat:"Seeds",phase:3,status:"OK",cal:559,qty:100,unit:"gms"},
+  {name:"Sunflower Seeds",cat:"Seeds",phase:3,status:"OK",cal:584,qty:100,unit:"gms"},
+  {name:"Sesame Seeds",cat:"Seeds",phase:3,status:"OK",cal:573,qty:100,unit:"gms"},
+  {name:"MuscleBlaze",cat:"Protein",phase:1,status:"OK",cal:94,qty:25,unit:"gms"},
+  {name:"Fibre Drink",cat:"Supplements",phase:1,status:"OK",cal:28,qty:1,unit:"qty"},
+];
 
 // ============================================================
 // FIREBASE & AUTH
@@ -3314,6 +3391,33 @@ async function loadMasterFoods() {
 }
 
 // ── Admin sub-tab switcher ──
+async function seedMasterFoods() {
+  const toSeed = CALORIE_DB.filter(f => !masterFoods.some(mf => mf.name === f.name));
+  if (!toSeed.length) { showToast('All seed foods already in master ✓'); return; }
+  if (!confirm(`Push ${toSeed.length} seed foods to master DB? Existing master entries are not overwritten.`)) return;
+
+  setSyncStatus('● Seeding…', '#f59e0b');
+  try {
+    const batch = db.batch();
+    toSeed.forEach(f => {
+      const docId = f.name.replace(/\//g, '_');
+      batch.set(db.collection('masterFoods').doc(docId), {
+        name: f.name, cal: f.cal, qty: f.qty,
+        unit: f.unit, cat: f.cat, phase: String(f.phase)
+      });
+    });
+    await batch.commit();
+    showToast(`${toSeed.length} foods seeded to master ✓`);
+    setSyncStatus('● Synced', '#6ee7b7');
+    await loadMasterFoodsAdmin();
+    await loadMasterFoods();
+  } catch(e) {
+    setSyncStatus('⚠ Seed failed', '#f87171');
+    showToast('Seed failed: ' + e.message);
+    console.error(e);
+  }
+}
+
 async function saveAppConfig() {
   const email = document.getElementById('cfg_adminEmail').value.trim();
   const cal   = parseInt(document.getElementById('cfg_defaultCal').value);
