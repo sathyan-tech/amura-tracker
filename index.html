@@ -1246,6 +1246,8 @@ function signOut() {
   // Clear all in-memory state so the next user starts fresh
   dayLogs = {};
   foodStatusOverrides = {};
+  customFoods = [];
+  resetCalorieDBStatuses();
   localStorage.removeItem('amura_logs_cache');
   localStorage.removeItem('amura_overrides_cache');
   firebase.auth().signOut();
@@ -1256,6 +1258,8 @@ function onSignedIn(user) {
   // Reset state for this user — prevents previous account's data from leaking
   dayLogs = {};
   foodStatusOverrides = {};
+  customFoods = [];
+  resetCalorieDBStatuses();
   document.getElementById('loginScreen').style.display = 'none';
   const syncBar = document.getElementById('syncBar');
   syncBar.style.display = 'flex';
@@ -1301,6 +1305,32 @@ window.addEventListener('load', () => {
 // ============================================================
 // APP STATE
 // ============================================================
+// Store original CALORIE_DB names+statuses at startup so we can reset between user sessions
+const _CALORIE_DB_ORIGINAL_STATUS = {};
+const _CALORIE_DB_ORIGINAL_NAMES = new Set();
+(function() {
+  CALORIE_DB.forEach(f => {
+    _CALORIE_DB_ORIGINAL_STATUS[f.name] = f.status;
+    _CALORIE_DB_ORIGINAL_NAMES.add(f.name);
+  });
+})();
+
+function resetCalorieDBStatuses() {
+  // Remove pure custom food entries added by a previous user session
+  for (let i = CALORIE_DB.length - 1; i >= 0; i--) {
+    if (!_CALORIE_DB_ORIGINAL_NAMES.has(CALORIE_DB[i].name)) {
+      CALORIE_DB.splice(i, 1);
+    }
+  }
+  // Restore original status and remove _custom flag on built-in entries
+  CALORIE_DB.forEach(f => {
+    if (_CALORIE_DB_ORIGINAL_STATUS.hasOwnProperty(f.name)) {
+      f.status = _CALORIE_DB_ORIGINAL_STATUS[f.name];
+    }
+    delete f._custom;
+  });
+}
+
 let currentDate = getTodayStr();
 let dayLogs = {};
 let foodStatusOverrides = {};
@@ -2560,7 +2590,7 @@ function viewAdminUser(idx) {
           ${m.weight ? `<div style="font-size:12px;"><span style="color:var(--muted)">Weight: </span><strong>${m.weight} kg</strong></div>` : ''}
           ${m.bloodSugar ? `<div style="font-size:12px;"><span style="color:var(--muted)">BS: </span><strong>${m.bloodSugar}</strong></div>` : ''}
           ${m.sleep ? `<div style="font-size:12px;"><span style="color:var(--muted)">Sleep: </span><strong>${m.sleep}h</strong></div>` : ''}
-          ${m.energy ? `<div style="font-size:12px;"><span style="color:var(--muted)">Energy: </span><strong>${m.energy}/5</strong></div>` : ''}
+          ${m.energy ? `<div style="font-size:12px;"><span style="color:var(--muted)">Energy: </span><strong>${m.energy}</strong></div>` : ''}
         </div>
         ${(log.foods || []).length > 0 ? `
           <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-family:'DM Mono',monospace;">FOOD LOG</div>
@@ -2627,7 +2657,7 @@ function shareSnapshot() {
     m.bloodSugar ? {icon:'🩸', label:'Blood Sugar',  val:`${m.bloodSugar} mg/dL`}: null,
     m.sleep      ? {icon:'😴', label:'Sleep',        val:`${m.sleep} hrs`}        : null,
     m.water      ? {icon:'💧', label:'Water',        val:`${m.water} L`}          : null,
-    m.energy     ? {icon:'⚡', label:'Energy',       val:`${m.energy}/5`}         : null,
+    m.energy     ? {icon:'⚡', label:'Energy',       val:`${m.energy}`}            : null,
     m.fasting    ? {icon:'⏱', label:'Fasting',      val:`${m.fasting} hrs`}      : null,
     m.bm         ? {icon:'🚽', label:'BM',           val:m.bm}                    : null,
     m.phase      ? {icon:'📋', label:'Phase',        val:m.phase}                 : null,
