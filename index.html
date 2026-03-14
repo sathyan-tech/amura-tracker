@@ -582,12 +582,8 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 <div class="page" id="page-phase">
   <div class="phase-badge">📋 Food Testing Tracker</div>
 
-  <div class="select-row">
-    <button class="select-chip active" id="fphase-all" onclick="filterPhase('all')">All</button>
-    <button class="select-chip" id="fphase-1" onclick="filterPhase('1')">Phase 1</button>
-    <button class="select-chip" id="fphase-2" onclick="filterPhase('2')">Phase 2</button>
-    <button class="select-chip" id="fphase-3" onclick="filterPhase('3')">Phase 3</button>
-    <button class="select-chip" id="fphase-4" onclick="filterPhase('4')">Phase 4</button>
+  <div class="select-row" id="phaseTabFilter">
+    <!-- built dynamically by buildPhaseTabFilter() so custom phases appear here too -->
   </div>
 
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:12px 14px;background:#161922;border:1px solid #2a2f3f;border-radius:12px;">
@@ -1989,10 +1985,21 @@ function buildCatFilters() {
   ).join('');
 }
 
+function buildPhaseTabFilter() {
+  const phases = getAllPhases();
+  const container = document.getElementById('phaseTabFilter');
+  if (!container) return;
+  container.innerHTML =
+    `<button class="select-chip ${currentPhaseFilter==='all'?'active':''}" id="fphase-all" onclick="filterPhase('all')">All</button>` +
+    phases.map(p =>
+      `<button class="select-chip ${currentPhaseFilter===p?'active':''}" id="fphase-${p}" onclick="filterPhase('${p}')">Phase ${p}</button>`
+    ).join('');
+}
+
 function filterPhase(ph) {
   currentPhaseFilter = ph;
-  document.querySelectorAll('.select-chip[id^=fphase-]').forEach(b => b.classList.remove('active'));
-  document.getElementById('fphase-' + ph).classList.add('active');
+  // Rebuild chips so active state is correct
+  buildPhaseTabFilter();
   renderPhaseList(currentPhaseFilter, currentCatFilter);
 }
 
@@ -2381,6 +2388,7 @@ async function saveFoodEditor() {
   closeFoodEditor();
   showToast(`${name} saved! ✓`);
   runLookup();
+  buildPhaseTabFilter();
   renderPhaseList(currentPhaseFilter, currentCatFilter);
   buildCatFilters();
   buildLookupCatFilter();
@@ -2513,9 +2521,11 @@ function switchPage(page) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.getElementById('nav-' + page).classList.add('active');
-  if (page === 'history') renderHistory();
-  if (page === 'admin') { switchAdminTab('users'); }
+  if (page === 'history')   renderHistory();
+  if (page === 'admin')     switchAdminTab('users');
   if (page === 'dashboard') renderDashboard();
+  if (page === 'phase')     { buildPhaseTabFilter(); renderPhaseList(currentPhaseFilter, currentCatFilter); }
+  if (page === 'lookup')    { buildLookupPhaseFilter(); runLookup(); }
 }
 
 function statusColor(s) {
@@ -2681,8 +2691,33 @@ function commitPhaseRename(oldName) {
   saveCustomPhases(getCustomPhases().map(p => p === oldName ? newName : p));
   errEl.textContent = '';
   editingPhase = null;
-  renderPhaseManagerList();
+  refreshAllPhaseUIs();
   showToast('Renamed to Phase ' + newName);
+}
+
+function refreshAllPhaseUIs() {
+  // Call this whenever phases are added/removed/renamed
+  // Updates every place in the app that shows a phase list
+  buildPhaseTabFilter();          // Phase tab filter chips
+  buildLookupPhaseFilter();       // Lookup tab filter chips
+  refreshFoodEditorPhases();      // Add food dropdown
+  buildMasterPhaseFilter();       // Admin master foods phase filter
+  renderPhaseManagerList();       // Config tab phase list
+}
+
+function buildMasterPhaseFilter() {
+  // Rebuild admin master foods phase filter if it's visible
+  const el = document.getElementById('masterPhaseFilter');
+  if (!el) return;
+  const phases = getAllPhases();
+  el.innerHTML = ['all', ...phases].map(p =>
+    `<div onclick="setMasterPhase('${p}',this)"
+      style="background:${p===masterPhaseFilterVal?'#a78bfa':'#1e2230'};border:1px solid ${p===masterPhaseFilterVal?'#a78bfa':'#3a4155'};
+      color:${p===masterPhaseFilterVal?'#0d0f14':'#94a3b8'};border-radius:20px;padding:5px 12px;font-size:11px;
+      white-space:nowrap;cursor:pointer;flex-shrink:0;font-weight:700;font-family:'DM Mono',monospace;">
+      ${p === 'all' ? 'All Phases' : 'Phase ' + p}
+    </div>`
+  ).join('');
 }
 
 function addCustomPhase() {
@@ -2696,7 +2731,7 @@ function addCustomPhase() {
   document.getElementById('newPhaseInput').value = '';
   errEl.textContent = '';
   editingPhase = null;
-  renderPhaseManagerList();
+  refreshAllPhaseUIs();
   showToast('Phase ' + val + ' added');
 }
 
@@ -2704,7 +2739,7 @@ function deleteCustomPhase(p) {
   if (!confirm('Remove Phase ' + p + '? Foods using this phase keep their data.')) return;
   saveCustomPhases(getCustomPhases().filter(x => x !== p));
   editingPhase = null;
-  renderPhaseManagerList();
+  refreshAllPhaseUIs();
   showToast('Phase ' + p + ' removed');
 }
 
