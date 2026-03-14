@@ -544,6 +544,10 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
   <div class="section-header">
     <div class="section-title">Today's Food</div>
+    <button id="foodLogSortBtn" onclick="toggleFoodLogSort()"
+      style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.2s;">
+      A–Z ↕
+    </button>
   </div>
 
   <div id="foodLog"></div>
@@ -615,7 +619,11 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <div class="lookup-card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <h3 style="font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">🔍 Food Database</h3>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="lookupSortBtn" onclick="toggleLookupSort()"
+          style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.2s;">
+          A–Z ↕
+        </button>
         <button onclick="openPhaseEditor()" style="background:#1e2230;border:1px solid #3a4155;color:#cbd5e1;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">⚙ Phases</button>
         <button onclick="openFoodEditor(null)" style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;">＋ Add Food</button>
       </div>
@@ -905,46 +913,137 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
   <!-- Header -->
 
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
     <div>
       <div style="font-size:18px;font-weight:800;color:#f59e0b;">⭐ Admin Console</div>
-      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">Admin Account</div>
+      <div style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;margin-top:2px;">Admin Account</div>
     </div>
-    <button onclick="loadAdminData()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">↻ Refresh</button>
+    <button onclick="adminRefresh()" style="background:#1e2230;border:1px solid #3a4155;color:#cbd5e1;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">↻ Refresh</button>
   </div>
 
-  <!-- Stats bar -->
+  <!-- Sub-tab switcher -->
 
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;" id="adminStats">
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
-      <div style="font-size:22px;font-weight:800;color:#6ee7b7;" id="stat-users">—</div>
-      <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USERS</div>
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <button id="adminTab-users" onclick="switchAdminTab('users')"
+      style="flex:1;padding:10px;border-radius:10px;border:1px solid #6ee7b7;background:rgba(110,231,183,0.15);color:#6ee7b7;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;">
+      👥 Users
+    </button>
+    <button id="adminTab-foods" onclick="switchAdminTab('foods')"
+      style="flex:1;padding:10px;border-radius:10px;border:1px solid #3a4155;background:#1e2230;color:#94a3b8;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;">
+      🥗 Master Foods
+    </button>
+  </div>
+
+  <!-- ── USERS SUB-TAB ── -->
+
+  <div id="adminView-users">
+    <!-- Stats bar -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;" id="adminStats">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;color:#6ee7b7;" id="stat-users">—</div>
+        <div style="font-size:10px;color:#64748b;font-family:'DM Mono',monospace;margin-top:2px;">USERS</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;color:#60a5fa;" id="stat-days">—</div>
+        <div style="font-size:10px;color:#64748b;font-family:'DM Mono',monospace;margin-top:2px;">TOTAL DAYS</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;color:#f59e0b;" id="stat-active">—</div>
+        <div style="font-size:10px;color:#64748b;font-family:'DM Mono',monospace;margin-top:2px;">ACTIVE TODAY</div>
+      </div>
     </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
-      <div style="font-size:22px;font-weight:800;color:#60a5fa;" id="stat-days">—</div>
-      <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">TOTAL DAYS</div>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
-      <div style="font-size:22px;font-weight:800;color:#f59e0b;" id="stat-active">—</div>
-      <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">ACTIVE TODAY</div>
+    <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:1px;margin-bottom:8px;font-family:'DM Mono',monospace;">ALL USERS</div>
+    <div id="adminUserList"><div class="empty-state">Loading users...</div></div>
+    <div id="adminUserDetail" style="display:none;margin-top:16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <button onclick="closeAdminDetail()" style="background:#1e2230;border:1px solid #3a4155;color:#cbd5e1;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">← Back</button>
+        <div style="font-size:14px;font-weight:800;" id="adminDetailName"></div>
+      </div>
+      <div id="adminDetailHistory"></div>
     </div>
   </div>
 
-  <!-- User list -->
+  <!-- ── MASTER FOODS SUB-TAB ── -->
 
-  <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:8px;font-family:'DM Mono',monospace;">ALL USERS</div>
-  <div id="adminUserList">
-    <div class="empty-state">Loading users...</div>
-  </div>
-
-  <!-- User detail panel -->
-
-  <div id="adminUserDetail" style="display:none;margin-top:16px;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-      <button onclick="closeAdminDetail()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">← Back</button>
-      <div style="font-size:14px;font-weight:800;" id="adminDetailName"></div>
+  <div id="adminView-foods" style="display:none;">
+    <!-- Toolbar -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
+      <input id="masterFoodSearch" type="text" placeholder="Search master foods…"
+        oninput="renderMasterFoodList()"
+        style="flex:1;min-width:150px;background:#1e2230;border:1px solid #3a4155;color:#e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Mono',monospace;outline:none;">
+      <button onclick="openMasterFoodEditor(null)"
+        style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
+        ＋ Add Food
+      </button>
     </div>
-    <div id="adminDetailHistory"></div>
+    <!-- Filter row -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;" id="masterCatFilter"></div>
+    <!-- Stats row -->
+    <div style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:10px;" id="masterFoodCount"></div>
+    <!-- Food list -->
+    <div id="masterFoodList"><div class="empty-state">Loading master foods…</div></div>
+  </div>
+</div>
+
+<!-- MASTER FOOD EDITOR MODAL -->
+
+<div id="masterFoodModal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
+  <div style="background:#161922;border:1px solid #2a2f3f;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:800;" id="masterFoodModalTitle">＋ Add Master Food</div>
+      <button onclick="closeMasterFoodEditor()" style="background:none;border:none;color:#64748b;font-size:22px;cursor:pointer;">✕</button>
+    </div>
+    <div id="masterFoodError" style="display:none;background:rgba(248,113,113,0.1);border:1px solid #f87171;border-radius:8px;padding:8px 12px;font-size:12px;color:#f87171;margin-bottom:12px;"></div>
+
+```
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+  <div style="grid-column:1/-1;">
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;">FOOD NAME</div>
+    <input id="mf_name" type="text" placeholder="e.g. Brown Rice"
+      style="width:100%;background:#0d0f14;border:1px solid #3a4155;color:#e2e8f0;border-radius:8px;padding:10px;font-size:14px;font-family:'Syne',sans-serif;outline:none;">
+  </div>
+  <div>
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;">CALORIES</div>
+    <input id="mf_cal" type="number" placeholder="e.g. 130"
+      style="width:100%;background:#0d0f14;border:1px solid #3a4155;color:#f59e0b;border-radius:8px;padding:10px;font-size:16px;font-weight:800;font-family:'DM Mono',monospace;outline:none;">
+  </div>
+  <div>
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;">PER QTY</div>
+    <input id="mf_qty" type="number" placeholder="100"
+      style="width:100%;background:#0d0f14;border:1px solid #3a4155;color:#e2e8f0;border-radius:8px;padding:10px;font-size:14px;font-family:'DM Mono',monospace;outline:none;">
+  </div>
+  <div>
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;">UNIT</div>
+    <input id="mf_unit" type="text" placeholder="gms / ml / Tsp"
+      style="width:100%;background:#0d0f14;border:1px solid #3a4155;color:#e2e8f0;border-radius:8px;padding:10px;font-size:14px;font-family:'DM Mono',monospace;outline:none;">
+  </div>
+  <div>
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;">CATEGORY</div>
+    <input id="mf_cat" type="text" placeholder="e.g. Vegetables"
+      style="width:100%;background:#0d0f14;border:1px solid #3a4155;color:#e2e8f0;border-radius:8px;padding:10px;font-size:14px;font-family:'Syne',sans-serif;outline:none;">
+  </div>
+  <div>
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;">PHASE</div>
+    <select id="mf_phase" style="width:100%;background:#0d0f14;border:1px solid #3a4155;color:#e2e8f0;border-radius:8px;padding:10px;font-size:14px;font-family:'Syne',sans-serif;outline:none;">
+      <option value="1">Phase 1</option>
+      <option value="2">Phase 2</option>
+      <option value="3">Phase 3</option>
+      <option value="4">Phase 4</option>
+    </select>
+  </div>
+</div>
+
+<div style="background:rgba(110,231,183,0.06);border:1px solid rgba(110,231,183,0.2);border-radius:10px;padding:10px 12px;font-size:11px;color:#64748b;margin-bottom:16px;">
+  ℹ Master food data (name, calories, qty, unit, category, phase) is shared with all users.<br>
+  Each user's individual <strong style="color:#94a3b8;">status</strong> is maintained separately in their own profile.
+</div>
+
+<div style="display:flex;gap:10px;">
+  <button onclick="closeMasterFoodEditor()" style="flex:1;background:#1e2230;border:1px solid #3a4155;color:#e2e8f0;border-radius:10px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">Cancel</button>
+  <button onclick="saveMasterFood()" style="flex:2;background:#f59e0b;color:#0d0f14;border:none;border-radius:10px;padding:12px;font-weight:800;font-size:15px;font-family:'Syne',sans-serif;cursor:pointer;box-shadow:0 0 14px rgba(245,158,11,0.35);">💾 Save to Master</button>
+</div>
+```
+
   </div>
 </div>
 
@@ -1333,6 +1432,8 @@ function resetCalorieDBStatuses() {
 
 let currentDate = getTodayStr();
 let dayLogs = {};
+let foodLogSortAlpha = false;  // Today tab food log sort
+let lookupSortAlpha = false;   // Lookup tab sort
 let foodStatusOverrides = {};
 
 function getTodayStr() {
@@ -1411,8 +1512,9 @@ async function appInit() {
     displayName: currentUser.displayName || '',
     lastSeen: new Date().toISOString().slice(0, 10)
   }, { merge: true }).catch(() => {});
+  await loadMasterFoods();     // merge admin master DB on top of built-in CALORIE_DB
   await loadAllFromFirestore();
-  await loadCustomFoods();
+  await loadCustomFoods();     // user's own customFoods applied last (highest priority)
   currentDate = getTodayStr();
   document.getElementById('todayDate').value = currentDate;
   updateTopbarDate();
@@ -1533,17 +1635,82 @@ function renderFoodLog() {
     logEl.innerHTML = '<div class="empty-state">No food logged yet.<br>Add food below.</div>';
     return;
   }
-  logEl.innerHTML = log.foods.map((f, i) => `
+  // Build display list — sorted copy if alpha sort, original indices otherwise
+  const displayFoods = foodLogSortAlpha
+    ? [...log.foods].map((f, i) => ({...f, _origIdx: i})).sort((a, b) => a.name.localeCompare(b.name))
+    : log.foods.map((f, i) => ({...f, _origIdx: i}));
+
+  logEl.innerHTML = displayFoods.map(f => `
     <div class="food-item">
-      <div style="flex:1;cursor:pointer;" onclick="openEditFoodModal(${i})">
+      <div style="flex:1;cursor:pointer;" onclick="openEditFoodModal(${f._origIdx})">
         <div class="food-item-name">${f.name}</div>
         <div class="food-item-qty">${f.qtyDisplay}</div>
       </div>
-      <div class="food-item-cal" style="cursor:pointer;" onclick="openEditFoodModal(${i})">${f.calories} kcal</div>
-      <button class="food-item-del" title="Edit" onclick="openEditFoodModal(${i})" style="color:var(--muted);font-size:14px;margin-right:2px;">✎</button>
-      <button class="food-item-del" onclick="removeFoodItem(${i})">✕</button>
+      <div class="food-item-cal" style="cursor:pointer;" onclick="openEditFoodModal(${f._origIdx})">${f.calories} kcal</div>
+      <button class="food-item-del" title="Edit" onclick="openEditFoodModal(${f._origIdx})" style="color:var(--muted);font-size:14px;margin-right:2px;">✎</button>
+      <button class="food-item-del" onclick="removeFoodItem(${f._origIdx})">✕</button>
     </div>
   `).join('');
+}
+
+function toggleFoodLogSort() {
+  foodLogSortAlpha = !foodLogSortAlpha;
+  const btn = document.getElementById('foodLogSortBtn');
+  if (foodLogSortAlpha) {
+    btn.style.background = '#6ee7b7';
+    btn.style.color = '#0d0f14';
+    btn.style.borderColor = '#6ee7b7';
+    btn.textContent = 'A–Z ✓';
+  } else {
+    btn.style.background = '#1e2230';
+    btn.style.color = '#94a3b8';
+    btn.style.borderColor = '#3a4155';
+    btn.textContent = 'A–Z ↕';
+  }
+  renderFoodLog();
+}
+
+function toggleLookupSort() {
+  lookupSortAlpha = !lookupSortAlpha;
+  const btn = document.getElementById('lookupSortBtn');
+  if (lookupSortAlpha) {
+    btn.style.background = '#6ee7b7';
+    btn.style.color = '#0d0f14';
+    btn.style.borderColor = '#6ee7b7';
+    btn.textContent = 'A–Z ✓';
+  } else {
+    btn.style.background = '#1e2230';
+    btn.style.color = '#94a3b8';
+    btn.style.borderColor = '#3a4155';
+    btn.textContent = 'A–Z ↕';
+  }
+  runLookup();
+}
+
+function toggleFoodLogSort() {
+  foodLogSortAlpha = !foodLogSortAlpha;
+  const btn = document.getElementById('foodLogSortBtn');
+  if (foodLogSortAlpha) {
+    btn.style.background = '#6ee7b7'; btn.style.color = '#0d0f14';
+    btn.style.borderColor = '#6ee7b7'; btn.textContent = 'A–Z ✓';
+  } else {
+    btn.style.background = '#1e2230'; btn.style.color = '#94a3b8';
+    btn.style.borderColor = '#3a4155'; btn.textContent = 'A–Z ↕';
+  }
+  renderFoodLog();
+}
+
+function toggleLookupSort() {
+  lookupSortAlpha = !lookupSortAlpha;
+  const btn = document.getElementById('lookupSortBtn');
+  if (lookupSortAlpha) {
+    btn.style.background = '#6ee7b7'; btn.style.color = '#0d0f14';
+    btn.style.borderColor = '#6ee7b7'; btn.textContent = 'A–Z ✓';
+  } else {
+    btn.style.background = '#1e2230'; btn.style.color = '#94a3b8';
+    btn.style.borderColor = '#3a4155'; btn.textContent = 'A–Z ↕';
+  }
+  runLookup();
 }
 
 function removeFoodItem(i) {
@@ -1656,7 +1823,12 @@ function searchFood() {
   document.getElementById('addFoodPreview').style.display = 'none';
 
   if (q.length < 1) { sugg.classList.remove('show'); return; }
-  const matches = CALORIE_DB.filter(f => f.name.toLowerCase().includes(q)).slice(0, 12);
+  const _seen = new Set();
+  const matches = CALORIE_DB.filter(f => {
+    if (_seen.has(f.name)) return false;
+    _seen.add(f.name);
+    return f.name.toLowerCase().includes(q);
+  }).slice(0, 12);
   if (!matches.length) { sugg.innerHTML = '<div style="padding:10px 14px;color:var(--muted);font-size:13px;">No matches</div>'; sugg.classList.add('show'); return; }
   sugg.innerHTML = matches.map(f => `
     <div class="food-suggestion-item" onclick="selectFood('${f.name.replace(/'/g,"\\'")}')">
@@ -1903,7 +2075,16 @@ function runLookup() {
     if (q && !f.name.toLowerCase().includes(q)) return false;
     return true;
   };
-  const allItems = [...CALORIE_DB.filter(filterFn), ...customFoods.filter(filterFn)];
+  // CALORIE_DB is the single source of truth — loadCustomFoods already merges
+  // custom entries into it. Spreading customFoods separately causes duplicates.
+  // Deduplicate by name (last-write wins) as a safety net.
+  const seen = new Set();
+  let allItems = CALORIE_DB.filter(f => {
+    if (seen.has(f.name)) return false;
+    seen.add(f.name);
+    return filterFn(f);
+  });
+  if (lookupSortAlpha) allItems.sort((a, b) => a.name.localeCompare(b.name));
 
   const el = document.getElementById('lookupResults');
   if (!allItems.length) { el.innerHTML = '<div class="empty-state">No results</div>'; return; }
@@ -1945,11 +2126,13 @@ async function loadCustomFoods() {
     customFoods.forEach(cf => {
       const idx = CALORIE_DB.findIndex(f => f.name === cf.name);
       if (idx >= 0) {
-        // Update existing built-in entry with saved edits (cal, qty, unit, phase, cat)
+        // Update existing built-in entry with saved edits — merged in-place, no duplicate
         Object.assign(CALORIE_DB[idx], { cal: cf.cal, qty: cf.qty, unit: cf.unit, phase: cf.phase, cat: cf.cat, _custom: true });
       } else {
-        // Brand new custom food — add to DB
-        CALORIE_DB.push(cf);
+        // Truly new custom food not in built-in DB — add once
+        if (!CALORIE_DB.find(f => f.name === cf.name)) {
+          CALORIE_DB.push(cf);
+        }
       }
       // Restore status override from the saved custom food record
       // (only if not already set from foodStatusOverrides doc to avoid conflicts)
@@ -2194,7 +2377,7 @@ function switchPage(page) {
   document.getElementById('page-' + page).classList.add('active');
   document.getElementById('nav-' + page).classList.add('active');
   if (page === 'history') renderHistory();
-  if (page === 'admin') loadAdminData();
+  if (page === 'admin') { switchAdminTab('users'); }
   if (page === 'dashboard') renderDashboard();
 }
 
@@ -3043,6 +3226,242 @@ async function importHistoricalData() {
     showToast('Import failed — check console');
     setTimeout(() => { btn.textContent = '⬆ Import Spreadsheet'; btn.style.background = '#f59e0b'; }, 3000);
   }
+}
+
+
+// ============================================================
+// MASTER FOODS — admin-managed, Firestore /masterFoods/{name}
+// All users read on load; only admin can write
+// User status stays in their own foodStatusOverrides — never touched here
+// ============================================================
+let masterFoods = [];        // loaded from Firestore /masterFoods
+let masterFoodEditName = null; // null = new, string = editing
+let masterCatFilterVal = 'all';
+
+// ── Load master foods from Firestore and merge into CALORIE_DB ──
+async function loadMasterFoods() {
+  try {
+    const snap = await db.collection('masterFoods').get();
+    masterFoods = [];
+    snap.forEach(doc => masterFoods.push({ ...doc.data() }));
+
+    // Merge into CALORIE_DB: master overrides cal/qty/unit/phase/cat for matching names
+    // User status (foodStatusOverrides) is NOT touched here
+    masterFoods.forEach(mf => {
+      const idx = CALORIE_DB.findIndex(f => f.name === mf.name);
+      if (idx >= 0) {
+        Object.assign(CALORIE_DB[idx], { cal: mf.cal, qty: mf.qty, unit: mf.unit, phase: mf.phase, cat: mf.cat, _master: true });
+      } else {
+        CALORIE_DB.push({ ...mf, status: 'Test', _master: true });
+        _CALORIE_DB_ORIGINAL_NAMES.add(mf.name);
+        _CALORIE_DB_ORIGINAL_STATUS[mf.name] = 'Test';
+      }
+    });
+  } catch(e) { console.warn('loadMasterFoods:', e); }
+}
+
+// ── Admin sub-tab switcher ──
+function switchAdminTab(tab) {
+  document.getElementById('adminView-users').style.display = tab === 'users' ? 'block' : 'none';
+  document.getElementById('adminView-foods').style.display = tab === 'foods' ? 'block' : 'none';
+  const tabs = ['users','foods'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('adminTab-' + t);
+    if (t === tab) {
+      btn.style.borderColor = '#6ee7b7';
+      btn.style.background = 'rgba(110,231,183,0.15)';
+      btn.style.color = '#6ee7b7';
+    } else {
+      btn.style.borderColor = '#3a4155';
+      btn.style.background = '#1e2230';
+      btn.style.color = '#94a3b8';
+    }
+  });
+  if (tab === 'foods') {
+    loadMasterFoodsAdmin();
+  } else {
+    loadAdminData();
+  }
+}
+
+function adminRefresh() {
+  const foodsVisible = document.getElementById('adminView-foods').style.display !== 'none';
+  if (foodsVisible) loadMasterFoodsAdmin(); else loadAdminData();
+}
+
+// ── Load and render master foods in admin view ──
+async function loadMasterFoodsAdmin() {
+  document.getElementById('masterFoodList').innerHTML = '<div class="empty-state">Loading…</div>';
+  document.getElementById('masterCatFilter').innerHTML = '';
+  document.getElementById('masterFoodCount').textContent = '';
+  try {
+    const snap = await db.collection('masterFoods').get();
+    masterFoods = [];
+    snap.forEach(doc => masterFoods.push({ ...doc.data() }));
+
+    // Build category filter
+    const cats = ['all', ...new Set(masterFoods.map(f => f.cat).concat(CALORIE_DB.map(f => f.cat)))].sort();
+    document.getElementById('masterCatFilter').innerHTML = cats.map(c =>
+      `<div onclick="setMasterCat('${c}',this)"
+        style="background:${c===masterCatFilterVal?'#60a5fa':'#1e2230'};border:1px solid ${c===masterCatFilterVal?'#60a5fa':'#3a4155'};
+        color:${c===masterCatFilterVal?'#0d0f14':'#94a3b8'};border-radius:20px;padding:5px 12px;font-size:11px;
+        white-space:nowrap;cursor:pointer;flex-shrink:0;font-weight:700;font-family:'DM Mono',monospace;">
+        ${c === 'all' ? 'All' : c}
+      </div>`
+    ).join('');
+
+    renderMasterFoodList();
+  } catch(e) {
+    document.getElementById('masterFoodList').innerHTML = `<div class="empty-state" style="color:#f87171;">⚠ Error: ${e.message}</div>`;
+  }
+}
+
+function setMasterCat(cat, el) {
+  masterCatFilterVal = cat;
+  document.querySelectorAll('#masterCatFilter div').forEach(d => {
+    d.style.background = '#1e2230'; d.style.borderColor = '#3a4155'; d.style.color = '#94a3b8';
+  });
+  el.style.background = '#60a5fa'; el.style.borderColor = '#60a5fa'; el.style.color = '#0d0f14';
+  renderMasterFoodList();
+}
+
+function renderMasterFoodList() {
+  const q = (document.getElementById('masterFoodSearch')?.value || '').toLowerCase();
+
+  // Combine: start with CALORIE_DB as base, overlay with masterFoods
+  const nameSet = new Set();
+  const combined = [];
+
+  // First add all masterFoods (admin-managed)
+  masterFoods.forEach(mf => {
+    if (nameSet.has(mf.name)) return;
+    nameSet.add(mf.name);
+    combined.push({ ...mf, _master: true });
+  });
+  // Then add built-in DB items not in master
+  CALORIE_DB.forEach(f => {
+    if (nameSet.has(f.name)) return;
+    if (f._custom) return; // skip user custom
+    nameSet.add(f.name);
+    combined.push({ ...f, _master: false });
+  });
+
+  const filtered = combined.filter(f => {
+    if (masterCatFilterVal !== 'all' && f.cat !== masterCatFilterVal) return false;
+    if (q && !f.name.toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a, b) => a.name.localeCompare(b.name));
+
+  document.getElementById('masterFoodCount').textContent =
+    `${filtered.length} items · ${masterFoods.length} in master DB · ${combined.length - masterFoods.length} built-in only`;
+
+  if (!filtered.length) {
+    document.getElementById('masterFoodList').innerHTML = '<div class="empty-state">No foods match</div>';
+    return;
+  }
+
+  document.getElementById('masterFoodList').innerHTML = filtered.map(f => {
+    const badge = f._master
+      ? `<span style="background:rgba(110,231,183,0.15);color:#6ee7b7;border:1px solid rgba(110,231,183,0.3);border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700;">MASTER</span>`
+      : `<span style="background:rgba(96,165,250,0.12);color:#60a5fa;border:1px solid rgba(96,165,250,0.3);border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700;">BUILT-IN</span>`;
+    const delBtn = f._master
+      ? `<button onclick="deleteMasterFood('${f.name.replace(/'/g,"\'")}',this)"
+          style="background:rgba(248,113,113,0.12);border:1px solid #f87171;color:#f87171;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">🗑</button>`
+      : '';
+    return `
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;background:#161922;border:1px solid #2a2f3f;border-radius:12px;margin-bottom:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:3px;">${f.name} ${badge}</div>
+        <div style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;">${f.cat} · Phase ${f.phase} · ${f.cal} kcal / ${f.qty} ${f.unit}</div>
+      </div>
+      <button onclick="openMasterFoodEditor('${f.name.replace(/'/g,"\'")}',${f._master})"
+        style="background:#1e2230;border:1px solid #3a4155;color:#cbd5e1;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">✏ Edit</button>
+      ${delBtn}
+    </div>`;
+  }).join('');
+}
+
+// ── Master Food Editor ──
+function openMasterFoodEditor(name, isMaster) {
+  masterFoodEditName = name;
+  const modal = document.getElementById('masterFoodModal');
+  document.getElementById('masterFoodError').style.display = 'none';
+  document.getElementById('masterFoodModalTitle').textContent = name ? '✏ Edit Master Food' : '＋ Add Master Food';
+
+  if (name) {
+    // Find from master first, then CALORIE_DB
+    const f = masterFoods.find(x => x.name === name) || CALORIE_DB.find(x => x.name === name);
+    if (!f) return;
+    document.getElementById('mf_name').value = f.name;
+    document.getElementById('mf_name').disabled = true; // can't rename — would orphan user data
+    document.getElementById('mf_cal').value = f.cal;
+    document.getElementById('mf_qty').value = f.qty;
+    document.getElementById('mf_unit').value = f.unit;
+    document.getElementById('mf_cat').value = f.cat;
+    document.getElementById('mf_phase').value = f.phase;
+  } else {
+    document.getElementById('mf_name').value = '';
+    document.getElementById('mf_name').disabled = false;
+    document.getElementById('mf_cal').value = '';
+    document.getElementById('mf_qty').value = '100';
+    document.getElementById('mf_unit').value = 'gms';
+    document.getElementById('mf_cat').value = '';
+    document.getElementById('mf_phase').value = '1';
+  }
+
+  modal.style.display = 'flex';
+  if (!name) setTimeout(() => document.getElementById('mf_name').focus(), 100);
+}
+
+function closeMasterFoodEditor() {
+  document.getElementById('masterFoodModal').style.display = 'none';
+  masterFoodEditName = null;
+}
+
+async function saveMasterFood() {
+  const errEl = document.getElementById('masterFoodError');
+  errEl.style.display = 'none';
+
+  const name = document.getElementById('mf_name').value.trim();
+  const cal  = parseFloat(document.getElementById('mf_cal').value);
+  const qty  = parseFloat(document.getElementById('mf_qty').value);
+  const unit = document.getElementById('mf_unit').value.trim();
+  const cat  = document.getElementById('mf_cat').value.trim();
+  const phase = document.getElementById('mf_phase').value;
+
+  if (!name)             { errEl.textContent = 'Food name is required';      errEl.style.display = 'block'; return; }
+  if (isNaN(cal)||cal<0) { errEl.textContent = 'Enter valid calories';       errEl.style.display = 'block'; return; }
+  if (isNaN(qty)||qty<=0){ errEl.textContent = 'Enter valid quantity';       errEl.style.display = 'block'; return; }
+  if (!unit)             { errEl.textContent = 'Unit is required (gms/ml/…)';errEl.style.display = 'block'; return; }
+  if (!cat)              { errEl.textContent = 'Category is required';       errEl.style.display = 'block'; return; }
+
+  const food = { name, cal, qty, unit, cat, phase: String(phase) };
+  const docId = name.replace(/\//g, '_');
+
+  try {
+    await db.collection('masterFoods').doc(docId).set(food);
+    showToast(`${name} saved to master ✓`);
+    closeMasterFoodEditor();
+    // Update local CALORIE_DB immediately so the app reflects it
+    const idx = CALORIE_DB.findIndex(f => f.name === name);
+    if (idx >= 0) Object.assign(CALORIE_DB[idx], { cal, qty, unit, cat, phase: String(phase), _master: true });
+    else { CALORIE_DB.push({ ...food, status: 'Test', _master: true }); _CALORIE_DB_ORIGINAL_NAMES.add(name); }
+    await loadMasterFoodsAdmin();
+  } catch(e) {
+    errEl.textContent = 'Save failed: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+async function deleteMasterFood(name, btn) {
+  if (!confirm(`Delete "${name}" from master DB? Users keep their status data — only the master entry is removed.`)) return;
+  const docId = name.replace(/\//g, '_');
+  try {
+    await db.collection('masterFoods').doc(docId).delete();
+    showToast(`${name} removed from master`);
+    masterFoods = masterFoods.filter(f => f.name !== name);
+    renderMasterFoodList();
+  } catch(e) { showToast('Delete failed'); }
 }
 
 
