@@ -25,13 +25,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Write version.json
+        run: |
+          echo "{\"version\":\"${{ github.sha }}\",\"deployed\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > version.json
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'   # uploads entire repo root (index.html, icons, etc.)
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
