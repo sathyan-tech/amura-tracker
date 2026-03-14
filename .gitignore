@@ -1,0 +1,14 @@
+# The index.html in this repo must ONLY contain __PLACEHOLDER__ values.
+# Real Firebase config lives in the private amura-config repo.
+# GitHub Actions injects it at build time — never commit real keys here.
+
+# Block any accidental local config files
+firebase-config.json
+firebase-config.*.json
+.env
+.env.*
+*.local
+
+# Local build output
+dist/
+build/
