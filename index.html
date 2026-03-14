@@ -1955,17 +1955,17 @@ function cycleStatus(name) {
   const idx = statuses.indexOf(current);
   const newStatus = statuses[(idx + 1) % statuses.length];
   foodStatusOverrides[name] = newStatus;
-  saveOverrides();
-  // Also persist into customFoods collection so status survives across sessions
-  const existingCustom = customFoods.find(f => f.name === name);
-  if (existingCustom) {
-    existingCustom.status = newStatus;
-    saveCustomFood(existingCustom).catch(() => {});
-  } else {
-    // Create a custom entry to hold the status override persistently
-    const entry = { ...food, status: newStatus, _custom: true, phase: String(food.phase) };
-    customFoods.push(entry);
-    saveCustomFood(entry).catch(() => {});
+  saveOverrides(); // foodStatusOverrides is the single source of truth for status
+
+  // Only sync status back into customFoods if this is a user-custom food
+  // Master foods and built-in foods must NEVER create customFoods entries just for status
+  const isMasterOrBuiltIn = food._master || !customFoods.some(cf => cf.name === name);
+  if (!isMasterOrBuiltIn) {
+    const existingCustom = customFoods.find(f => f.name === name);
+    if (existingCustom) {
+      existingCustom.status = newStatus;
+      saveCustomFood(existingCustom).catch(() => {});
+    }
   }
   renderPhaseList(currentPhaseFilter, currentCatFilter);
 }
@@ -2268,33 +2268,33 @@ async function saveFoodEditor() {
   if (isNaN(cal) || cal < 0) { errEl.textContent = 'Enter a valid calorie value'; errEl.style.display = 'block'; return; }
   if (isNaN(qty) || qty <= 0) { errEl.textContent = 'Enter a valid quantity'; errEl.style.display = 'block'; return; }
 
-  const isBuiltIn = CALORIE_DB.find(f => f.name === name && !f._custom);
+  // Determine food type: master > custom > built-in
+  const isMaster = !!CALORIE_DB.find(f => f.name === name)?._master;
+  const isUserCustom = !isMaster && customFoods.some(cf => cf.name === name);
 
-  if (isBuiltIn) {
-    // For built-in foods, only update the status override + save cal/qty/phase to a custom overlay
-    foodStatusOverrides[name] = status;
-    // Update in-memory CALORIE_DB entry
-    const idx = CALORIE_DB.findIndex(f => f.name === name);
-    if (idx >= 0) Object.assign(CALORIE_DB[idx], { cal, qty, unit, phase, cat });
-    saveOverrides();
-    // Save override data as a custom food entry too so edits persist
-    await saveCustomFood({ name, cal, qty, unit, phase: String(phase), cat, status, _custom: true });
-    const existing = customFoods.findIndex(f => f.name === name);
-    const updated = { name, cal, qty, unit, phase: String(phase), cat, status, _custom: true };
-    if (existing >= 0) customFoods[existing] = updated; else customFoods.push(updated);
-  } else {
-    // Custom food — save fully
+  // Always update CALORIE_DB in-memory
+  const dbIdx = CALORIE_DB.findIndex(f => f.name === name);
+  if (dbIdx >= 0) Object.assign(CALORIE_DB[dbIdx], { cal, qty, unit, phase: String(phase), cat });
+
+  // Always save status to foodStatusOverrides — this is the single source of truth for status
+  foodStatusOverrides[name] = status;
+  saveOverrides();
+
+  if (isMaster) {
+    // Master food: status lives ONLY in foodStatusOverrides — never touch customFoods
+    // The admin can update cal/qty/unit/phase/cat via Admin → Master Foods if needed
+  } else if (isUserCustom) {
+    // User-custom food: update the custom entry (cal, qty, etc.) and status
     const food = { name, cal, qty, unit, phase: String(phase), cat, status, _custom: true };
     await saveCustomFood(food);
-    // Update in-memory
-    const existingDB = CALORIE_DB.findIndex(f => f.name === name);
-    if (existingDB >= 0) Object.assign(CALORIE_DB[existingDB], food);
-    else CALORIE_DB.push(food);
     const existingCF = customFoods.findIndex(f => f.name === name);
     if (existingCF >= 0) customFoods[existingCF] = food; else customFoods.push(food);
-    // Update status override
-    foodStatusOverrides[name] = status;
-    saveOverrides();
+  } else {
+    // Built-in food being edited for the first time — save as user-custom
+    const food = { name, cal, qty, unit, phase: String(phase), cat, status, _custom: true };
+    await saveCustomFood(food);
+    if (dbIdx >= 0) CALORIE_DB[dbIdx]._custom = true;
+    customFoods.push(food);
   }
 
   closeFoodEditor();
