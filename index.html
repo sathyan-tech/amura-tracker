@@ -922,14 +922,18 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
   <!-- Sub-tab switcher -->
 
-  <div style="display:flex;gap:8px;margin-bottom:16px;">
+  <div style="display:flex;gap:6px;margin-bottom:16px;">
     <button id="adminTab-users" onclick="switchAdminTab('users')"
-      style="flex:1;padding:10px;border-radius:10px;border:1px solid #6ee7b7;background:rgba(110,231,183,0.15);color:#6ee7b7;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;">
+      style="flex:1;padding:9px 6px;border-radius:10px;border:1px solid #6ee7b7;background:rgba(110,231,183,0.15);color:#6ee7b7;font-size:12px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;">
       👥 Users
     </button>
     <button id="adminTab-foods" onclick="switchAdminTab('foods')"
-      style="flex:1;padding:10px;border-radius:10px;border:1px solid #3a4155;background:#1e2230;color:#94a3b8;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;">
-      🥗 Master Foods
+      style="flex:1;padding:9px 6px;border-radius:10px;border:1px solid #3a4155;background:#1e2230;color:#94a3b8;font-size:12px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;">
+      🥗 Foods
+    </button>
+    <button id="adminTab-config" onclick="switchAdminTab('config')"
+      style="flex:1;padding:9px 6px;border-radius:10px;border:1px solid #3a4155;background:#1e2230;color:#94a3b8;font-size:12px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;">
+      ⚙ Config
     </button>
   </div>
 
@@ -965,75 +969,111 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <!-- ── MASTER FOODS SUB-TAB ── -->
 
   <div id="adminView-foods" style="display:none;">
-    <!-- App Config section -->
-    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:12px 14px;margin-bottom:14px;">
-      <div style="font-size:12px;font-weight:800;color:#f59e0b;margin-bottom:10px;">⚙ App Configuration</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-        <div>
-          <div style="font-size:10px;color:#94a3b8;font-weight:700;margin-bottom:4px;">ADMIN EMAIL</div>
-          <input id="cfg_adminEmail" type="email"
-            style="width:100%;background:#0d0f14;border:1px solid #3a4155;color:#e2e8f0;border-radius:8px;padding:8px;font-size:12px;font-family:'DM Mono',monospace;outline:none;">
-        </div>
-        <div>
-          <div style="font-size:10px;color:#94a3b8;font-weight:700;margin-bottom:4px;">DEFAULT CAL TARGET</div>
-          <input id="cfg_defaultCal" type="number" min="200" max="5000"
-            style="width:100%;background:#0d0f14;border:1px solid #3a4155;color:#f59e0b;border-radius:8px;padding:8px;font-size:14px;font-weight:800;font-family:'DM Mono',monospace;outline:none;">
-        </div>
-      </div>
-      <button onclick="saveAppConfig()"
-        style="background:#f59e0b;color:#0d0f14;border:none;border-radius:8px;padding:8px 20px;font-size:12px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;">
-        💾 Save Config
+    <!-- Toolbar -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
+      <input id="masterFoodSearch" type="text" placeholder="Search master foods…"
+        oninput="renderMasterFoodList()"
+        style="flex:1;min-width:150px;background:#1e2230;border:1px solid #3a4155;color:#e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Mono',monospace;outline:none;">
+      <button onclick="openMasterFoodEditor(null)"
+        style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
+        ＋ Add Food
       </button>
-      <span id="cfg_status" style="font-size:11px;color:#6ee7b7;margin-left:10px;"></span>
+      <button onclick="seedMasterFoods()"
+        style="background:#1e2230;border:1px solid #a78bfa;color:#a78bfa;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;"
+        title="Push all seed foods to Firestore master list">
+        ⬆ Seed All
+      </button>
+      <button onclick="openPhaseEditor()"
+        style="background:#a78bfa;color:#0d0f14;border:none;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
+        ⚙ Phases
+      </button>
     </div>
+    <!-- Phase filter row -->
+    <div style="display:flex;gap:6px;margin-bottom:6px;overflow-x:auto;padding-bottom:2px;" id="masterPhaseFilter"></div>
+    <!-- Category filter row -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;" id="masterCatFilter"></div>
+    <!-- Migration banner -->
+    <div id="migrationBanner" style="background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.35);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:none;">
+      <div style="font-size:13px;font-weight:800;color:#f59e0b;margin-bottom:4px;">⬆ Migrate My Custom Foods to Master</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:10px;" id="migrationDesc">Copies all your personal custom food entries into the master DB (name, cal, qty, unit, phase, category). Your individual status for each food stays in your profile.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button onclick="runMigration()"
+          style="background:#f59e0b;color:#0d0f14;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;">
+          ⬆ Migrate Now
+        </button>
+        <button onclick="document.getElementById('migrationBanner').style.display='none'"
+          style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">
+          Dismiss
+        </button>
+        <div id="migrationStatus" style="font-size:12px;color:#6ee7b7;font-weight:700;"></div>
+      </div>
+    </div>
+    <!-- Stats row -->
+    <div style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:10px;" id="masterFoodCount"></div>
+    <!-- Food list -->
+    <div id="masterFoodList"><div class="empty-state">Loading master foods…</div></div>
+  </div>
+
+  <!-- ── CONFIG SUB-TAB ── -->
+
+  <div id="adminView-config" style="display:none;">
+    <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:1px;margin-bottom:14px;font-family:'DM Mono',monospace;">APP CONFIGURATION</div>
 
 ```
-<!-- Toolbar -->
-<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
-  <input id="masterFoodSearch" type="text" placeholder="Search master foods…"
-    oninput="renderMasterFoodList()"
-    style="flex:1;min-width:150px;background:#1e2230;border:1px solid #3a4155;color:#e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Mono',monospace;outline:none;">
-  <button onclick="openMasterFoodEditor(null)"
-    style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
-    ＋ Add Food
-  </button>
-  <button onclick="seedMasterFoods()"
-    style="background:#1e2230;border:1px solid #a78bfa;color:#a78bfa;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;"
-    title="Push all seed foods to Firestore master list">
-    ⬆ Seed All
-  </button>
-  <button onclick="openPhaseEditor()"
-    style="background:#a78bfa;color:#0d0f14;border:none;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
-    ⚙ Phases
-  </button>
-</div>
-<!-- Phase filter row -->
-<div style="display:flex;gap:6px;margin-bottom:6px;overflow-x:auto;padding-bottom:2px;" id="masterPhaseFilter"></div>
-<!-- Category filter row -->
-<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;" id="masterCatFilter"></div>
-<!-- Migration banner -->
-<div id="migrationBanner" style="background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.35);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:none;">
-  <div style="font-size:13px;font-weight:800;color:#f59e0b;margin-bottom:4px;">⬆ Migrate My Custom Foods to Master</div>
-  <div style="font-size:12px;color:#94a3b8;margin-bottom:10px;" id="migrationDesc">Copies all your personal custom food entries into the master DB (name, cal, qty, unit, phase, category). Your individual status for each food stays in your profile.</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-    <button onclick="runMigration()"
-      style="background:#f59e0b;color:#0d0f14;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;">
-      ⬆ Migrate Now
+<!-- Admin & Calorie settings -->
+<div style="background:#161922;border:1px solid #2a2f3f;border-radius:14px;padding:16px;margin-bottom:14px;">
+  <div style="font-size:12px;font-weight:800;color:#f59e0b;margin-bottom:12px;">🔐 Access &amp; Defaults</div>
+  <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;">
+    <div>
+      <div style="font-size:11px;color:#94a3b8;font-weight:700;margin-bottom:5px;">ADMIN EMAIL</div>
+      <input id="cfg_adminEmail" type="email" placeholder="admin@example.com"
+        style="width:100%;background:#0d0f14;border:1px solid #3a4155;color:#e2e8f0;border-radius:8px;padding:10px;font-size:13px;font-family:'DM Mono',monospace;outline:none;box-sizing:border-box;">
+      <div style="font-size:10px;color:#64748b;margin-top:4px;">Only this email sees the Admin tab</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:#94a3b8;font-weight:700;margin-bottom:5px;">DEFAULT CALORIE TARGET (kcal)</div>
+      <input id="cfg_defaultCal" type="number" min="200" max="5000" placeholder="850"
+        style="width:100%;background:#0d0f14;border:1px solid #3a4155;color:#f59e0b;border-radius:8px;padding:10px;font-size:18px;font-weight:800;font-family:'DM Mono',monospace;outline:none;box-sizing:border-box;">
+      <div style="font-size:10px;color:#64748b;margin-top:4px;">Used when no previous day target exists</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button onclick="saveAppConfig()"
+      style="background:#f59e0b;color:#0d0f14;border:none;border-radius:10px;padding:11px 24px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;box-shadow:0 0 12px rgba(245,158,11,0.3);">
+      💾 Save Config
     </button>
-    <button onclick="document.getElementById('migrationBanner').style.display='none'"
-      style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">
-      Dismiss
-    </button>
-    <div id="migrationStatus" style="font-size:12px;color:#6ee7b7;font-weight:700;"></div>
+    <span id="cfg_status" style="font-size:12px;color:#6ee7b7;font-weight:700;"></span>
   </div>
 </div>
-<!-- Stats row -->
-<div style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:10px;" id="masterFoodCount"></div>
-<!-- Food list -->
-<div id="masterFoodList"><div class="empty-state">Loading master foods…</div></div>
+
+<!-- Phase management -->
+<div style="background:#161922;border:1px solid #2a2f3f;border-radius:14px;padding:16px;margin-bottom:14px;">
+  <div style="font-size:12px;font-weight:800;color:#a78bfa;margin-bottom:12px;">🏷 Phase Management</div>
+  <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Add custom phases or rename existing ones. Default phases (1–4) cannot be deleted.</div>
+  <div id="phaseManagerList" style="margin-bottom:14px;"></div>
+  <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;margin-bottom:8px;">ADD NEW PHASE</div>
+  <div style="display:flex;gap:8px;">
+    <input id="newPhaseInput" placeholder="e.g. V5, Maintenance"
+      style="flex:1;background:#0d0f14;border:1px solid #3a4155;border-radius:8px;padding:10px 12px;font-size:13px;color:#e2e8f0;font-family:'Syne',sans-serif;outline:none;" maxlength="20">
+    <button onclick="addCustomPhase()"
+      style="background:#a78bfa;color:#0d0f14;border:none;border-radius:8px;padding:10px 16px;font-weight:800;font-size:13px;font-family:'Syne',sans-serif;cursor:pointer;">Add</button>
+  </div>
+  <div id="phaseEditorError" style="color:#f87171;font-size:12px;margin-top:8px;"></div>
+</div>
+
+<!-- Danger zone -->
+<div style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.2);border-radius:14px;padding:16px;">
+  <div style="font-size:12px;font-weight:800;color:#f87171;margin-bottom:8px;">⚠ Danger Zone</div>
+  <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Permanently delete all master foods from Firestore. The seed data in the app remains as fallback.</div>
+  <button onclick="if(confirm('Delete ALL master foods from Firestore? This cannot be undone.')) clearAllMasterFoods()"
+    style="background:rgba(248,113,113,0.15);border:1px solid #f87171;color:#f87171;border-radius:10px;padding:9px 18px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">
+    🗑 Clear All Master Foods
+  </button>
+</div>
 ```
 
   </div>
+
 </div>
 
 <!-- MASTER FOOD EDITOR MODAL -->
@@ -1986,9 +2026,14 @@ function cycleStatus(name) {
 }
 
 function renderPhaseList(phFilter, catFilter) {
+  // Case-insensitive dedup — "Mustard Oil" and "Mustard oil" are the same food
+  const seenCI = new Set();
   let items = CALORIE_DB.filter(f => {
     if (phFilter !== 'all' && String(f.phase) !== phFilter) return false;
     if (catFilter !== 'all' && f.cat !== catFilter) return false;
+    const key = f.name.toLowerCase();
+    if (seenCI.has(key)) return false;
+    seenCI.add(key);
     return true;
   });
 
@@ -2572,11 +2617,9 @@ function openPhaseEditor() {
     showToast('Phase management is admin-only');
     return;
   }
-  editingPhase = null;
-  renderPhaseManagerList();
-  document.getElementById('newPhaseInput').value = '';
-  document.getElementById('phaseEditorError').textContent = '';
-  document.getElementById('phaseEditorModal').style.display = 'flex';
+  // Phase management is now in Admin → ⚙ Config tab
+  switchPage('admin');
+  switchAdminTab('config');
 }
 
 function closePhaseEditor() {
@@ -3391,6 +3434,20 @@ async function loadMasterFoods() {
 }
 
 // ── Admin sub-tab switcher ──
+async function clearAllMasterFoods() {
+  try {
+    setSyncStatus('● Clearing…', '#f87171');
+    const snap = await db.collection('masterFoods').get();
+    const batch = db.batch();
+    snap.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    masterFoods = [];
+    showToast('All master foods cleared');
+    setSyncStatus('● Synced', '#6ee7b7');
+    renderMasterFoodList();
+  } catch(e) { showToast('Clear failed: ' + e.message); }
+}
+
 async function seedMasterFoods() {
   const toSeed = CALORIE_DB.filter(f => !masterFoods.some(mf => mf.name === f.name));
   if (!toSeed.length) { showToast('All seed foods already in master ✓'); return; }
@@ -3446,15 +3503,15 @@ function populateConfigPanel() {
 }
 
 function switchAdminTab(tab) {
-  document.getElementById('adminView-users').style.display = tab === 'users' ? 'block' : 'none';
-  document.getElementById('adminView-foods').style.display = tab === 'foods' ? 'block' : 'none';
-  const tabs = ['users','foods'];
-  tabs.forEach(t => {
+  ['users','foods','config'].forEach(t => {
+    document.getElementById('adminView-' + t).style.display = t === tab ? 'block' : 'none';
     const btn = document.getElementById('adminTab-' + t);
+    // each tab has its own accent colour
+    const accent = t === 'users' ? '#6ee7b7' : t === 'foods' ? '#6ee7b7' : '#f59e0b';
     if (t === tab) {
-      btn.style.borderColor = '#6ee7b7';
-      btn.style.background = 'rgba(110,231,183,0.15)';
-      btn.style.color = '#6ee7b7';
+      btn.style.borderColor = accent;
+      btn.style.background = `rgba(${t==='config'?'245,158,11':'110,231,183'},0.15)`;
+      btn.style.color = accent;
     } else {
       btn.style.borderColor = '#3a4155';
       btn.style.background = '#1e2230';
@@ -3462,16 +3519,19 @@ function switchAdminTab(tab) {
     }
   });
   if (tab === 'foods') {
-    populateConfigPanel();
     loadMasterFoodsAdmin();
+  } else if (tab === 'config') {
+    populateConfigPanel();
+    renderPhaseManagerList();
   } else {
     loadAdminData();
   }
 }
 
 function adminRefresh() {
-  const foodsVisible = document.getElementById('adminView-foods').style.display !== 'none';
-  if (foodsVisible) loadMasterFoodsAdmin(); else loadAdminData();
+  if (document.getElementById('adminView-foods').style.display !== 'none') loadMasterFoodsAdmin();
+  else if (document.getElementById('adminView-config').style.display !== 'none') { populateConfigPanel(); renderPhaseManagerList(); }
+  else loadAdminData();
 }
 
 // ── Load and render master foods in admin view ──
