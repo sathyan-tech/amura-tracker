@@ -624,7 +624,6 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
           style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.2s;">
           A–Z ↕
         </button>
-        <button onclick="openPhaseEditor()" style="background:#1e2230;border:1px solid #3a4155;color:#cbd5e1;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">⚙ Phases</button>
         <button onclick="openFoodEditor(null)" style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;">＋ Add Food</button>
       </div>
     </div>
@@ -975,8 +974,14 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
         style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
         ＋ Add Food
       </button>
+      <button onclick="openPhaseEditor()"
+        style="background:#a78bfa;color:#0d0f14;border:none;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
+        ⚙ Phases
+      </button>
     </div>
-    <!-- Filter row -->
+    <!-- Phase filter row -->
+    <div style="display:flex;gap:6px;margin-bottom:6px;overflow-x:auto;padding-bottom:2px;" id="masterPhaseFilter"></div>
+    <!-- Category filter row -->
     <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;" id="masterCatFilter"></div>
     <!-- Stats row -->
     <div style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:10px;" id="masterFoodCount"></div>
@@ -2156,6 +2161,24 @@ async function deleteCustomFood(name) {
   await userDoc().collection('customFoods').doc(docId).delete();
 }
 
+async function confirmDeleteCustomFood(name) {
+  if (!confirm(`Delete your custom entry for "${name}"?\nThis removes your personal edits. The base food item remains in the database.`)) return;
+  try {
+    await deleteCustomFood(name);
+    // Remove from in-memory customFoods
+    customFoods = customFoods.filter(f => f.name !== name);
+    // Remove _custom flag from CALORIE_DB entry (revert to built-in/master)
+    const idx = CALORIE_DB.findIndex(f => f.name === name);
+    if (idx >= 0) delete CALORIE_DB[idx]._custom;
+    // Remove status override too so it reverts to default
+    delete foodStatusOverrides[name];
+    saveOverrides();
+    showToast(`${name} custom entry removed`);
+    runLookup();
+    renderPhaseList(currentPhaseFilter, currentCatFilter);
+  } catch(e) { showToast('Delete failed'); console.error(e); }
+}
+
 function openFoodEditor(foodName) {
   editingFoodName = foodName;
   refreshFoodEditorPhases(); // ensure custom phases are shown
@@ -2476,6 +2499,10 @@ document.addEventListener('click', e => {
 let editingPhase = null;
 
 function openPhaseEditor() {
+  if (!currentUser || currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    showToast('Phase management is admin-only');
+    return;
+  }
   editingPhase = null;
   renderPhaseManagerList();
   document.getElementById('newPhaseInput').value = '';
@@ -3237,6 +3264,7 @@ async function importHistoricalData() {
 let masterFoods = [];        // loaded from Firestore /masterFoods
 let masterFoodEditName = null; // null = new, string = editing
 let masterCatFilterVal = 'all';
+let masterPhaseFilterVal = 'all';
 
 // ── Load master foods from Firestore and merge into CALORIE_DB ──
 async function loadMasterFoods() {
@@ -3299,6 +3327,17 @@ async function loadMasterFoodsAdmin() {
     masterFoods = [];
     snap.forEach(doc => masterFoods.push({ ...doc.data() }));
 
+    // Build phase filter
+    const phases = ['all', ...getAllPhases()];
+    document.getElementById('masterPhaseFilter').innerHTML = phases.map(p =>
+      `<div onclick="setMasterPhase('${p}',this)"
+        style="background:${p===masterPhaseFilterVal?'#a78bfa':'#1e2230'};border:1px solid ${p===masterPhaseFilterVal?'#a78bfa':'#3a4155'};
+        color:${p===masterPhaseFilterVal?'#0d0f14':'#94a3b8'};border-radius:20px;padding:5px 12px;font-size:11px;
+        white-space:nowrap;cursor:pointer;flex-shrink:0;font-weight:700;font-family:'DM Mono',monospace;">
+        ${p === 'all' ? 'All Phases' : 'Phase ' + p}
+      </div>`
+    ).join('');
+
     // Build category filter
     const cats = ['all', ...new Set(masterFoods.map(f => f.cat).concat(CALORIE_DB.map(f => f.cat)))].sort();
     document.getElementById('masterCatFilter').innerHTML = cats.map(c =>
@@ -3306,7 +3345,7 @@ async function loadMasterFoodsAdmin() {
         style="background:${c===masterCatFilterVal?'#60a5fa':'#1e2230'};border:1px solid ${c===masterCatFilterVal?'#60a5fa':'#3a4155'};
         color:${c===masterCatFilterVal?'#0d0f14':'#94a3b8'};border-radius:20px;padding:5px 12px;font-size:11px;
         white-space:nowrap;cursor:pointer;flex-shrink:0;font-weight:700;font-family:'DM Mono',monospace;">
-        ${c === 'all' ? 'All' : c}
+        ${c === 'all' ? 'All Categories' : c}
       </div>`
     ).join('');
 
@@ -3314,6 +3353,15 @@ async function loadMasterFoodsAdmin() {
   } catch(e) {
     document.getElementById('masterFoodList').innerHTML = `<div class="empty-state" style="color:#f87171;">⚠ Error: ${e.message}</div>`;
   }
+}
+
+function setMasterPhase(phase, el) {
+  masterPhaseFilterVal = phase;
+  document.querySelectorAll('#masterPhaseFilter div').forEach(d => {
+    d.style.background = '#1e2230'; d.style.borderColor = '#3a4155'; d.style.color = '#94a3b8';
+  });
+  el.style.background = '#a78bfa'; el.style.borderColor = '#a78bfa'; el.style.color = '#0d0f14';
+  renderMasterFoodList();
 }
 
 function setMasterCat(cat, el) {
@@ -3347,6 +3395,7 @@ function renderMasterFoodList() {
   });
 
   const filtered = combined.filter(f => {
+    if (masterPhaseFilterVal !== 'all' && String(f.phase) !== String(masterPhaseFilterVal)) return false;
     if (masterCatFilterVal !== 'all' && f.cat !== masterCatFilterVal) return false;
     if (q && !f.name.toLowerCase().includes(q)) return false;
     return true;
