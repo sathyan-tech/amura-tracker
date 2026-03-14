@@ -3572,43 +3572,58 @@ async function runMigration() {
     return;
   }
 
-  let done = 0, failed = 0;
+  let done = 0;
   const batch = db.batch();
 
   for (const cf of toMigrate) {
-    // Strip user-specific fields — only copy the food definition
-    const masterEntry = {
-      name: cf.name,
-      cal:  cf.cal,
-      qty:  cf.qty,
-      unit: cf.unit || 'gms',
-      cat:  cf.cat  || 'Other',
-      phase: String(cf.phase || '1'),
-    };
     const docId = cf.name.replace(/\//g, '_');
-    batch.set(db.collection('masterFoods').doc(docId), masterEntry);
+
+    // 1. Write food definition to master (no status — stays per-user in foodStatusOverrides)
+    batch.set(db.collection('masterFoods').doc(docId), {
+      name:  cf.name,
+      cal:   cf.cal,
+      qty:   cf.qty,
+      unit:  cf.unit  || 'gms',
+      cat:   cf.cat   || 'Other',
+      phase: String(cf.phase || '1'),
+    });
+
+    // 2. Remove from user's customFoods — master now owns the food definition
+    batch.delete(userDoc().collection('customFoods').doc(docId));
+
     done++;
   }
 
   try {
     await batch.commit();
+
+    // Update in-memory customFoods — remove migrated entries
+    const migratedNames = new Set(toMigrate.map(cf => cf.name));
+    customFoods = customFoods.filter(cf => !migratedNames.has(cf.name));
+
+    // Mark entries in CALORIE_DB as master, remove _custom flag
+    migratedNames.forEach(name => {
+      const idx = CALORIE_DB.findIndex(f => f.name === name);
+      if (idx >= 0) { CALORIE_DB[idx]._master = true; delete CALORIE_DB[idx]._custom; }
+    });
+
+    // foodStatusOverrides already holds each food's status — untouched
+
     statusEl.style.color = '#6ee7b7';
-    statusEl.textContent = `✓ ${done} food${done > 1 ? 's' : ''} migrated to master!`;
+    statusEl.textContent = `✓ ${done} food${done > 1 ? 's' : ''} moved to master — delete icons removed.`;
 
-    // Also keep user's status in foodStatusOverrides (it's already there — nothing to do)
-    // Reload master foods list to reflect new additions
     await loadMasterFoodsAdmin();
-
-    // Update in-memory CALORIE_DB so the app uses master values immediately
     await loadMasterFoods();
+    runLookup(); // refresh lookup so delete icons disappear immediately
 
-    showToast(`${done} foods added to master DB`);
+    showToast(`${done} foods moved to master DB ✓`);
   } catch(e) {
     statusEl.style.color = '#f87171';
     statusEl.textContent = `⚠ Migration failed: ${e.message}`;
     console.error('Migration error:', e);
   }
 }
+
 
 
 // ============================================================
