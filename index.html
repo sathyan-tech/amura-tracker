@@ -705,22 +705,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
 <!-- PHASE EDITOR MODAL -->
 
-<div id="phaseEditorModal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
-  <div style="background:var(--surface);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <div style="font-size:16px;font-weight:800;">⚙ Manage Phases</div>
-      <button onclick="closePhaseEditor()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
-    </div>
-    <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;">All phases can be renamed. Custom phases can also be removed. Default phases (1–4) cannot be deleted.</div>
-    <div id="phaseManagerList" style="margin-bottom:16px;"></div>
-    <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:1px;margin-bottom:8px;">ADD NEW PHASE</div>
-    <div style="display:flex;gap:8px;">
-      <input id="newPhaseInput" placeholder="e.g. V5, Maintenance, Reintro" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;" maxlength="20">
-      <button onclick="addCustomPhase()" style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:8px;padding:10px 16px;font-weight:800;font-size:13px;font-family:'Syne',sans-serif;cursor:pointer;">Add</button>
-    </div>
-    <div id="phaseEditorError" style="color:var(--red);font-size:12px;margin-top:8px;"></div>
-  </div>
-</div>
+<!-- Phase management moved to Admin → Config tab -->
 
 <!-- PAGE: DASHBOARD -->
 
@@ -2633,10 +2618,8 @@ function openPhaseEditor() {
 }
 
 function closePhaseEditor() {
-  document.getElementById('phaseEditorModal').style.display = 'none';
   editingPhase = null;
-  buildLookupPhaseFilter();
-  refreshFoodEditorPhases();
+  refreshAllPhaseUIs();
 }
 
 function phaseColor(p) {
@@ -2648,33 +2631,60 @@ function renderPhaseManagerList() {
   const defaults = ['1','2','3','4'];
   const custom = getCustomPhases();
   const all = [...defaults, ...custom];
-  document.getElementById('phaseManagerList').innerHTML = all.map(p => {
+
+  const html = all.map(p => {
     const isDef = defaults.includes(p);
     const badge = p.length <= 3 ? p : p.slice(0,3);
+    const color = phaseColor(p);
+
     if (editingPhase === p) {
-      return `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface2);border:1px solid var(--accent);border-radius:10px;margin-bottom:8px;">
+      return `
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#1e2230;border:1px solid #6ee7b7;border-radius:12px;margin-bottom:8px;">
+        <div style="width:30px;height:30px;border-radius:50%;background:${color};color:#0d0f14;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;">${badge}</div>
         <input id="editPhaseInput_${p}" value="${p}" maxlength="20"
-          style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;"
+          style="flex:1;background:#0d0f14;border:1px solid #3a4155;border-radius:8px;padding:8px 10px;font-size:14px;font-weight:700;color:#e2e8f0;font-family:'Syne',sans-serif;outline:none;"
           onkeydown="if(event.key==='Enter')commitPhaseRename('${p}');if(event.key==='Escape')cancelPhaseEdit();">
-        <button onclick="commitPhaseRename('${p}')" style="background:#6ee7b7;border:none;color:#0d0f14;border-radius:6px;padding:7px 13px;font-size:12px;font-weight:800;cursor:pointer;">Save</button>
-        <button onclick="cancelPhaseEdit()" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:7px 10px;font-size:13px;cursor:pointer;">✕</button>
+        <button onclick="commitPhaseRename('${p}')"
+          style="background:#6ee7b7;border:none;color:#0d0f14;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
+          ✓ Save
+        </button>
+        <button onclick="cancelPhaseEdit()"
+          style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:8px;padding:8px 10px;font-size:13px;cursor:pointer;">
+          ✕
+        </button>
       </div>`;
     }
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:10px;margin-bottom:8px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:30px;height:30px;border-radius:50%;background:${phaseColor(p)};color:#0d0f14;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;">${badge}</div>
-        <span style="font-weight:700;">Phase ${p}</span>
-        ${isDef ? '<span style="font-size:10px;color:var(--muted);background:var(--bg);padding:2px 6px;border-radius:4px;">locked</span>' : ''}
+
+    return `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#1e2230;border:1px solid #2a2f3f;border-radius:12px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:34px;height:34px;border-radius:50%;background:${color};color:#0d0f14;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">${badge}</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#e2e8f0;">Phase ${p}</div>
+          ${isDef ? '<div style="font-size:10px;color:#64748b;margin-top:1px;">Default — cannot be deleted</div>' : '<div style="font-size:10px;color:#94a3b8;margin-top:1px;">Custom phase</div>'}
+        </div>
       </div>
-      <div style="display:flex;gap:6px;">
-        <button onclick="startPhaseEdit('${p}')" style="background:rgba(110,231,183,0.1);border:1px solid rgba(110,231,183,0.3);color:#6ee7b7;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">✏ Rename</button>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button onclick="startPhaseEdit('${p}')"
+          style="background:rgba(110,231,183,0.1);border:1px solid rgba(110,231,183,0.3);color:#6ee7b7;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">
+          ✏ Rename
+        </button>
         ${!isDef
-          ? `<button onclick="deleteCustomPhase('${p}')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#f87171;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">✕</button>`
-          : ''}
+          ? `<button onclick="deleteCustomPhase('${p}')"
+               style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#f87171;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">
+               🗑 Delete
+             </button>`
+          : '<div style="width:78px;"></div>'
+        }
       </div>
     </div>`;
   }).join('');
-  if (editingPhase) setTimeout(() => document.getElementById('editPhaseInput_' + editingPhase)?.focus(), 30);
+
+  // Update the Config tab phase list (now the only phaseManagerList)
+  const el = document.getElementById('phaseManagerList');
+  if (el) el.innerHTML = html;
+
+  if (editingPhase) setTimeout(() => document.getElementById('editPhaseInput_' + editingPhase)?.focus(), 50);
 }
 
 function startPhaseEdit(p) { editingPhase = p; renderPhaseManagerList(); }
@@ -2751,9 +2761,8 @@ function refreshFoodEditorPhases() {
   sel.value = getAllPhases().includes(cur) ? cur : '1';
 }
 
-document.addEventListener('click', e => {
-  if (e.target === document.getElementById('phaseEditorModal')) closePhaseEditor();
-});
+// Phase modal removed — management is in Admin → Config tab
+
 
 // ============================================================
 // SHARE CHARTS (DASHBOARD)
