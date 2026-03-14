@@ -370,16 +370,19 @@ font-family: ‘DM Mono’, monospace; margin-bottom: 10px; display: inline-flex
 
 /* Checkbox custom */
 .check-row {
-display: flex; align-items: center; gap: 10px; padding: 8px 0;
+display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+border-radius: 10px; border: 1px solid #2a2f3f; margin-bottom: 8px;
+background: #1e2230; cursor: pointer; transition: border-color 0.2s;
 }
+.check-row:hover { border-color: #6ee7b7; }
 .check-box {
-width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(–border);
-background: var(–surface2); cursor: pointer; display: flex; align-items: center; justify-content: center;
+width: 24px; height: 24px; border-radius: 6px; border: 2px solid #475569;
+background: #0d0f14; cursor: pointer; display: flex; align-items: center; justify-content: center;
 flex-shrink: 0; transition: all 0.2s;
 }
-.check-box.checked { background: var(–accent); border-color: var(–accent); }
-.check-box.checked::after { content: ‘✓’; color: #0d0f14; font-size: 13px; font-weight: 700; }
-.check-label { font-size: 14px; }
+.check-box.checked { background: #6ee7b7; border-color: #6ee7b7; }
+.check-box.checked::after { content: ‘✓’; color: #0d0f14; font-size: 14px; font-weight: 900; line-height: 1; }
+.check-label { font-size: 14px; font-weight: 600; color: #e2e8f0; flex: 1; }
 
 .impact-box {
 background: var(–surface2); border: 1px solid var(–border); border-radius: 10px;
@@ -995,11 +998,11 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 </div>
 
 <div style="margin-bottom:16px;">
-  <div class="metric-label" style="margin-bottom:8px;">WHAT TO COPY</div>
+  <div style="font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:1px;margin-bottom:10px;">WHAT TO COPY</div>
   <div id="dupOptions">
-    <div class="check-row"><div class="check-box checked" id="dup-foods" onclick="toggleDupOpt('foods')"></div><div class="check-label">Food items & calories</div></div>
-    <div class="check-row"><div class="check-box checked" id="dup-metrics" onclick="toggleDupOpt('metrics')"></div><div class="check-label">Daily metrics (weight, blood sugar, etc.)</div></div>
-    <div class="check-row"><div class="check-box" id="dup-phase" onclick="toggleDupOpt('phase')"></div><div class="check-label">Phase setting</div></div>
+    <div class="check-row" onclick="toggleDupOpt('foods')"><div class="check-box checked" id="dup-foods"></div><div class="check-label">🍽 Food items &amp; calories</div></div>
+    <div class="check-row" onclick="toggleDupOpt('metrics')"><div class="check-box checked" id="dup-metrics"></div><div class="check-label">📊 Daily metrics (weight, blood sugar…)</div></div>
+    <div class="check-row" onclick="toggleDupOpt('phase')"><div class="check-box" id="dup-phase"></div><div class="check-label">📋 Phase setting</div></div>
   </div>
 </div>
 
@@ -1009,7 +1012,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
 <div style="display:flex;gap:10px;">
   <button class="btn-secondary" onclick="closeDupModal()">Cancel</button>
-  <button class="btn-primary" style="flex:1;" onclick="executeDuplicate()">Copy Day →</button>
+  <button onclick="executeDuplicate()" style="flex:1;background:#f59e0b;color:#0d0f14;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;box-shadow:0 0 12px rgba(245,158,11,0.35);">Copy Day →</button>
 </div>
 ```
 
