@@ -131,23 +131,23 @@ display: flex; align-items: center; gap: 20px; margin-bottom: 16px;
 }
 .ring-svg { width: 110px; height: 110px; flex-shrink: 0; }
 .ring-info h2 { font-size: 28px; font-weight: 800; color: var(–accent); line-height: 1; }
-.ring-info .ring-sub { font-size: 12px; color: var(–muted); margin-top: 3px; font-family: ‘DM Mono’, monospace; }
+.ring-info .ring-sub { font-size: 12px; color: #94a3b8; margin-top: 3px; font-family: ‘DM Mono’, monospace; font-weight: 700; }
 .ring-info .ring-avail { font-size: 14px; color: var(–text); margin-top: 8px; }
 .ring-info .ring-avail span { color: var(–accent2); font-weight: 700; }
 
 .cal-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .cal-stat { text-align: center; }
 .cal-stat-val { font-size: 18px; font-weight: 700; }
-.cal-stat-lbl { font-size: 10px; color: var(–muted); font-family: ‘DM Mono’, monospace; }
+.cal-stat-lbl { font-size: 10px; color: #94a3b8; font-family: ‘DM Mono’, monospace; font-weight: 700; }
 
 /* METRICS CARD */
 .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
 .metric-card {
 background: var(–surface); border: 1px solid var(–border); border-radius: 14px; padding: 14px;
 }
-.metric-label { font-size: 10px; color: var(–muted); font-family: ‘DM Mono’, monospace; margin-bottom: 4px; }
+.metric-label { font-size: 10px; color: #94a3b8; font-family: ‘DM Mono’, monospace; margin-bottom: 4px; font-weight: 700; letter-spacing: 0.5px; }
 .metric-val { font-size: 20px; font-weight: 700; }
-.metric-unit { font-size: 11px; color: var(–muted); }
+.metric-unit { font-size: 11px; color: #64748b; }
 .metric-input-wrap { margin-top: 6px; }
 .metric-input {
 background: var(–surface2); border: 1px solid var(–border); color: var(–text);
@@ -161,7 +161,7 @@ outline: none;
 display: flex; align-items: center; justify-content: space-between;
 margin: 20px 0 10px;
 }
-.section-title { font-size: 14px; font-weight: 700; color: var(–muted); text-transform: uppercase; letter-spacing: 1px; }
+.section-title { font-size: 14px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 
 /* FOOD LOG */
 .food-item {
@@ -170,7 +170,7 @@ padding: 12px 14px; margin-bottom: 8px;
 display: flex; align-items: center; gap: 10px;
 }
 .food-item-name { flex: 1; font-weight: 600; font-size: 14px; }
-.food-item-qty { font-size: 11px; color: var(–muted); font-family: ‘DM Mono’, monospace; }
+.food-item-qty { font-size: 11px; color: #64748b; font-family: ‘DM Mono’, monospace; }
 .food-item-cal { font-family: ‘DM Mono’, monospace; font-size: 14px; font-weight: 700; color: var(–accent2); }
 .food-item-del { background: none; border: none; cursor: pointer; color: var(–red); padding: 4px; font-size: 16px; }
 
@@ -178,7 +178,7 @@ display: flex; align-items: center; gap: 10px;
 .add-food-panel {
 background: var(–surface); border: 1px solid var(–border); border-radius: 16px; padding: 16px; margin-bottom: 16px;
 }
-.add-food-panel h3 { font-size: 13px; font-weight: 700; color: var(–muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.add-food-panel h3 { font-size: 13px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
 .food-search {
 background: var(–surface2); border: 1px solid var(–border); color: var(–text);
 border-radius: 10px; padding: 10px 14px; width: 100%; font-size: 14px; font-family: ‘Syne’, sans-serif;
@@ -242,7 +242,7 @@ background: var(–surface); border: 1px solid var(–border); border-radius: 16
 .food-test-header {
 display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
 }
-.food-test-header h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(–muted); }
+.food-test-header h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #cbd5e1; }
 
 .test-items { display: flex; flex-wrap: wrap; gap: 8px; }
 .test-item {
@@ -290,7 +290,7 @@ padding: 10px 12px; border-bottom: 1px solid var(–border); font-size: 13px;
 .food-editor-modal { display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center; }
 .food-editor-sheet { background:var(–surface);border:1px solid var(–border);border-radius:20px 20px 0 0;padding:20px 20px 40px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto; }
 .food-editor-field { margin-bottom:14px; }
-.food-editor-label { font-size:11px;font-weight:700;color:var(–muted);letter-spacing:1px;margin-bottom:5px;font-family:‘DM Mono’,monospace; }
+.food-editor-label { font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;margin-bottom:5px;font-family:‘DM Mono’,monospace; }
 .food-editor-input { width:100%;background:var(–surface2);border:1px solid var(–border);color:var(–text);border-radius:10px;padding:10px 14px;font-size:14px;font-family:‘Syne’,sans-serif;outline:none;box-sizing:border-box; }
 .food-editor-input:focus { border-color:var(–accent); }
 .food-editor-select { width:100%;background:var(–surface2);border:1px solid var(–border);color:var(–text);border-radius:10px;padding:10px 14px;font-size:14px;font-family:‘Syne’,sans-serif;outline:none;box-sizing:border-box; }
@@ -303,10 +303,10 @@ padding: 10px 12px; border-bottom: 1px solid var(–border); font-size: 13px;
 background: var(–surface); border: 1px solid var(–border); border-radius: 14px; padding: 14px; margin-bottom: 10px;
 }
 .history-date { font-family: ‘DM Mono’, monospace; font-size: 11px; color: var(–accent3); margin-bottom: 6px; }
-.history-phase { font-size: 10px; color: var(–muted); margin-bottom: 8px; }
+.history-phase { font-size: 10px; color: #64748b; margin-bottom: 8px; }
 .history-metrics { display: flex; gap: 12px; flex-wrap: wrap; }
 .history-metric { font-size: 12px; }
-.history-metric-label { color: var(–muted); font-family: ‘DM Mono’, monospace; font-size: 10px; }
+.history-metric-label { color: #64748b; font-family: ‘DM Mono’, monospace; font-size: 10px; font-weight: 700; }
 .history-metric-val { font-weight: 700; }
 .history-cal { font-size: 16px; font-weight: 800; color: var(–accent); }
 
@@ -326,7 +326,7 @@ padding: 5px 10px; border-radius: 20px; border: 1px solid;
 /* TOGGLE SELECT */
 .select-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .select-chip {
-background: var(–surface2); border: 1px solid var(–border); color: var(–muted);
+background: #1e2230; border: 1px solid #3a4155; color: #94a3b8;
 border-radius: 20px; padding: 5px 14px; font-size: 12px; font-family: ‘DM Mono’, monospace;
 cursor: pointer; transition: all 0.2s; font-weight: 600;
 }
@@ -336,7 +336,7 @@ background: #6ee7b7; border-color: #6ee7b7; color: #0d0f14; font-weight: 800;
 
 .cat-filter { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 4px; }
 .cat-chip {
-background: var(–surface2); border: 1px solid var(–border); color: var(–muted);
+background: #1e2230; border: 1px solid #3a4155; color: #94a3b8;
 border-radius: 20px; padding: 5px 12px; font-size: 11px; white-space: nowrap;
 cursor: pointer; transition: all 0.2s; flex-shrink: 0; font-weight: 600;
 }
@@ -558,11 +558,11 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
     <!-- live calorie preview while adding -->
     <div id="addFoodPreview" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:10px 14px;margin-bottom:8px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <span style="font-size:11px;color:var(--muted);font-weight:700;">THIS ITEM</span>
+        <span style="font-size:11px;color:#94a3b8;font-weight:700;">THIS ITEM</span>
         <span id="addPreviewCal" style="font-size:18px;font-weight:800;color:#f59e0b;font-family:'DM Mono',monospace;">— kcal</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:11px;color:var(--muted);font-weight:700;">REMAINING AFTER</span>
+        <span style="font-size:11px;color:#94a3b8;font-weight:700;">REMAINING AFTER</span>
         <span id="addPreviewRemaining" style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;">— kcal</span>
       </div>
     </div>
@@ -614,9 +614,9 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 <div class="page" id="page-lookup">
   <div class="lookup-card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <h3 style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">🔍 Food Database</h3>
+      <h3 style="font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">🔍 Food Database</h3>
       <div style="display:flex;gap:8px;">
-        <button onclick="openPhaseEditor()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">⚙ Phases</button>
+        <button onclick="openPhaseEditor()" style="background:#1e2230;border:1px solid #3a4155;color:#cbd5e1;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">⚙ Phases</button>
         <button onclick="openFoodEditor(null)" style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;">＋ Add Food</button>
       </div>
     </div>
@@ -624,7 +624,9 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
     <!-- Phase filter -->
     <div class="cat-filter" id="lookupPhaseFilter" style="margin-bottom:6px;"></div>
     <!-- Category filter -->
-    <div class="cat-filter" id="lookupCatFilter"></div>
+    <div class="cat-filter" id="lookupCatFilter" style="margin-bottom:6px;"></div>
+    <!-- Status filter -->
+    <div class="cat-filter" id="lookupStatusFilter" style="margin-bottom:6px;"></div>
     <div id="lookupResults"></div>
   </div>
 </div>
@@ -634,10 +636,10 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 <div id="calTargetModal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:20px;padding:24px;width:88%;max-width:360px;">
     <div style="font-size:16px;font-weight:800;margin-bottom:6px;">🎯 Daily Calorie Target</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;" id="calTargetSubtitle">Set your planned intake. Defaults to previous day's target.</div>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:16px;" id="calTargetSubtitle">Set your planned intake. Defaults to previous day's target.</div>
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;">
       <input id="calTargetInput" type="number" min="200" max="5000" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:22px;font-weight:800;color:var(--accent2);text-align:center;font-family:'Syne',sans-serif;" placeholder="850">
-      <span style="color:var(--muted);font-size:13px;">kcal</span>
+      <span style="color:#94a3b8;font-size:13px;">kcal</span>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
       <button onclick="setTargetQuick(500)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">500</button>
@@ -648,9 +650,9 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
     </div>
     <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer;">
       <input type="checkbox" id="calTargetSetDefault" style="width:16px;height:16px;accent-color:#6ee7b7;">
-      <span style="font-size:12px;color:var(--muted);">Also set as my default going forward</span>
+      <span style="font-size:12px;color:#94a3b8;">Also set as my default going forward</span>
     </label>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:16px;" id="calTargetHint"></div>
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:16px;" id="calTargetHint"></div>
     <div style="display:flex;gap:10px;">
       <button onclick="closeTargetEditor()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">Cancel</button>
       <button onclick="saveCalTarget()" style="flex:2;background:#6ee7b7;border:none;color:#0d0f14;border-radius:10px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">Save Target</button>
@@ -667,10 +669,10 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
       <button onclick="closeEditFoodModal()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;">✕</button>
     </div>
     <div id="editFoodName" style="font-size:13px;color:var(--accent2);font-weight:700;margin-bottom:4px;font-family:'DM Mono',monospace;"></div>
-    <div id="editFoodRef" style="font-size:11px;color:var(--muted);margin-bottom:18px;"></div>
+    <div id="editFoodRef" style="font-size:11px;color:#94a3b8;margin-bottom:18px;"></div>
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;">
       <div style="flex:1;">
-        <label style="font-size:11px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">QUANTITY</label>
+        <label style="font-size:11px;color:#94a3b8;font-weight:700;display:block;margin-bottom:6px;">QUANTITY</label>
         <div style="display:flex;gap:8px;align-items:center;">
           <button onclick="stepEditQty(-1)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;width:36px;height:36px;font-size:20px;cursor:pointer;flex-shrink:0;">−</button>
           <input id="editFoodQty" type="number" min="0.1" step="any" oninput="updateEditCalPreview()" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:20px;font-weight:800;color:var(--text);text-align:center;font-family:'Syne',sans-serif;">
@@ -678,13 +680,13 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
         </div>
       </div>
       <div style="min-width:80px;text-align:center;">
-        <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px;">CALORIES</div>
+        <div style="font-size:11px;color:#94a3b8;font-weight:700;margin-bottom:6px;">CALORIES</div>
         <div id="editCalPreview" style="font-size:22px;font-weight:800;color:var(--accent2);font-family:'DM Mono',monospace;">—</div>
-        <div style="font-size:10px;color:var(--muted);">kcal</div>
+        <div style="font-size:10px;color:#64748b;">kcal</div>
       </div>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;">
-      <div style="font-size:10px;color:var(--muted);width:100%;font-weight:700;">QUICK SET:</div>
+      <div style="font-size:10px;color:#94a3b8;width:100%;font-weight:700;">QUICK SET:</div>
       <button onclick="setEditQtyMultiple(0.5)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">½×</button>
       <button onclick="setEditQtyMultiple(1)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">1×</button>
       <button onclick="setEditQtyMultiple(1.5)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);">1.5×</button>
@@ -706,9 +708,9 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
       <div style="font-size:16px;font-weight:800;">⚙ Manage Phases</div>
       <button onclick="closePhaseEditor()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
     </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">All phases can be renamed. Custom phases can also be removed. Default phases (1–4) cannot be deleted.</div>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;">All phases can be renamed. Custom phases can also be removed. Default phases (1–4) cannot be deleted.</div>
     <div id="phaseManagerList" style="margin-bottom:16px;"></div>
-    <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px;">ADD NEW PHASE</div>
+    <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:1px;margin-bottom:8px;">ADD NEW PHASE</div>
     <div style="display:flex;gap:8px;">
       <input id="newPhaseInput" placeholder="e.g. V5, Maintenance, Reintro" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;" maxlength="20">
       <button onclick="addCustomPhase()" style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:8px;padding:10px 16px;font-weight:800;font-size:13px;font-family:'Syne',sans-serif;cursor:pointer;">Add</button>
@@ -735,19 +737,19 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
       <div style="font-size:18px;font-weight:800;color:#6ee7b7;" id="dash-avgcal">—</div>
-      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">AVG KCAL</div>
+      <div style="font-size:9px;color:#64748b;font-family:'DM Mono',monospace;margin-top:2px;">AVG KCAL</div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
       <div style="font-size:18px;font-weight:800;color:#60a5fa;" id="dash-weight">—</div>
-      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">WEIGHT</div>
+      <div style="font-size:9px;color:#64748b;font-family:'DM Mono',monospace;margin-top:2px;">WEIGHT</div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
       <div style="font-size:18px;font-weight:800;color:#f87171;" id="dash-bs">—</div>
-      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">BLOOD SG</div>
+      <div style="font-size:9px;color:#64748b;font-family:'DM Mono',monospace;margin-top:2px;">BLOOD SG</div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
       <div style="font-size:18px;font-weight:800;color:#f59e0b;" id="dash-days">—</div>
-      <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">DAYS</div>
+      <div style="font-size:9px;color:#64748b;font-family:'DM Mono',monospace;margin-top:2px;">DAYS</div>
     </div>
   </div>
 
@@ -755,8 +757,8 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;">⚖ WEIGHT TREND (kg)</div>
-      <button onclick="shareChart('weightChart','Weight Trend')" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">📤 Share</button>
+      <div style="font-size:12px;font-weight:700;color:#cbd5e1;letter-spacing:1px;">⚖ WEIGHT TREND (kg)</div>
+      <button onclick="shareChart('weightChart','Weight Trend')" style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;">📤 Share</button>
     </div>
     <canvas id="weightChart" height="140"></canvas>
   </div>
@@ -765,8 +767,8 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;">🩸 BLOOD SUGAR TREND (mg/dL)</div>
-      <button onclick="shareChart('bsChart','Blood Sugar Trend')" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">📤 Share</button>
+      <div style="font-size:12px;font-weight:700;color:#cbd5e1;letter-spacing:1px;">🩸 BLOOD SUGAR TREND (mg/dL)</div>
+      <button onclick="shareChart('bsChart','Blood Sugar Trend')" style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;">📤 Share</button>
     </div>
     <canvas id="bsChart" height="140"></canvas>
   </div>
@@ -775,10 +777,10 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-      <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;">🔥 DAILY CALORIES</div>
-      <button onclick="shareChart('calChart','Daily Calories')" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">📤 Share</button>
+      <div style="font-size:12px;font-weight:700;color:#cbd5e1;letter-spacing:1px;">🔥 DAILY CALORIES</div>
+      <button onclick="shareChart('calChart','Daily Calories')" style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;">📤 Share</button>
     </div>
-    <div style="font-size:10px;color:var(--muted);margin-bottom:12px;font-family:'DM Mono',monospace;">Target: 850 kcal shown as dashed line</div>
+    <div style="font-size:10px;color:#64748b;margin-bottom:12px;font-family:'DM Mono',monospace;">Target: 850 kcal shown as dashed line</div>
     <canvas id="calChart" height="140"></canvas>
   </div>
 
@@ -786,8 +788,8 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;">😴 SLEEP HOURS</div>
-      <button onclick="shareChart('sleepChart','Sleep Trend')" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">📤 Share</button>
+      <div style="font-size:12px;font-weight:700;color:#cbd5e1;letter-spacing:1px;">😴 SLEEP HOURS</div>
+      <button onclick="shareChart('sleepChart','Sleep Trend')" style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;">📤 Share</button>
     </div>
     <canvas id="sleepChart" height="120"></canvas>
   </div>
@@ -989,7 +991,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 <div id="dupModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;">
     <div style="font-size:16px;font-weight:800;margin-bottom:6px;">⧉ Copy Day</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;" id="dupSourceLabel">Copy foods &amp; metrics from <strong id="dupFromDate">—</strong> to another date.</div>
+    <div style="font-size:13px;color:#94a3b8;margin-bottom:20px;" id="dupSourceLabel">Copy foods &amp; metrics from <strong id="dupFromDate">—</strong> to another date.</div>
 
 ```
 <div style="margin-bottom:16px;">
@@ -1777,6 +1779,7 @@ function renderPhaseList(phFilter, catFilter) {
 // ============================================================
 let lookupCat = 'all';
 let lookupPhase = 'all';
+let lookupStatus = 'all';
 
 function getCustomPhases() {
   try { return JSON.parse(localStorage.getItem('amura_custom_phases') || '[]'); } catch { return []; }
@@ -1786,6 +1789,32 @@ function saveCustomPhases(phases) {
 }
 function getAllPhases() {
   return ['1','2','3','4', ...getCustomPhases()];
+}
+
+function buildLookupStatusFilter() {
+  const statuses = [
+    { val: 'all',    label: 'All Status', bg: '#1e2230', border: '#3a4155', color: '#94a3b8' },
+    { val: 'OK',     label: '✓ Passed',   bg: 'rgba(74,222,128,0.15)',  border: '#4ade80', color: '#4ade80' },
+    { val: 'Test',   label: '⊙ To Test',  bg: 'rgba(96,165,250,0.15)',  border: '#60a5fa', color: '#93c5fd' },
+    { val: 'Retest', label: '↻ Retest',   bg: 'rgba(251,146,60,0.15)', border: '#fb923c', color: '#fdba74' },
+    { val: 'Failed', label: '✕ Failed',   bg: 'rgba(248,113,113,0.15)', border: '#f87171', color: '#fca5a5' },
+    { val: 'NI',     label: '– Not Interested', bg: 'rgba(148,163,184,0.12)', border: '#475569', color: '#94a3b8' },
+  ];
+  document.getElementById('lookupStatusFilter').innerHTML = statuses.map(s => {
+    const isActive = lookupStatus === s.val;
+    const bg = isActive ? s.bg : '#1e2230';
+    const border = isActive ? s.border : '#3a4155';
+    const color = isActive ? s.color : '#64748b';
+    const fw = isActive ? '800' : '600';
+    return `<div style="background:${bg};border:1px solid ${border};color:${color};border-radius:20px;padding:5px 12px;font-size:11px;white-space:nowrap;cursor:pointer;flex-shrink:0;font-weight:${fw};transition:all 0.2s;"
+      onclick="setLookupStatus('${s.val}',this)">${s.label}</div>`;
+  }).join('');
+}
+
+function setLookupStatus(status, el) {
+  lookupStatus = status;
+  buildLookupStatusFilter();
+  runLookup();
 }
 
 function buildLookupPhaseFilter() {
@@ -1808,6 +1837,7 @@ function buildLookupCatFilter() {
     `<div class="cat-chip ${c==='all'?'active':''}" onclick="setLookupCat('${c}',this)">${c==='all'?'All Categories':c}</div>`
   ).join('');
   buildLookupPhaseFilter();
+  buildLookupStatusFilter();
   runLookup();
 }
 
@@ -1823,6 +1853,8 @@ function runLookup() {
   const filterFn = f => {
     if (lookupCat !== 'all' && f.cat !== lookupCat) return false;
     if (lookupPhase !== 'all' && String(f.phase) !== String(lookupPhase)) return false;
+    const effectiveStatus = foodStatusOverrides[f.name] || f.status;
+    if (lookupStatus !== 'all' && effectiveStatus !== lookupStatus) return false;
     if (q && !f.name.toLowerCase().includes(q)) return false;
     return true;
   };
