@@ -519,11 +519,8 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
       </div>
       <div style="flex:1;">
         <div class="metric-label">PHASE</div>
-        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-          <button class="select-chip" id="ph-v1" onclick="setPhase('V1')">V1</button>
-          <button class="select-chip" id="ph-v2" onclick="setPhase('V2')">V2</button>
-          <button class="select-chip" id="ph-v3" onclick="setPhase('V3')">V3</button>
-          <button class="select-chip" id="ph-v4" onclick="setPhase('V4')">V4</button>
+        <div id="todayPhaseChips" style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+          <!-- built dynamically by buildTodayPhaseChips() -->
         </div>
       </div>
     </div>
@@ -1610,10 +1607,8 @@ function loadDay() {
   }
   // Phase buttons
   document.querySelectorAll('.select-chip[id^=ph-]').forEach(b => b.classList.remove('active'));
-  if (log.meta.phase) {
-    const btn = document.getElementById('ph-' + log.meta.phase.toLowerCase());
-    if (btn) btn.classList.add('active');
-  }
+  // Build dynamic phase chips and mark current phase active
+  buildTodayPhaseChips(log.meta.phase || '');
   renderFoodLog();
 }
 
@@ -1624,11 +1619,27 @@ function setBM(val) {
   document.getElementById('bm-' + val.toLowerCase()).classList.add('active');
 }
 
+function buildTodayPhaseChips(activePhase) {
+  // All phases: 1,2,3,4 default + custom (V1-V6 etc.)
+  const phases = getAllPhases();
+  const container = document.getElementById('todayPhaseChips');
+  if (!container) return;
+  container.innerHTML = phases.map(p =>
+    `<button class="select-chip ${activePhase === p ? 'active' : ''}"
+       id="ph-${p.toLowerCase()}"
+       onclick="setPhase('${p}')"
+       style="font-size:12px;padding:5px 12px;">
+       ${p.startsWith('V') || isNaN(p) ? p : 'Ph ' + p}
+     </button>`
+  ).join('');
+}
+
 function setPhase(val) {
   getLog(currentDate).meta.phase = val;
   saveLogs();
-  document.querySelectorAll('.select-chip[id^=ph-]').forEach(b => b.classList.remove('active'));
-  document.getElementById('ph-' + val.toLowerCase()).classList.add('active');
+  buildTodayPhaseChips(val);
+  // Refresh food search if open — phase filter may have changed available foods
+  searchFood();
 }
 
 function saveDayMeta() {
@@ -1871,6 +1882,22 @@ function saveEditFood() {
 // ============================================================
 let selectedFood = null;
 
+// ── Phase ordering for food filtering ──
+// Returns the index of a phase in the full ordered list.
+// Foods with a phase index GREATER than the selected day's phase are hidden.
+function getPhaseOrder(phase) {
+  if (!phase) return 9999; // no phase set = show all
+  const all = getAllPhases(); // ['1','2','3','4','V1','V2',...]
+  const idx = all.findIndex(p => p.toLowerCase() === String(phase).toLowerCase());
+  return idx >= 0 ? idx : 9999;
+}
+
+// Returns true if foodPhase is allowed given the day's selected phase
+function isFoodAllowedForPhase(foodPhase, dayPhase) {
+  if (!dayPhase) return true; // no phase selected on this day — show everything
+  return getPhaseOrder(String(foodPhase)) <= getPhaseOrder(String(dayPhase));
+}
+
 function searchFood() {
   const q = document.getElementById('foodSearchInput').value.toLowerCase().trim();
   const sugg = document.getElementById('foodSuggestions');
@@ -1880,13 +1907,22 @@ function searchFood() {
   document.getElementById('addFoodPreview').style.display = 'none';
 
   if (q.length < 1) { sugg.classList.remove('show'); return; }
+  const dayPhase = getLog(currentDate).meta.phase || '';
   const _seen = new Set();
   const matches = CALORIE_DB.filter(f => {
     if (_seen.has(f.name)) return false;
     _seen.add(f.name);
-    return f.name.toLowerCase().includes(q);
+    if (!f.name.toLowerCase().includes(q)) return false;
+    // Only show foods whose phase is ≤ the day's selected phase
+    if (!isFoodAllowedForPhase(f.phase, dayPhase)) return false;
+    return true;
   }).slice(0, 12);
-  if (!matches.length) { sugg.innerHTML = '<div style="padding:10px 14px;color:var(--muted);font-size:13px;">No matches</div>'; sugg.classList.add('show'); return; }
+  if (!matches.length) {
+    const dayPhase = getLog(currentDate).meta.phase || '';
+    const phaseMsg = dayPhase ? ` for Phase ${dayPhase} and below` : '';
+    sugg.innerHTML = `<div style="padding:10px 14px;color:var(--muted);font-size:13px;">No matches${phaseMsg}</div>`;
+    sugg.classList.add('show'); return;
+  }
   sugg.innerHTML = matches.map(f => `
     <div class="food-suggestion-item" onclick="selectFood('${f.name.replace(/'/g,"\\'")}')">
       <div>
@@ -2373,6 +2409,7 @@ async function saveFoodEditor() {
   closeFoodEditor();
   showToast(`${name} saved! ✓`);
   runLookup();
+  buildTodayPhaseChips(getLog(currentDate)?.meta?.phase || '');
   buildPhaseTabFilter();
   renderPhaseList(currentPhaseFilter, currentCatFilter);
   buildCatFilters();
@@ -2708,6 +2745,7 @@ function commitPhaseRename(oldName) {
 function refreshAllPhaseUIs() {
   // Call this whenever phases are added/removed/renamed
   // Updates every place in the app that shows a phase list
+  buildTodayPhaseChips(getLog(currentDate)?.meta?.phase || ''); // Today tab
   buildPhaseTabFilter();          // Phase tab filter chips
   buildLookupPhaseFilter();       // Lookup tab filter chips
   refreshFoodEditorPhases();      // Add food dropdown
