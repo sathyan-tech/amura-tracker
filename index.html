@@ -1619,9 +1619,16 @@ function setBM(val) {
   document.getElementById('bm-' + val.toLowerCase()).classList.add('active');
 }
 
+// Map internal phase value to display label for Today tab
+// Numeric defaults 1-4 shown as V1-V4; custom phases (V5, V6 etc.) shown as-is
+function phaseLabel(p) {
+  const n = parseInt(p);
+  if (!isNaN(n) && String(n) === String(p)) return 'V' + n; // '1' → 'V1'
+  return String(p); // 'V5', 'V6' etc. shown as-is
+}
+
 function buildTodayPhaseChips(activePhase) {
-  // All phases: 1,2,3,4 default + custom (V1-V6 etc.)
-  const phases = getAllPhases();
+  const phases = getAllPhases(); // ['1','2','3','4','V5','V6',...]
   const container = document.getElementById('todayPhaseChips');
   if (!container) return;
   container.innerHTML = phases.map(p =>
@@ -1629,7 +1636,7 @@ function buildTodayPhaseChips(activePhase) {
        id="ph-${p.toLowerCase()}"
        onclick="setPhase('${p}')"
        style="font-size:12px;padding:5px 12px;">
-       ${p.startsWith('V') || isNaN(p) ? p : 'Ph ' + p}
+       ${phaseLabel(p)}
      </button>`
   ).join('');
 }
