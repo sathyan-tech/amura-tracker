@@ -3100,12 +3100,16 @@ function shareSnapshot() {
     ? `<span style="background:rgba(110,231,183,0.15);color:#6ee7b7;border:1px solid rgba(110,231,183,0.3);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;margin-left:8px">Phase ${m.phase}</span>`
     : '';
 
+  // Format date as DD/MM/YYYY for the share title
+  const shareDateStr = `${d}/${mo}/${y}`;
+
   const card = document.getElementById('snapshotCard');
   card.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div>
-        <div style="font-size:17px;font-weight:800;color:#6ee7b7">🌿 Sathyan's Amura Tracker</div>
-        <div style="font-size:12px;color:#64748b;margin-top:2px;font-family:'DM Mono',monospace">${dateStr} ${phaseHtml}</div>
+    <div style="margin-bottom:20px;">
+      <div style="font-size:18px;font-weight:800;color:#e2e8f0;">My food log for ${shareDateStr}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+        <div style="font-size:12px;color:#64748b;font-family:'DM Mono',monospace;">${dateStr}</div>
+        ${phaseHtml}
       </div>
     </div>
 
@@ -3392,29 +3396,50 @@ function renderDashboard() {
     plugins: { ...chartDefaults.plugins }
   });
 
-  // Phase timeline
-  const phaseColors = { V1:'#6ee7b7', V2:'#60a5fa', V3:'#f59e0b', V4:'#f87171' };
+  // Phase timeline — handle both numeric ('1','2','3','4') and named ('V1','V2','V5') phases
+  // Numeric phases are displayed as V1-V4 to match the Today tab labels
+  const _phaseColorPalette = ['#6ee7b7','#60a5fa','#f59e0b','#f87171','#a78bfa','#fb923c','#34d399','#f472b6'];
+  const _allPhaseOrder = getAllPhases(); // ['1','2','3','4','V5','V6',...]
+
+  // Build a colour map for every known phase
+  const phaseColorMap = {};
+  _allPhaseOrder.forEach((p, i) => { phaseColorMap[p] = _phaseColorPalette[i % _phaseColorPalette.length]; });
+
   const phaseDays = {};
   filtered.forEach(dk => {
     const ph = (all[dk].meta||{}).phase;
-    if (ph && ph.startsWith('V')) {
-      if (!phaseDays[ph]) phaseDays[ph] = [];
-      phaseDays[ph].push(dk);
-    }
+    if (!ph) return;
+    if (!phaseDays[ph]) phaseDays[ph] = [];
+    phaseDays[ph].push(dk);
   });
-  const ptHtml = Object.entries(phaseDays).sort().map(([ph, days]) => {
-    const col = phaseColors[ph] || '#888';
-    const start = days[0].slice(5);
-    const end = days[days.length-1].slice(5);
-    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-      <div style="width:36px;height:36px;border-radius:50%;background:${col};color:#0d0f14;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">${ph}</div>
-      <div>
-        <div style="font-weight:700;font-size:13px;">${ph} — ${days.length} days</div>
-        <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;">${start} → ${end}</div>
+
+  // Sort by phase order index
+  const sortedPhases = Object.keys(phaseDays).sort((a, b) => {
+    return _allPhaseOrder.indexOf(a) - _allPhaseOrder.indexOf(b);
+  });
+
+  const fmtDate = (dk) => {
+    const [y, mo, d] = dk.split('-');
+    return `${d}/${mo}/${y.slice(2)}`;
+  };
+
+  const ptHtml = sortedPhases.map(ph => {
+    const days = phaseDays[ph];
+    const col  = phaseColorMap[ph] || '#888';
+    const label = phaseLabel(ph); // uses phaseLabel() — '1'→'V1', 'V5'→'V5'
+    const start = fmtDate(days[0]);
+    const end   = fmtDate(days[days.length - 1]);
+    const dateRange = days.length === 1 ? start : `${start} → ${end}`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="width:38px;height:38px;border-radius:50%;background:${col};color:#0d0f14;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;">${label}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:13px;color:#e2e8f0;">${label} &nbsp;<span style="font-weight:400;color:#94a3b8;font-size:12px;">${days.length} day${days.length > 1 ? 's' : ''}</span></div>
+        <div style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;margin-top:2px;">${dateRange}</div>
       </div>
-      <div style="margin-left:auto;font-size:20px;font-weight:800;color:${col};">${days.length}</div>
+      <div style="font-size:22px;font-weight:800;color:${col};flex-shrink:0;">${days.length}</div>
     </div>`;
   }).join('');
+
   document.getElementById('phaseTimeline').innerHTML = ptHtml || '<div class="empty-state">No phase data</div>';
 }
 
