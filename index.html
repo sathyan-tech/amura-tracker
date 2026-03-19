@@ -3,8 +3,7 @@
 <html lang="en" style="background:#0d0f14;color-scheme:dark;">
 <head>
 <meta charset="UTF-8">
-<script src="https://js.puter.com/v2/"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0d0f14">
 <title>Sathyan's Amura Tracker</title>
@@ -1534,8 +1533,8 @@ let ADMIN_EMAIL = ['sathyan85','gmail.com'].join('@'); // fallback — overwritt
 // Cloudflare Worker that securely forwards requests to Anthropic API.
 // Set this to your deployed Worker URL after following CLOUDFLARE_SETUP.md
 // Example: 'https://amura-ai.your-name.workers.dev'
-// AI powered by Puter.js (free, no API key needed)
-const AI_PROXY_URL = ''; // unused — kept for compatibility
+// Gemini API key — injected by GitHub Actions from repository secret GEMINI_API_KEY
+const GEMINI_API_KEY = '__GEMINI_API_KEY__';
 let db = null;
 let currentUser = null;
 let saveTimer = null;
@@ -4161,6 +4160,26 @@ async function runMigration() {
 // ── Today tab AI card ────────────────────────────────────────────────────────
 let todayAIRunning = false;
 
+// ── Direct Gemini API call — no proxy, no sign-in ─────────────────────────
+async function callGemini(systemPrompt, userPrompt) {
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === '__GEMINI_API_KEY__') {
+    throw new Error('Gemini API key not configured — add GEMINI_API_KEY secret to GitHub repo and redeploy');
+  }
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=' + GEMINI_API_KEY;
+  const body = {
+    contents: [{ parts: [{ text: systemPrompt + '\n\n' + userPrompt }] }],
+    generationConfig: { maxOutputTokens: 1200, temperature: 0.7 }
+  };
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.candidates[0].content.parts[0].text;
+}
+
 async function runTodayAI(auto = false) {
   if (todayAIRunning) return;
   todayAIRunning = true;
@@ -4184,9 +4203,8 @@ async function runTodayAI(auto = false) {
       'Be specific with actual food names and numbers from the data. Keep it mobile-friendly and motivating. ' +
       'Do not include medical disclaimers.';
 
-    const fullPrompt = systemPrompt + '\n\n' + prompt;
-    const text = await puter.ai.chat(fullPrompt, { model: 'gemini-2.0-flash-exp' });
-    contentEl.innerHTML = formatAIResponse(typeof text === 'string' ? text : text?.message?.content?.[0]?.text || String(text));
+    const text = await callGemini(systemPrompt, prompt);
+    contentEl.innerHTML = formatAIResponse(text);
 
     // Timestamp
     const now = new Date();
@@ -4283,9 +4301,8 @@ async function runAgent(agentId) {
       'Format your response with clear sections using emoji headers. Keep it mobile-friendly — short paragraphs, no long walls of text. ' +
       'Do not include disclaimers about consulting doctors unless there is a genuine safety concern.';
 
-    const fullPrompt = sysPrompt + '\n\n' + prompt;
-    const text = await puter.ai.chat(fullPrompt, { model: 'gemini-2.0-flash-exp' });
-    resultEl.innerHTML = formatAIResponse(typeof text === 'string' ? text : text?.message?.content?.[0]?.text || String(text));
+    const text = await callGemini(sysPrompt, prompt);
+    resultEl.innerHTML = formatAIResponse(text);
 
   } catch(e) {
     resultEl.innerHTML =
