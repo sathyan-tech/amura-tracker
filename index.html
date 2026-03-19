@@ -1104,6 +1104,10 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
         style="background:#a78bfa;color:#0d0f14;border:none;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
         ⚙ Phases
       </button>
+      <label style="background:#1e2230;border:1px solid #60a5fa;color:#60a5fa;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
+        📥 CSV
+        <input type="file" accept=".csv" style="display:none;" onchange="handleCSVUpload(event)">
+      </label>
     </div>
     <!-- Phase filter row -->
     <div style="display:flex;gap:6px;margin-bottom:6px;overflow-x:auto;padding-bottom:2px;" id="masterPhaseFilter"></div>
@@ -1191,6 +1195,73 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
   </div>
 
+</div>
+
+<!-- CSV REVIEW MODAL -->
+
+<div id="csvReviewModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 0;">
+  <div style="background:#161922;border:1px solid #2a2f3f;border-radius:20px;padding:20px;width:calc(100% - 32px);max-width:480px;margin:0 auto;">
+
+```
+<!-- Header -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+  <div style="font-size:16px;font-weight:800;color:#e2e8f0;">📥 CSV Import Review</div>
+  <button onclick="closeCSVModal()" style="background:none;border:none;color:#64748b;font-size:22px;cursor:pointer;line-height:1;">✕</button>
+</div>
+<div style="font-size:12px;color:#64748b;margin-bottom:14px;" id="csvSummaryLine">0 foods parsed</div>
+
+<!-- Error banner -->
+<div id="csvErrorBanner" style="display:none;background:rgba(248,113,113,0.1);border:1px solid #f87171;border-radius:10px;padding:10px 12px;font-size:12px;color:#f87171;margin-bottom:12px;"></div>
+
+<!-- Column format hint -->
+<div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.25);border-radius:10px;padding:10px 12px;font-size:11px;color:#94a3b8;margin-bottom:14px;font-family:'DM Mono',monospace;">
+  Accepted column names (case-insensitive):<br>
+  <strong style="color:#60a5fa;">Food Item</strong> or name &nbsp;·&nbsp;
+  <strong style="color:#60a5fa;">Calories (Kcal)</strong> or calories &nbsp;·&nbsp;
+  <strong style="color:#60a5fa;">Quantity Value</strong> or qty &nbsp;·&nbsp;
+  <strong style="color:#60a5fa;">Quantity Unit</strong> or unit &nbsp;·&nbsp;
+  <strong style="color:#60a5fa;">Phase</strong> &nbsp;·&nbsp;
+  <strong style="color:#60a5fa;">Category</strong> (optional — set below)
+</div>
+
+<!-- Global category setter -->
+<div style="background:#1e2230;border:1px solid #3a4155;border-radius:12px;padding:12px 14px;margin-bottom:14px;">
+  <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:8px;">SET CATEGORY FOR ALL UNCATEGORISED ROWS</div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <input id="csvGlobalCat" type="text" placeholder="e.g. Vegetables"
+      style="flex:1;background:#0d0f14;border:1px solid #3a4155;color:#e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;font-family:'Syne',sans-serif;outline:none;">
+    <button onclick="applyGlobalCategory()"
+      style="background:#60a5fa;color:#0d0f14;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;">
+      Apply All
+    </button>
+  </div>
+</div>
+
+<!-- Category quick-pick chips -->
+<div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:6px;">QUICK PICK</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;" id="csvCatChips"></div>
+
+<!-- Food rows table -->
+<div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;margin-bottom:8px;">
+  REVIEW & EDIT — <span id="csvRowCount">0</span> ITEMS
+</div>
+<div id="csvReviewList" style="max-height:380px;overflow-y:auto;border:1px solid #2a2f3f;border-radius:12px;"></div>
+
+<!-- Action buttons -->
+<div style="display:flex;gap:10px;margin-top:16px;">
+  <button onclick="closeCSVModal()"
+    style="flex:1;background:#1e2230;border:1px solid #3a4155;color:#e2e8f0;border-radius:10px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">
+    Cancel
+  </button>
+  <button onclick="submitCSVImport()"
+    style="flex:2;background:#f59e0b;color:#0d0f14;border:none;border-radius:10px;padding:12px;font-weight:800;font-size:15px;font-family:'Syne',sans-serif;cursor:pointer;box-shadow:0 0 14px rgba(245,158,11,0.35);">
+    💾 Import to Master
+  </button>
+</div>
+<div id="csvImportStatus" style="font-size:12px;color:#6ee7b7;font-weight:700;text-align:center;margin-top:10px;"></div>
+```
+
+  </div>
 </div>
 
 <!-- MASTER FOOD EDITOR MODAL -->
@@ -1457,6 +1528,12 @@ let CALORIE_DB = [
 // FIREBASE & AUTH
 // ============================================================
 let ADMIN_EMAIL = ['sathyan85','gmail.com'].join('@'); // fallback — overwritten by loadAppConfig()
+
+// ── AI Proxy URL ──────────────────────────────────────────────────────────────
+// Cloudflare Worker that securely forwards requests to Anthropic API.
+// Set this to your deployed Worker URL after following CLOUDFLARE_SETUP.md
+// Example: 'https://amura-ai.your-name.workers.dev'
+const AI_PROXY_URL = ''; // <-- PASTE YOUR WORKER URL HERE
 let db = null;
 let currentUser = null;
 let saveTimer = null;
@@ -4100,7 +4177,9 @@ async function runTodayAI(auto = false) {
     const ctx    = buildAIContext();
     const prompt = buildPrompt('summary', ctx);
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    if (!AI_PROXY_URL) throw new Error('AI proxy not configured — see CLOUDFLARE_SETUP.md');
+
+    const response = await fetch(AI_PROXY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -4114,7 +4193,10 @@ async function runTodayAI(auto = false) {
       })
     });
 
-    if (!response.ok) throw new Error('API error ' + response.status);
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'API error ' + response.status);
+    }
 
     const data = await response.json();
     const text = (data.content || []).find(b => b.type === 'text')?.text || '';
@@ -4126,7 +4208,10 @@ async function runTodayAI(auto = false) {
     if (btn)  { btn.disabled = false; btn.textContent = '↻'; btn.title = 'Refresh'; }
 
   } catch(e) {
-    contentEl.innerHTML = '<span style="color:#64748b;font-size:12px;">Could not load insight — ' + e.message + '</span>';
+    const isConfig = e.message.includes('proxy not configured');
+    contentEl.innerHTML = isConfig
+      ? '<span style="color:#f59e0b;font-size:12px;">⚠ AI not set up yet — paste your Cloudflare Worker URL into AI_PROXY_URL in the app. See CLOUDFLARE_SETUP.md</span>'
+      : '<span style="color:#64748b;font-size:12px;">Could not load insight — ' + e.message + '</span>';
     if (btn) { btn.disabled = false; btn.textContent = '✨ Analyse'; }
   }
 
@@ -4209,7 +4294,9 @@ async function runAgent(agentId) {
     const ctx    = buildAIContext();
     const prompt = buildPrompt(agentId, ctx);
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    if (!AI_PROXY_URL) throw new Error('AI proxy not configured — see CLOUDFLARE_SETUP.md');
+
+    const response = await fetch(AI_PROXY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -4373,6 +4460,319 @@ function escH(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+
+
+// ============================================================
+// CSV IMPORT — Admin Master Foods
+// ============================================================
+// Expected CSV columns (case-insensitive, any order):
+//   name, calories (or cal or kcal), qty, unit, phase
+//   category (or cat) — optional, can be set in review UI
+// ============================================================
+
+let csvParsedRows = []; // [{name, cal, qty, unit, phase, cat, _rowIdx}]
+
+const CSV_KNOWN_CATS = [
+  'Vegetables','Fruits','Oils','Dairy','Nuts','Seeds',
+  'Protein','Supplements','Grains','Legumes','Spices','Other'
+];
+
+// ── File input handler ───────────────────────────────────────
+function handleCSVUpload(event) {
+  const file = event.target.files[0];
+  event.target.value = ''; // reset so same file can be re-selected
+  if (!file) return;
+  if (!file.name.endsWith('.csv')) {
+    showToast('Please select a .csv file');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => parseAndReviewCSV(e.target.result, file.name);
+  reader.readAsText(file);
+}
+
+// ── Parse CSV text ───────────────────────────────────────────
+function parseAndReviewCSV(text, filename) {
+  const errors = [];
+  const lines  = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) {
+    showToast('CSV has no data rows');
+    return;
+  }
+
+  // Parse header — normalise to lowercase, trim
+  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+
+  // Column index lookup (flexible naming)
+  const col = (names) => {
+    for (const n of names) {
+      const i = header.indexOf(n);
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
+
+  const iName  = col(['name','food name','food item','food','item']);
+  const iCal   = col(['calories','calories (kcal)','cal','kcal','calorie','energy','kcal value','calories (kcal) per serving']);
+  const iQty   = col(['qty','quantity value','quantity','amount','per qty','per','serving size','qty value']);
+  const iUnit  = col(['unit','quantity unit','units','measure','unit of measurement']);
+  const iPhase = col(['phase','phase number','phase no']);
+  const iCat   = col(['category','cat','type','group','food category','food group']);
+
+  if (iName < 0)  errors.push('Missing required column: name');
+  if (iCal < 0)   errors.push('Missing required column: calories');
+  if (iUnit < 0)  errors.push('Missing required column: unit');
+  if (errors.length) {
+    openCSVModal([]);
+    document.getElementById('csvErrorBanner').textContent = errors.join(' · ');
+    document.getElementById('csvErrorBanner').style.display = 'block';
+    return;
+  }
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const raw = lines[i];
+    if (!raw.trim()) continue;
+
+    // Handle quoted fields with commas inside
+    const cells = parseCSVLine(raw);
+    const get = (idx) => idx >= 0 && idx < cells.length ? cells[idx].trim().replace(/^["']|["']$/g, '') : '';
+
+    const name  = get(iName);
+    const calRaw= get(iCal);
+    const qtyRaw= get(iQty);
+    const rawUnit = get(iUnit) || 'gms';
+    // Normalise common unit spellings
+    const unit = rawUnit
+      .toLowerCase()
+      .replace(/^grams?$/, 'gms')
+      .replace(/^millilit(re|er)s?$/, 'ml')
+      .replace(/^teaspoon(s)?$/, 'Tsp')
+      .replace(/^tablespoon(s)?$/, 'Tbsp')
+      .replace(/^pieces?$/, 'pcs')
+      .replace(/^nos?\.?$/, 'nos')
+      || 'gms';
+    const phase = String(get(iPhase) || '1');
+    const cat   = get(iCat) || '';
+    const cal   = parseFloat(calRaw);
+    const qty   = parseFloat(qtyRaw) || 100;
+
+    if (!name) continue; // skip blank rows
+    if (isNaN(cal)) {
+      errors.push(`Row ${i + 1} "${name}": invalid calories "${calRaw}"`);
+      continue;
+    }
+
+    rows.push({ name, cal, qty, unit, phase, cat, _rowIdx: i, _error: null });
+  }
+
+  csvParsedRows = rows;
+  openCSVModal(rows, filename, errors);
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQuote = !inQuote; continue; }
+    if (c === ',' && !inQuote) { result.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+
+// ── Open review modal ────────────────────────────────────────
+function openCSVModal(rows, filename, parseErrors) {
+  const modal = document.getElementById('csvReviewModal');
+  modal.style.display = 'flex';
+
+  document.getElementById('csvImportStatus').textContent = '';
+  document.getElementById('csvGlobalCat').value = '';
+
+  // Error banner
+  const errBanner = document.getElementById('csvErrorBanner');
+  if (parseErrors && parseErrors.length) {
+    errBanner.innerHTML = parseErrors.map(e => '⚠ ' + e).join('<br>');
+    errBanner.style.display = 'block';
+  } else {
+    errBanner.style.display = 'none';
+  }
+
+  // Summary
+  const totalSkipped = (parseErrors || []).length;
+  document.getElementById('csvSummaryLine').textContent =
+    (filename || '') + ' — ' + rows.length + ' food' + (rows.length !== 1 ? 's' : '') + ' parsed' +
+    (totalSkipped ? ', ' + totalSkipped + ' skipped' : '');
+  document.getElementById('csvRowCount').textContent = rows.length;
+
+  // Build known-cats chips + any cats from the file
+  const fileCats = [...new Set(rows.map(r => r.cat).filter(Boolean))];
+  const allChipCats = [...new Set([...CSV_KNOWN_CATS, ...fileCats])];
+  document.getElementById('csvCatChips').innerHTML = allChipCats.map(c =>
+    `<div onclick="applyGlobalCategoryName('${c}')"
+      style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:20px;padding:4px 12px;
+      font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Mono',monospace;transition:all 0.15s;"
+      onmouseover="this.style.borderColor='#60a5fa';this.style.color='#60a5fa'"
+      onmouseout="this.style.borderColor='#3a4155';this.style.color='#94a3b8'">
+      ${c}
+    </div>`
+  ).join('');
+
+  renderCSVRows();
+}
+
+function closeCSVModal() {
+  document.getElementById('csvReviewModal').style.display = 'none';
+  csvParsedRows = [];
+}
+
+// ── Render editable food rows ────────────────────────────────
+function renderCSVRows() {
+  const list = document.getElementById('csvReviewList');
+  if (!csvParsedRows.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:20px;">No rows to review</div>';
+    return;
+  }
+
+  const allPhases = getAllPhases();
+
+  list.innerHTML = csvParsedRows.map((row, idx) => {
+    const hasCat = !!row.cat;
+    return `
+    <div id="csvrow-${idx}" style="padding:10px 12px;border-bottom:1px solid #2a2f3f;background:${hasCat?'#0d0f14':'rgba(245,158,11,0.05)'};">
+      <!-- Row header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-size:13px;font-weight:700;color:#e2e8f0;flex:1;min-width:0;margin-right:8px;">${escCSV(row.name)}</div>
+        <div style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;flex-shrink:0;">
+          ${row.cal} kcal / ${row.qty} ${escCSV(row.unit)} · Phase ${escCSV(row.phase)}
+        </div>
+        <button onclick="removeCSVRow(${idx})"
+          style="background:none;border:none;color:#475569;font-size:16px;cursor:pointer;padding:0 0 0 8px;flex-shrink:0;" title="Remove row">✕</button>
+      </div>
+      <!-- Category input -->
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span style="font-size:10px;font-weight:700;color:#64748b;white-space:nowrap;">CATEGORY</span>
+        <input type="text"
+          value="${escCSV(row.cat)}"
+          placeholder="${hasCat ? '' : '⚠ required — type or tap quick pick above'}"
+          oninput="updateCSVRowCat(${idx}, this.value)"
+          style="flex:1;background:#1e2230;border:1px solid ${hasCat?'#3a4155':'#f59e0b'};color:#e2e8f0;
+                 border-radius:6px;padding:5px 8px;font-size:12px;font-family:'Syne',sans-serif;outline:none;">
+        <!-- Mini phase selector per row -->
+        <select onchange="updateCSVRowPhase(${idx}, this.value)"
+          style="background:#1e2230;border:1px solid #3a4155;color:#94a3b8;border-radius:6px;
+                 padding:5px 6px;font-size:11px;font-family:'DM Mono',monospace;outline:none;">
+          ${allPhases.map(p =>
+            `<option value="${p}" ${String(row.phase)===String(p)?'selected':''}>${p.match(/^\d+$/)?'V'+p:p}</option>`
+          ).join('')}
+        </select>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escCSV(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updateCSVRowCat(idx, val) {
+  csvParsedRows[idx].cat = val.trim();
+  // Update border colour live
+  const input = document.querySelector(`#csvrow-${idx} input[type=text]`);
+  if (input) input.style.borderColor = val.trim() ? '#3a4155' : '#f59e0b';
+  const row = document.getElementById('csvrow-' + idx);
+  if (row) row.style.background = val.trim() ? '#0d0f14' : 'rgba(245,158,11,0.05)';
+}
+
+function updateCSVRowPhase(idx, val) {
+  csvParsedRows[idx].phase = val;
+}
+
+function removeCSVRow(idx) {
+  csvParsedRows.splice(idx, 1);
+  document.getElementById('csvRowCount').textContent = csvParsedRows.length;
+  renderCSVRows();
+}
+
+function applyGlobalCategory() {
+  const cat = document.getElementById('csvGlobalCat').value.trim();
+  if (!cat) return;
+  applyGlobalCategoryName(cat);
+  document.getElementById('csvGlobalCat').value = cat;
+}
+
+function applyGlobalCategoryName(cat) {
+  document.getElementById('csvGlobalCat').value = cat;
+  // Only apply to rows that don't already have a category
+  csvParsedRows.forEach(r => { if (!r.cat) r.cat = cat; });
+  renderCSVRows();
+}
+
+// ── Submit to Firestore ──────────────────────────────────────
+async function submitCSVImport() {
+  const statusEl = document.getElementById('csvImportStatus');
+  const btn = document.querySelector('#csvReviewModal button[onclick="submitCSVImport()"]');
+
+  // Validate — all rows must have a category
+  const missing = csvParsedRows.filter(r => !r.cat);
+  if (missing.length) {
+    statusEl.style.color = '#f87171';
+    statusEl.textContent = `⚠ ${missing.length} row${missing.length > 1 ? 's' : ''} missing a category. Set it above then try again.`;
+    // Scroll list to first missing row
+    const idx = csvParsedRows.indexOf(missing[0]);
+    const el = document.getElementById('csvrow-' + idx);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Importing…'; }
+  statusEl.style.color = '#94a3b8';
+  statusEl.textContent = 'Writing to Firestore…';
+
+  try {
+    // Batch in groups of 500 (Firestore limit)
+    const BATCH_SIZE = 400;
+    let imported = 0;
+
+    for (let i = 0; i < csvParsedRows.length; i += BATCH_SIZE) {
+      const chunk = csvParsedRows.slice(i, i + BATCH_SIZE);
+      const batch = db.batch();
+      chunk.forEach(row => {
+        const docId = row.name.replace(/\//g, '_');
+        batch.set(db.collection('masterFoods').doc(docId), {
+          name:  row.name,
+          cal:   row.cal,
+          qty:   row.qty,
+          unit:  row.unit,
+          phase: String(row.phase),
+          cat:   row.cat,
+        });
+      });
+      await batch.commit();
+      imported += chunk.length;
+      statusEl.textContent = `Writing… ${imported}/${csvParsedRows.length}`;
+    }
+
+    statusEl.style.color = '#6ee7b7';
+    statusEl.textContent = `✓ ${imported} food${imported > 1 ? 's' : ''} imported to master!`;
+    showToast(`${imported} foods imported ✓`);
+
+    // Refresh master list and CALORIE_DB
+    await loadMasterFoodsAdmin();
+    await loadMasterFoods();
+
+    // Auto-close after 1.5s
+    setTimeout(closeCSVModal, 1500);
+
+  } catch(e) {
+    statusEl.style.color = '#f87171';
+    statusEl.textContent = '⚠ Import failed: ' + e.message;
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Import to Master'; }
+    console.error('CSV import error:', e);
+  }
+}
 
 // ============================================================
 // AUTO-REFRESH: polls version.json, reloads when new deploy detected
