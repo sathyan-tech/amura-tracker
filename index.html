@@ -3,7 +3,8 @@
 <html lang="en" style="background:#0d0f14;color-scheme:dark;">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<script src="https://js.puter.com/v2/"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0d0f14">
 <title>Sathyan's Amura Tracker</title>
@@ -917,7 +918,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
     <div>
       <div style="font-size:18px;font-weight:800;color:#a78bfa;">🤖 AI Insights</div>
-      <div style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;margin-top:2px;">Powered by Claude</div>
+      <div style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;margin-top:2px;">Powered by Gemini · Free</div>
     </div>
     <div style="font-size:10px;color:#64748b;font-family:'DM Mono',monospace;text-align:right;" id="aiDataRange">All history</div>
   </div>
@@ -1533,7 +1534,8 @@ let ADMIN_EMAIL = ['sathyan85','gmail.com'].join('@'); // fallback — overwritt
 // Cloudflare Worker that securely forwards requests to Anthropic API.
 // Set this to your deployed Worker URL after following CLOUDFLARE_SETUP.md
 // Example: 'https://amura-ai.your-name.workers.dev'
-const AI_PROXY_URL = 'https://amura-ai.sathyan85.workers.dev'; // <-- PASTE YOUR WORKER URL HERE
+// AI powered by Puter.js (free, no API key needed)
+const AI_PROXY_URL = ''; // unused — kept for compatibility
 let db = null;
 let currentUser = null;
 let saveTimer = null;
@@ -4177,30 +4179,14 @@ async function runTodayAI(auto = false) {
     const ctx    = buildAIContext();
     const prompt = buildPrompt('summary', ctx);
 
-    if (!AI_PROXY_URL) throw new Error('AI proxy not configured — see CLOUDFLARE_SETUP.md');
+    const systemPrompt = 'You are a warm, encouraging health assistant for the Amura Tracker food testing app. ' +
+      'Provide a concise daily insight — 3-4 short sections maximum. Use emoji headers. ' +
+      'Be specific with actual food names and numbers from the data. Keep it mobile-friendly and motivating. ' +
+      'Do not include medical disclaimers.';
 
-    const response = await fetch(AI_PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 600,
-        system: 'You are a warm, encouraging health assistant for the Amura Tracker food testing app. ' +
-          'Provide a concise daily insight — 3-4 short sections maximum. Use emoji headers. ' +
-          'Be specific with actual food names and numbers from the data. Keep it mobile-friendly and motivating. ' +
-          'Do not include medical disclaimers.',
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error?.message || 'API error ' + response.status);
-    }
-
-    const data = await response.json();
-    const text = (data.content || []).find(b => b.type === 'text')?.text || '';
-    contentEl.innerHTML = formatAIResponse(text);
+    const fullPrompt = systemPrompt + '\n\n' + prompt;
+    const text = await puter.ai.chat(fullPrompt, { model: 'gemini-2.0-flash-exp' });
+    contentEl.innerHTML = formatAIResponse(typeof text === 'string' ? text : text?.message?.content?.[0]?.text || String(text));
 
     // Timestamp
     const now = new Date();
@@ -4208,10 +4194,7 @@ async function runTodayAI(auto = false) {
     if (btn)  { btn.disabled = false; btn.textContent = '↻'; btn.title = 'Refresh'; }
 
   } catch(e) {
-    const isConfig = e.message.includes('proxy not configured');
-    contentEl.innerHTML = isConfig
-      ? '<span style="color:#f59e0b;font-size:12px;">⚠ AI not set up yet — paste your Cloudflare Worker URL into AI_PROXY_URL in the app. See CLOUDFLARE_SETUP.md</span>'
-      : '<span style="color:#64748b;font-size:12px;">Could not load insight — ' + e.message + '</span>';
+    contentEl.innerHTML = '<span style="color:#64748b;font-size:12px;">Could not load insight — ' + e.message + '</span>';
     if (btn) { btn.disabled = false; btn.textContent = '✨ Analyse'; }
   }
 
@@ -4294,31 +4277,15 @@ async function runAgent(agentId) {
     const ctx    = buildAIContext();
     const prompt = buildPrompt(agentId, ctx);
 
-    if (!AI_PROXY_URL) throw new Error('AI proxy not configured — see CLOUDFLARE_SETUP.md');
+    const sysPrompt = 'You are a health and nutrition assistant analysing data from a personal food elimination/reintroduction diet tracker called Amura Tracker. ' +
+      'The user is systematically testing foods across phases V1-V6. ' +
+      'Be concise, specific, and actionable. Use the actual food names and dates from the data. ' +
+      'Format your response with clear sections using emoji headers. Keep it mobile-friendly — short paragraphs, no long walls of text. ' +
+      'Do not include disclaimers about consulting doctors unless there is a genuine safety concern.';
 
-    const response = await fetch(AI_PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: 'You are a health and nutrition assistant analysing data from a personal food elimination/reintroduction diet tracker called Amura Tracker. ' +
-          'The user is systematically testing foods across phases V1-V6. ' +
-          'Be concise, specific, and actionable. Use the actual food names and dates from the data. ' +
-          'Format your response with clear sections using emoji headers. Keep it mobile-friendly — short paragraphs, no long walls of text. ' +
-          'Do not include disclaimers about consulting doctors unless there is a genuine safety concern.',
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error?.message || 'API error ' + response.status);
-    }
-
-    const data = await response.json();
-    const text = (data.content || []).find(b => b.type === 'text')?.text || 'No response received.';
-    resultEl.innerHTML = formatAIResponse(text);
+    const fullPrompt = sysPrompt + '\n\n' + prompt;
+    const text = await puter.ai.chat(fullPrompt, { model: 'gemini-2.0-flash-exp' });
+    resultEl.innerHTML = formatAIResponse(typeof text === 'string' ? text : text?.message?.content?.[0]?.text || String(text));
 
   } catch(e) {
     resultEl.innerHTML =
