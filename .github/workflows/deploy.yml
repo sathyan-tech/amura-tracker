@@ -34,31 +34,45 @@ jobs:
           token: ${{ secrets.CONFIG_REPO_TOKEN }}
           path: config
 
-      - name: Inject Firebase config
+      - name: Inject all config values
         run: |
+          # Firebase keys from private config repo
+          API_KEY=$(jq -r '.apiKey' config/firebase-config.json)
+          AUTH_DOMAIN=$(jq -r '.authDomain' config/firebase-config.json)
+          PROJECT_ID=$(jq -r '.projectId' config/firebase-config.json)
+          STORAGE_BUCKET=$(jq -r '.storageBucket' config/firebase-config.json)
+          SENDER_ID=$(jq -r '.messagingSenderId' config/firebase-config.json)
+          APP_ID=$(jq -r '.appId' config/firebase-config.json)
+          MEASUREMENT_ID=$(jq -r '.measurementId' config/firebase-config.json)
+
+          # Gemini key — read from private config, fall back to empty string if missing
+          GEMINI_KEY=$(jq -r '.geminiApiKey // ""' config/firebase-config.json)
+
           sed -i \
-            -e 's|__FIREBASE_API_KEY__|${{ secrets.FIREBASE_API_KEY }}|g' \
-            -e 's|__FIREBASE_AUTH_DOMAIN__|${{ secrets.FIREBASE_AUTH_DOMAIN }}|g' \
-            -e 's|__FIREBASE_PROJECT_ID__|${{ secrets.FIREBASE_PROJECT_ID }}|g' \
-            -e 's|__FIREBASE_STORAGE_BUCKET__|${{ secrets.FIREBASE_STORAGE_BUCKET }}|g' \
-            -e 's|__FIREBASE_MESSAGING_SENDER_ID__|${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}|g' \
-            -e 's|__FIREBASE_APP_ID__|${{ secrets.FIREBASE_APP_ID }}|g' \
-            -e 's|__FIREBASE_MEASUREMENT_ID__|${{ secrets.FIREBASE_MEASUREMENT_ID }}|g' \
+            -e "s|__FIREBASE_API_KEY__|${API_KEY}|g" \
+            -e "s|__FIREBASE_AUTH_DOMAIN__|${AUTH_DOMAIN}|g" \
+            -e "s|__FIREBASE_PROJECT_ID__|${PROJECT_ID}|g" \
+            -e "s|__FIREBASE_STORAGE_BUCKET__|${STORAGE_BUCKET}|g" \
+            -e "s|__FIREBASE_MESSAGING_SENDER_ID__|${SENDER_ID}|g" \
+            -e "s|__FIREBASE_APP_ID__|${APP_ID}|g" \
+            -e "s|__FIREBASE_MEASUREMENT_ID__|${MEASUREMENT_ID}|g" \
+            -e "s|__GEMINI_API_KEY__|${GEMINI_KEY}|g" \
             public/index.html
 
-      - name: Inject Gemini API key
+      - name: Verify Firebase placeholders replaced
         run: |
-          GEMINI_KEY=$(jq -r '.geminiApiKey' config/firebase-config.json)
-          sed -i "s|__GEMINI_API_KEY__|${GEMINI_KEY}|g" public/index.html
-
-      - name: Verify no placeholders remain
-        run: |
-          if grep -q '__FIREBASE_\|__GEMINI_' public/index.html; then
-            echo "ERROR: Unreplaced placeholders found!"
-            grep '__FIREBASE_\|__GEMINI_' public/index.html
+          if grep -q '__FIREBASE_' public/index.html; then
+            echo "ERROR: Firebase placeholders not replaced!"
+            grep '__FIREBASE_' public/index.html
             exit 1
           fi
-          echo "All placeholders replaced successfully"
+          echo "All Firebase placeholders replaced"
+          # Gemini key warning (non-fatal — app works without AI)
+          if grep -q '__GEMINI_API_KEY__' public/index.html; then
+            echo "WARNING: GEMINI_API_KEY not set — AI features will be disabled"
+          else
+            echo "Gemini key configured"
+          fi
 
       - name: Write version.json
         run: echo '{"sha":"${{ github.sha }}"}' > public/version.json
