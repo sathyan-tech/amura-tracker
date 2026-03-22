@@ -873,14 +873,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <div class="food-editor-field">
     <div class="food-editor-label">CATEGORY</div>
     <select class="food-editor-select" id="fe_cat">
-      <option>Vegetables</option>
-      <option>Fruits</option>
-      <option>Protein</option>
-      <option>Dairy</option>
-      <option>Nuts</option>
-      <option>Seeds</option>
-      <option>Oils</option>
-      <option>Other</option>
+      <!-- populated dynamically by refreshFoodEditorCategories() -->
     </select>
   </div>
   <div class="food-editor-field">
@@ -2565,7 +2558,7 @@ function openFoodEditor(foodName) {
     document.getElementById('fe_qty').value = f.qty;
     document.getElementById('fe_unit').value = f.unit;
     document.getElementById('fe_phase').value = f.phase;
-    document.getElementById('fe_cat').value = f.cat;
+    refreshFoodEditorCategories(f.cat);
     document.getElementById('fe_status').value = foodStatusOverrides[f.name] || f.status;
     document.getElementById('fe_name').disabled = !f._custom; // can't rename built-in foods
   } else {
@@ -2577,7 +2570,7 @@ function openFoodEditor(foodName) {
     document.getElementById('fe_qty').value = '100';
     document.getElementById('fe_unit').value = 'gms';
     document.getElementById('fe_phase').value = '1';
-    document.getElementById('fe_cat').value = 'Vegetables';
+    refreshFoodEditorCategories('Vegetables');
     document.getElementById('fe_status').value = 'NI';
   }
 
@@ -3029,6 +3022,31 @@ function refreshFoodEditorPhases() {
   const cur = sel.value;
   sel.innerHTML = getAllPhases().map(p => `<option value="${p}">Phase ${p}</option>`).join('');
   sel.value = getAllPhases().includes(cur) ? cur : '1';
+}
+
+function refreshFoodEditorCategories(currentCat) {
+  const sel = document.getElementById('fe_cat');
+  if (!sel) return;
+  // Collect all unique categories from CALORIE_DB + masterFoods
+  const cats = new Set();
+  CALORIE_DB.forEach(f => { if (f.cat) cats.add(f.cat); });
+  masterFoods.forEach(f => { if (f.cat) cats.add(f.cat); });
+  // Always include these base categories even if no foods use them yet
+  ['Vegetables','Fruits','Protein','Dairy','Nuts','Seeds','Oils','Grains','Supplements','Spices','Other']
+    .forEach(c => cats.add(c));
+  const sorted = [...cats].sort();
+  sel.innerHTML = sorted.map(c => `<option value="${c}">${c}</option>`).join('');
+  // Restore selection — if the food's category exists use it, else default to first
+  if (currentCat && cats.has(currentCat)) {
+    sel.value = currentCat;
+  } else if (currentCat) {
+    // Category from food not in list yet — add it dynamically
+    const opt = document.createElement('option');
+    opt.value = currentCat;
+    opt.textContent = currentCat;
+    sel.appendChild(opt);
+    sel.value = currentCat;
+  }
 }
 
 // Phase modal removed — management is in Admin → Config tab
@@ -3770,6 +3788,8 @@ async function loadMasterFoods() {
       }
     });
   } catch(e) { console.warn('loadMasterFoods:', e); }
+  // Refresh category dropdown if food editor is open
+  refreshFoodEditorCategories();
 }
 
 // ── Admin sub-tab switcher ──
@@ -4165,18 +4185,32 @@ async function callGemini(systemPrompt, userPrompt) {
   if (!GEMINI_API_KEY || GEMINI_API_KEY === '__GEMINI_API_KEY__') {
     throw new Error('Gemini API key not configured — add GEMINI_API_KEY secret to GitHub repo and redeploy');
   }
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=' + GEMINI_API_KEY;
+  // gemini-1.5-flash — reliable free tier model
+  const model = 'gemini-1.5-flash';
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + GEMINI_API_KEY;
+
+  // Trim prompt to avoid hitting token limits — keep last 4000 chars of user data
+  const trimmed = userPrompt.length > 4000 ? userPrompt.slice(-4000) : userPrompt;
+
   const body = {
-    contents: [{ parts: [{ text: systemPrompt + '\n\n' + userPrompt }] }],
-    generationConfig: { maxOutputTokens: 1200, temperature: 0.7 }
+    contents: [{ parts: [{ text: systemPrompt + '\n\n' + trimmed }] }],
+    generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
   };
+
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
+
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
+
+  if (data.error) {
+    throw new Error(data.error.message + ' (code: ' + data.error.code + ')');
+  }
+  if (!data.candidates || !data.candidates[0]) {
+    throw new Error('No response from Gemini — try again');
+  }
   return data.candidates[0].content.parts[0].text;
 }
 
