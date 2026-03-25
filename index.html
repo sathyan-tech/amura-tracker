@@ -444,8 +444,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
 <div class="page active" id="page-today">
   <div class="date-picker-wrap">
-    <input type="date" class="date-picker" id="todayDate">
-    <button class="btn-secondary" style="flex:none;padding:8px 14px;" onclick="loadDay()">Load</button>
+    <input type="date" class="date-picker" id="todayDate" onchange="loadDay()">
     <button class="btn-secondary" style="flex:none;padding:8px 14px;color:var(--accent2);border-color:var(--accent2);" onclick="showDuplicateModal()">⧉ Copy</button>
     <button class="btn-secondary" style="flex:none;padding:8px 14px;color:var(--accent3);border-color:var(--accent3);" onclick="shareSnapshot()">📤 Share</button>
   </div>
@@ -599,7 +598,13 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 <!-- PAGE: PHASE -->
 
 <div class="page" id="page-phase">
-  <div class="phase-badge">📋 Food Testing Tracker</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+    <div class="phase-badge" style="margin-bottom:0;">📋 Food Testing Tracker</div>
+    <button onclick="sharePhaseSnapshot()"
+      style="background:#1e2230;border:1px solid #6ee7b7;color:#6ee7b7;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;">
+      📤 Share
+    </button>
+  </div>
 
   <div class="select-row" id="phaseTabFilter">
     <!-- built dynamically by buildPhaseTabFilter() so custom phases appear here too -->
@@ -3278,6 +3283,79 @@ document.addEventListener('click', function(e) {
 // ============================================================
 let snapshotBlob = null;
 let snapshotDataUrl = null;
+
+function sharePhaseSnapshot() {
+  // Build a text summary of currently filtered phase items
+  const phFilter  = currentPhaseFilter || 'all';
+  const catFilter = currentCatFilter   || 'all';
+
+  // Get filtered, deduped items same as renderPhaseList
+  const seenCI = new Set();
+  const items = CALORIE_DB.filter(f => {
+    if (phFilter  !== 'all' && String(f.phase) !== phFilter)  return false;
+    if (catFilter !== 'all' && f.cat !== catFilter)            return false;
+    const key = f.name.toLowerCase();
+    if (seenCI.has(key)) return false;
+    seenCI.add(key);
+    return true;
+  });
+
+  // Group by category
+  const grouped = {};
+  items.forEach(f => {
+    const status = foodStatusOverrides[f.name] || f.status;
+    if (!grouped[f.cat]) grouped[f.cat] = [];
+    grouped[f.cat].push({ name: f.name, status });
+  });
+
+  // Status emoji map
+  const stIcon = { OK:'✅', Test:'🔵', Retest:'🔄', Failed:'❌', NI:'⬜' };
+  const stLabel = { OK:'Passed', Test:'To Test', Retest:'Retest', Failed:'Failed', NI:'Not Interested' };
+
+  // Build share text
+  let title = '📋 Amura Food Testing Status';
+  if (phFilter  !== 'all') title += ' — Phase ' + phaseLabel(phFilter);
+  if (catFilter !== 'all') title += ' — ' + catFilter;
+  title += '\n' + new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+
+  let body = '';
+  Object.entries(grouped).sort().forEach(([cat, foods]) => {
+    body += '\n\n' + cat.toUpperCase();
+    foods.forEach(f => {
+      const icon = stIcon[f.status] || '⬜';
+      const lbl  = stLabel[f.status] || f.status;
+      body += '\n' + icon + ' ' + f.name + ' (' + lbl + ')';
+    });
+  });
+
+  const summary = '\n\nTotal: ' + items.length + ' items';
+  const shareText = title + body + summary;
+
+  // Share via Web Share API or copy to clipboard
+  if (navigator.share) {
+    navigator.share({ text: shareText })
+      .catch(e => { if (e.name !== 'AbortError') copyToClipboard(shareText); });
+  } else {
+    copyToClipboard(shareText);
+  }
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text)
+    .then(() => showToast('Copied to clipboard ✓'))
+    .catch(() => {
+      // Fallback for older browsers
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('Copied to clipboard ✓');
+    });
+}
 
 function shareSnapshot() {
   snapshotBlob = null;
