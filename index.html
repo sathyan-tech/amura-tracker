@@ -645,6 +645,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
           A–Z ↕
         </button>
         <button onclick="openFoodEditor(null)" style="background:#6ee7b7;color:#0d0f14;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;">＋ Add Food</button>
+        <button onclick="shareLookupSnapshot()" style="background:#1e2230;border:1px solid #6ee7b7;color:#6ee7b7;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;flex-shrink:0;">📤 Share</button>
       </div>
     </div>
     <input class="lookup-search" type="text" id="lookupInput" placeholder="Search any food..." oninput="runLookup()">
@@ -741,7 +742,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
     <button class="select-chip active" id="range-30" onclick="setDashRange(30,this)">30 Days</button>
     <button class="select-chip" id="range-60" onclick="setDashRange(60,this)">60 Days</button>
     <button class="select-chip" id="range-90" onclick="setDashRange(90,this)">All Time</button>
-    <button onclick="importHistoricalData()" id="importBtn" style="margin-left:auto;background:#f59e0b;color:#0d0f14;border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;">⬆ Import Spreadsheet</button>
+
   </div>
 
   <!-- Summary cards -->
@@ -1334,8 +1335,8 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
 
 <div id="shareModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
   <div style="background:#161922;border:1px solid #2a2f3f;border-radius:20px 20px 0 0;padding:20px 20px 36px;width:100%;max-width:480px;">
-    <div style="font-size:16px;font-weight:800;margin-bottom:4px;">📤 Share Day Snapshot</div>
-    <div style="font-size:12px;color:#64748b;margin-bottom:16px;">Preview your daily summary image</div>
+    <div style="font-size:16px;font-weight:800;margin-bottom:4px;" id="shareModalTitle">📤 Share Snapshot</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px;" id="shareModalSubtitle">Preview your summary image</div>
 
 ```
 <!-- preview -->
@@ -3284,77 +3285,252 @@ document.addEventListener('click', function(e) {
 let snapshotBlob = null;
 let snapshotDataUrl = null;
 
-function sharePhaseSnapshot() {
-  // Build a text summary of currently filtered phase items
-  const phFilter  = currentPhaseFilter || 'all';
-  const catFilter = currentCatFilter   || 'all';
 
-  // Get filtered, deduped items same as renderPhaseList
-  const seenCI = new Set();
-  const items = CALORIE_DB.filter(f => {
+
+
+// ── Shared helper — renders snapshotCard then opens shareModal ────────────────
+function renderAndShare(titleText, subtitleText, cardHtml, filename) {
+  snapshotBlob = null;
+  snapshotDataUrl = null;
+
+  // Set modal title
+  const t = document.getElementById('shareModalTitle');
+  const s = document.getElementById('shareModalSubtitle');
+  if (t) t.textContent = '\uD83D\uDCE4 ' + titleText;
+  if (s) s.textContent = subtitleText;
+
+  // Store filename for download/share
+  window._snapshotFilename = filename || 'amura-snapshot.png';
+
+  // Fill the off-screen card
+  const card = document.getElementById('snapshotCard');
+  card.innerHTML = cardHtml;
+
+  // Show modal with spinner
+  const modal = document.getElementById('shareModal');
+  modal.style.display = 'flex';
+  document.getElementById('snapshotPreview').style.display = 'none';
+  document.getElementById('snapshotSpinner').style.display = 'block';
+  document.getElementById('snapshotSpinner').textContent = 'Generating preview\u2026';
+
+  setTimeout(function() {
+    html2canvas(card, {
+      backgroundColor: '#0d0f14',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    }).then(function(canvas) {
+      snapshotDataUrl = canvas.toDataURL('image/png');
+      canvas.toBlob(function(blob) {
+        snapshotBlob = blob;
+        var preview = document.getElementById('snapshotPreview');
+        preview.src = snapshotDataUrl;
+        preview.style.display = 'block';
+        document.getElementById('snapshotSpinner').style.display = 'none';
+        document.getElementById('btnNativeShare').style.display =
+          (navigator.share && navigator.canShare) ? 'flex' : 'none';
+      }, 'image/png');
+    }).catch(function() {
+      document.getElementById('snapshotSpinner').textContent = 'Preview unavailable';
+    });
+  }, 100);
+}
+
+// ── STATUS helpers ────────────────────────────────────────────────────────────
+function statusColor(st) {
+  if (st === 'OK')     return '#4ade80';
+  if (st === 'Test')   return '#60a5fa';
+  if (st === 'Retest') return '#fb923c';
+  if (st === 'Failed') return '#f87171';
+  return '#475569'; // NI / unknown
+}
+function statusLabel(st) {
+  if (st === 'OK')     return 'Passed';
+  if (st === 'Test')   return 'To Test';
+  if (st === 'Retest') return 'Retest';
+  if (st === 'Failed') return 'Failed';
+  if (st === 'NI')     return 'Not Interested';
+  return st;
+}
+
+// ── PHASE TAB snapshot ────────────────────────────────────────────────────────
+function sharePhaseSnapshot() {
+  var phFilter  = currentPhaseFilter  || 'all';
+  var catFilter = currentCatFilter    || 'all';
+
+  // Collect filtered, deduped items
+  var seenCI = new Set();
+  var items = CALORIE_DB.filter(function(f) {
     if (phFilter  !== 'all' && String(f.phase) !== phFilter)  return false;
     if (catFilter !== 'all' && f.cat !== catFilter)            return false;
-    const key = f.name.toLowerCase();
+    var key = f.name.toLowerCase();
     if (seenCI.has(key)) return false;
     seenCI.add(key);
     return true;
   });
 
   // Group by category
-  const grouped = {};
-  items.forEach(f => {
-    const status = foodStatusOverrides[f.name] || f.status;
+  var grouped = {};
+  items.forEach(function(f) {
+    var st = foodStatusOverrides[f.name] || f.status;
     if (!grouped[f.cat]) grouped[f.cat] = [];
-    grouped[f.cat].push({ name: f.name, status });
+    grouped[f.cat].push({ name: f.name, status: st });
   });
 
-  // Status emoji map
-  const stIcon = { OK:'✅', Test:'🔵', Retest:'🔄', Failed:'❌', NI:'⬜' };
-  const stLabel = { OK:'Passed', Test:'To Test', Retest:'Retest', Failed:'Failed', NI:'Not Interested' };
-
-  // Build share text
-  let title = '📋 Amura Food Testing Status';
-  if (phFilter  !== 'all') title += ' — Phase ' + phaseLabel(phFilter);
-  if (catFilter !== 'all') title += ' — ' + catFilter;
-  title += '\n' + new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
-
-  let body = '';
-  Object.entries(grouped).sort().forEach(([cat, foods]) => {
-    body += '\n\n' + cat.toUpperCase();
-    foods.forEach(f => {
-      const icon = stIcon[f.status] || '⬜';
-      const lbl  = stLabel[f.status] || f.status;
-      body += '\n' + icon + ' ' + f.name + ' (' + lbl + ')';
-    });
+  // Count by status
+  var counts = { OK: 0, Test: 0, Retest: 0, Failed: 0, NI: 0 };
+  items.forEach(function(f) {
+    var st = foodStatusOverrides[f.name] || f.status;
+    if (counts[st] !== undefined) counts[st]++;
+    else counts.NI++;
   });
 
-  const summary = '\n\nTotal: ' + items.length + ' items';
-  const shareText = title + body + summary;
+  // Filter label
+  var filterLabel = '';
+  if (phFilter  !== 'all') filterLabel += 'Phase ' + phaseLabel(phFilter);
+  if (catFilter !== 'all') filterLabel += (filterLabel ? ' \u00B7 ' : '') + catFilter;
+  if (!filterLabel) filterLabel = 'All Foods';
 
-  // Share via Web Share API or copy to clipboard
-  if (navigator.share) {
-    navigator.share({ text: shareText })
-      .catch(e => { if (e.name !== 'AbortError') copyToClipboard(shareText); });
-  } else {
-    copyToClipboard(shareText);
-  }
+  var today = new Date();
+  var dateStr = today.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  // Summary bar chips
+  var summaryHtml = [
+    { st: 'OK',     col: '#4ade80', label: 'Passed' },
+    { st: 'Test',   col: '#60a5fa', label: 'To Test' },
+    { st: 'Retest', col: '#fb923c', label: 'Retest' },
+    { st: 'Failed', col: '#f87171', label: 'Failed' },
+  ].filter(function(x) { return counts[x.st] > 0; })
+   .map(function(x) {
+    return '<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:8px 12px;text-align:center;min-width:54px;">' +
+      '<div style="font-size:18px;font-weight:800;color:' + x.col + ';">' + counts[x.st] + '</div>' +
+      '<div style="font-size:10px;color:#64748b;margin-top:2px;">' + x.label.toUpperCase() + '</div>' +
+    '</div>';
+  }).join('');
+
+  // Food chips per category
+  var catRowsHtml = Object.keys(grouped).sort().map(function(cat) {
+    var chips = grouped[cat].map(function(f) {
+      var col = statusColor(f.status);
+      return '<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);' +
+        'border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:4px 10px;margin:3px 2px;font-size:11px;">' +
+        '<div style="width:7px;height:7px;border-radius:50%;background:' + col + ';flex-shrink:0;"></div>' +
+        '<span style="color:#e2e8f0;font-weight:600;">' + f.name + '</span>' +
+        '</div>';
+    }).join('');
+    return '<div style="margin-bottom:14px;">' +
+      '<div style="font-size:10px;font-weight:700;color:#64748b;letter-spacing:1px;margin-bottom:6px;">' + cat.toUpperCase() + '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;">' + chips + '</div>' +
+    '</div>';
+  }).join('');
+
+  var cardHtml =
+    '<div style="margin-bottom:18px;">' +
+      '<div style="font-size:17px;font-weight:800;color:#e2e8f0;">📋 Food Testing Status</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;">' +
+        '<span style="font-size:12px;color:#64748b;font-family:\'DM Mono\',monospace;">' + dateStr + '</span>' +
+        '<span style="background:rgba(110,231,183,0.15);color:#6ee7b7;border:1px solid rgba(110,231,183,0.3);' +
+          'border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;">' + filterLabel + '</span>' +
+        '<span style="font-size:11px;color:#64748b;">' + items.length + ' foods</span>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">' + summaryHtml + '</div>' +
+    '<div>' + catRowsHtml + '</div>' +
+    '<div style="margin-top:12px;text-align:center;font-size:10px;color:#2a2f3f;font-family:\'DM Mono\',monospace;">' +
+      "Generated by Sathyan\u2019s Amura Tracker" +
+    '</div>';
+
+  var filename = 'amura-phase-' + filterLabel.replace(/\s/g, '-').toLowerCase() + '.png';
+  renderAndShare('Share Phase Status', filterLabel + ' \u00B7 ' + items.length + ' foods', cardHtml, filename);
 }
 
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text)
-    .then(() => showToast('Copied to clipboard ✓'))
-    .catch(() => {
-      // Fallback for older browsers
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      showToast('Copied to clipboard ✓');
-    });
+// ── LOOKUP TAB snapshot ───────────────────────────────────────────────────────
+function shareLookupSnapshot() {
+  // Read active filters from Lookup tab
+  var phFilter  = lookupPhaseFilter  || 'all';
+  var catFilter = lookupCatFilter    || 'all';
+  var stFilter  = lookupStatusFilter || 'all';
+  var searchQ   = (document.getElementById('lookupInput') || {}).value || '';
+
+  // Collect filtered, deduped items (same logic as runLookup)
+  var seenCI = new Set();
+  var items = CALORIE_DB.filter(function(f) {
+    if (searchQ && !f.name.toLowerCase().includes(searchQ.toLowerCase())) return false;
+    if (phFilter  !== 'all' && String(f.phase) !== phFilter)  return false;
+    if (catFilter !== 'all' && f.cat !== catFilter)            return false;
+    var st = foodStatusOverrides[f.name] || f.status;
+    if (stFilter  !== 'all' && st !== stFilter)                return false;
+    var key = f.name.toLowerCase();
+    if (seenCI.has(key)) return false;
+    seenCI.add(key);
+    return true;
+  });
+
+  // Build filter label
+  var parts = [];
+  if (phFilter  !== 'all') parts.push('Phase ' + phaseLabel(phFilter));
+  if (catFilter !== 'all') parts.push(catFilter);
+  if (stFilter  !== 'all') parts.push(statusLabel(stFilter));
+  if (searchQ)             parts.push('"' + searchQ + '"');
+  var filterLabel = parts.length ? parts.join(' \u00B7 ') : 'All Foods';
+
+  var today = new Date();
+  var dateStr = today.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  // Group by category
+  var grouped = {};
+  items.forEach(function(f) {
+    var st = foodStatusOverrides[f.name] || f.status;
+    if (!grouped[f.cat]) grouped[f.cat] = [];
+    grouped[f.cat].push({ name: f.name, cal: f.cal, qty: f.qty, unit: f.unit, phase: f.phase, status: st });
+  });
+
+  // Table rows per category
+  var catBlocksHtml = Object.keys(grouped).sort().map(function(cat) {
+    var rows = grouped[cat].map(function(f) {
+      var col = statusColor(f.status);
+      var lbl = statusLabel(f.status);
+      return '<div style="display:flex;align-items:center;justify-content:space-between;' +
+        'padding:6px 0;border-bottom:1px solid #1e2230;">' +
+        '<div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">' +
+          '<div style="width:8px;height:8px;border-radius:50%;background:' + col + ';flex-shrink:0;"></div>' +
+          '<div>' +
+            '<div style="font-size:12px;font-weight:700;color:#e2e8f0;">' + f.name + '</div>' +
+            '<div style="font-size:10px;color:#64748b;">' + f.cal + ' kcal / ' + f.qty + ' ' + f.unit +
+              ' \u00B7 Phase ' + phaseLabel(String(f.phase)) + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:10px;font-weight:700;color:' + col + ';flex-shrink:0;margin-left:8px;">' + lbl + '</div>' +
+      '</div>';
+    }).join('');
+
+    return '<div style="margin-bottom:16px;">' +
+      '<div style="font-size:10px;font-weight:700;color:#64748b;letter-spacing:1px;margin-bottom:6px;">' +
+        cat.toUpperCase() + ' (' + grouped[cat].length + ')' +
+      '</div>' +
+      rows +
+    '</div>';
+  }).join('');
+
+  var cardHtml =
+    '<div style="margin-bottom:16px;">' +
+      '<div style="font-size:17px;font-weight:800;color:#e2e8f0;">🔍 Food Database</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;">' +
+        '<span style="font-size:12px;color:#64748b;font-family:\'DM Mono\',monospace;">' + dateStr + '</span>' +
+        '<span style="background:rgba(96,165,250,0.15);color:#60a5fa;border:1px solid rgba(96,165,250,0.3);' +
+          'border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;">' + filterLabel + '</span>' +
+        '<span style="font-size:11px;color:#64748b;">' + items.length + ' items</span>' +
+      '</div>' +
+    '</div>' +
+    (items.length === 0
+      ? '<div style="color:#64748b;font-size:13px;padding:16px 0;text-align:center;">No foods match the current filters</div>'
+      : '<div>' + catBlocksHtml + '</div>') +
+    '<div style="margin-top:12px;text-align:center;font-size:10px;color:#2a2f3f;font-family:\'DM Mono\',monospace;">' +
+      "Generated by Sathyan\u2019s Amura Tracker" +
+    '</div>';
+
+  var filename = 'amura-lookup-' + filterLabel.replace(/[\s/]/g, '-').toLowerCase() + '.png';
+  renderAndShare('Share Food List', filterLabel + ' \u00B7 ' + items.length + ' items', cardHtml, filename);
 }
 
 function shareSnapshot() {
@@ -3519,10 +3695,19 @@ function closeShareModal() {
   document.getElementById('shareModal').style.display = 'none';
 }
 
+function doDownload() {
+  if (!snapshotDataUrl) return;
+  const a = document.createElement('a');
+  a.download = window._snapshotFilename || ('amura-' + currentDate + '.png');
+  a.href = snapshotDataUrl;
+  a.click();
+  showToast('Image saved ✓');
+}
+
 async function doNativeShare() {
   if (!snapshotBlob) return;
   const [y, mo, d] = currentDate.split('-');
-  const file = new File([snapshotBlob], `amura-${currentDate}.png`, { type: 'image/png' });
+  const file = new File([snapshotBlob], (window._snapshotFilename || `amura-${currentDate}.png`), { type: 'image/png' });
   const shareData = {
     title: "Sathyan's Amura Tracker",
     text: `My Amura diet log for ${d}/${mo}/${y} 🌿`,
@@ -4260,14 +4445,16 @@ let todayAIRunning = false;
 
 // ── Direct Gemini API call — no proxy, no sign-in ─────────────────────────
 async function callGemini(systemPrompt, userPrompt) {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === '__GEMINI_API_KEY__') {
-    throw new Error('Gemini API key not configured — add GEMINI_API_KEY secret to GitHub repo and redeploy');
+  // Check key — show first/last 4 chars for debugging if it looks like a placeholder
+  const keyVal = GEMINI_API_KEY || '';
+  if (!keyVal || keyVal === '__GEMINI_API_KEY__' || keyVal.length < 10) {
+    throw new Error('Gemini key missing or not injected (value: "' + keyVal.substring(0,8) + '…"). Check firebase-config.json has geminiApiKey field and redeploy.');
   }
-  // gemini-1.5-flash — reliable free tier model
-  const model = 'gemini-1.5-flash';
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + GEMINI_API_KEY;
 
-  // Trim prompt to avoid hitting token limits — keep last 4000 chars of user data
+  const model = 'gemini-1.5-flash';
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + keyVal;
+
+  // Trim prompt to stay within free tier limits
   const trimmed = userPrompt.length > 4000 ? userPrompt.slice(-4000) : userPrompt;
 
   const body = {
@@ -4275,19 +4462,24 @@ async function callGemini(systemPrompt, userPrompt) {
     generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
   };
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  } catch(fetchErr) {
+    throw new Error('Network error reaching Gemini: ' + fetchErr.message);
+  }
 
   const data = await res.json();
 
   if (data.error) {
-    throw new Error(data.error.message + ' (code: ' + data.error.code + ')');
+    throw new Error(data.error.message + ' [' + data.error.code + ']');
   }
   if (!data.candidates || !data.candidates[0]) {
-    throw new Error('No response from Gemini — try again');
+    throw new Error('No response from Gemini. Status: ' + res.status);
   }
   return data.candidates[0].content.parts[0].text;
 }
