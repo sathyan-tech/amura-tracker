@@ -4445,10 +4445,9 @@ let todayAIRunning = false;
 
 // ── Direct Gemini API call — no proxy, no sign-in ─────────────────────────
 async function callGemini(systemPrompt, userPrompt) {
-  // Check key — show first/last 4 chars for debugging if it looks like a placeholder
   const keyVal = GEMINI_API_KEY || '';
-  if (!keyVal || keyVal === '__GEMINI_API_KEY__' || keyVal.length < 10) {
-    throw new Error('Gemini key missing or not injected (value: "' + keyVal.substring(0,8) + '…"). Check firebase-config.json has geminiApiKey field and redeploy.');
+  if (!keyVal || keyVal === '__GEMINI_API_KEY__') {
+    throw new Error('Gemini key placeholder not replaced — check deploy logs.');
   }
 
   const model = 'gemini-1.5-flash';
@@ -4476,10 +4475,11 @@ async function callGemini(systemPrompt, userPrompt) {
   const data = await res.json();
 
   if (data.error) {
-    throw new Error(data.error.message + ' [' + data.error.code + ']');
+    throw new Error(data.error.message + ' [HTTP ' + res.status + ', code ' + data.error.code + ']');
   }
   if (!data.candidates || !data.candidates[0]) {
-    throw new Error('No response from Gemini. Status: ' + res.status);
+    const reason = data.promptFeedback ? JSON.stringify(data.promptFeedback) : ('HTTP ' + res.status);
+    throw new Error('No candidates in Gemini response: ' + reason);
   }
   return data.candidates[0].content.parts[0].text;
 }
