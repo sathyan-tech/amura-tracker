@@ -1303,10 +1303,7 @@ padding: 8px 12px; font-size: 13px; color: var(–muted); margin-top: 6px; min-h
   <div>
     <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;">PHASE</div>
     <select id="mf_phase" style="width:100%;background:#0d0f14;border:1px solid #3a4155;color:#e2e8f0;border-radius:8px;padding:10px;font-size:14px;font-family:'Syne',sans-serif;outline:none;">
-      <option value="1">Phase 1</option>
-      <option value="2">Phase 2</option>
-      <option value="3">Phase 3</option>
-      <option value="4">Phase 4</option>
+      <!-- populated dynamically by openMasterFoodEditor() -->
     </select>
   </div>
 </div>
@@ -4282,17 +4279,22 @@ function openMasterFoodEditor(name) {
   document.getElementById('masterFoodError').style.display = 'none';
   document.getElementById('masterFoodModalTitle').textContent = name ? '✏ Edit Food' : '＋ Add Food';
 
+  // Always rebuild phase dropdown from getAllPhases() so V5, V6 etc. appear
+  const phaseSel = document.getElementById('mf_phase');
+  phaseSel.innerHTML = getAllPhases().map(p =>
+    `<option value="${p}">${phaseLabel(p)}</option>`
+  ).join('');
+
   if (name) {
-    // Find from master first, then built-in CALORIE_DB
     const f = masterFoods.find(x => x.name === name) || CALORIE_DB.find(x => x.name === name);
     if (!f) return;
     document.getElementById('mf_name').value = f.name;
-    document.getElementById('mf_name').disabled = true; // renaming would orphan historical log data
+    document.getElementById('mf_name').disabled = true;
     document.getElementById('mf_cal').value = f.cal;
     document.getElementById('mf_qty').value = f.qty;
     document.getElementById('mf_unit').value = f.unit;
     document.getElementById('mf_cat').value = f.cat;
-    document.getElementById('mf_phase').value = f.phase;
+    phaseSel.value = String(f.phase);
   } else {
     document.getElementById('mf_name').value = '';
     document.getElementById('mf_name').disabled = false;
@@ -4300,7 +4302,7 @@ function openMasterFoodEditor(name) {
     document.getElementById('mf_qty').value = '100';
     document.getElementById('mf_unit').value = 'gms';
     document.getElementById('mf_cat').value = '';
-    document.getElementById('mf_phase').value = '1';
+    phaseSel.value = '1';
   }
 
   modal.style.display = 'flex';
