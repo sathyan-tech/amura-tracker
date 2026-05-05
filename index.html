@@ -2147,18 +2147,23 @@ function searchFood() {
     sugg.innerHTML = `<div style="padding:10px 14px;color:var(--muted);font-size:13px;">No matches${phaseMsg}</div>`;
     sugg.classList.add('show'); return;
   }
-  sugg.innerHTML = matches.map(f => `
-    <div class="food-suggestion-item" onclick="selectFood('${f.name.replace(/'/g,"\\'")}')">
+  sugg.innerHTML = matches.map(f => {
+    const userSt  = foodStatusOverrides[f.name] || f.status;
+    const stLabel = userSt === 'OK' ? 'Passed' : userSt === 'NI' ? 'Not Interested' : (userSt || '');
+    const stCol   = statusColor(userSt);
+    const safeName = f.name.replace(/'/g, "\\'");
+    return `
+    <div class="food-suggestion-item" onclick="selectFood('${safeName}')">
       <div>
         <div style="font-weight:600">${f.name}</div>
-        <div style="font-size:11px;color:var(--muted)">${f.cat} · Phase ${f.phase} · <span style="font-weight:700;color:${statusColor(f.status)}">${f.status === 'NI' ? 'Not Interested' : f.status}</span></div>
+        <div style="font-size:11px;color:var(--muted)">${f.cat} · ${phaseLabel(String(f.phase))} · <span style="font-weight:700;color:${stCol}">${stLabel}</span></div>
       </div>
       <div style="text-align:right">
         <div class="food-suggestion-cal">${f.cal} kcal</div>
         <div class="food-suggestion-unit">per ${f.qty}${f.unit}</div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
   sugg.classList.add('show');
 }
 
