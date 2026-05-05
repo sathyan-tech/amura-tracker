@@ -4773,7 +4773,13 @@ async function confirmRxName() {
   } catch(e) {
     document.getElementById('rxUploadProgress').style.display = 'none';
     document.getElementById('rxEmptyState').style.display = Object.keys(rxPrescriptions).length ? 'none' : 'block';
-    showToast('Failed to parse: ' + e.message);
+    // Show full error inline so it's visible on mobile
+    var errDiv = document.createElement('div');
+    errDiv.style.cssText = 'background:rgba(248,113,113,0.1);border:1px solid #f87171;border-radius:12px;padding:14px;margin-bottom:14px;font-size:12px;color:#f87171;';
+    errDiv.innerHTML = '<strong>Upload failed:</strong><br>' + e.message;
+    var page = document.getElementById('page-rx');
+    page.insertBefore(errDiv, page.firstChild.nextSibling);
+    setTimeout(function() { errDiv.remove(); }, 12000);
     console.error('Rx parse error:', e);
   }
 }
@@ -4787,83 +4793,118 @@ function fileToBase64(file) {
   });
 }
 
-// ── Parse PDF with Gemini ─────────────────────────────────────
+// ── Parse PDF with Gemini (File API upload → generateContent) ────────────────
 async function parseRxWithGemini(base64, rxName) {
   var keyVal = GEMINI_API_KEY || '';
   if (!keyVal || keyVal === '__GEMINI_API_KEY__') {
     throw new Error('Gemini API key not configured');
   }
 
-  var prompt = 'This is a medical prescription PDF. Extract ALL supplement/medication information and return ONLY valid JSON with this exact structure:\n' +
-    '{\n' +
-    '  "title": "prescription label e.g. ' + rxName + '",\n' +
-    '  "patient": "patient name",\n' +
-    '  "doctor": "doctor name and reg no",\n' +
-    '  "date": "prescription date",\n' +
-    '  "findings": "finding summary if present",\n' +
-    '  "duration": "e.g. 90 days",\n' +
-    '  "items": [\n' +
-    '    {\n' +
-    '      "name": "full supplement name with dosage e.g. Cap. 5-HTP 100mg",\n' +
-    '      "morning": "0",\n' +
-    '      "noon": "0",\n' +
-    '      "evening": "0",\n' +
-    '      "night": "0",\n' +
-    '      "timing": "With Food (Carb) / After Food / Anytime etc",\n' +
-    '      "days": "Day 2 - Day 90"\n' +
-    '    }\n' +
-    '  ],\n' +
-    '  "notes": ["important note 1", "important note 2"]\n' +
+  // Step 1 — Upload PDF to Gemini File API
+  document.getElementById('rxProgressDetail').textContent = 'Uploading PDF to Gemini…';
+
+  var pdfBytes = base64ToUint8Array(base64);
+  var uploadRes = await fetch(
+    'https://generativelanguage.googleapis.com/upload/v1beta/files?key=' + keyVal,
+    {
+      method: 'POST',
+      headers: {
+        'X-Goog-Upload-Command': 'start, upload, finalize',
+        'X-Goog-Upload-Header-Content-Length': pdfBytes.length,
+        'X-Goog-Upload-Header-Content-Type': 'application/pdf',
+        'Content-Type': 'application/pdf',
+      },
+      body: pdfBytes
+    }
+  );
+
+  if (!uploadRes.ok) {
+    var errText = await uploadRes.text();
+    throw new Error('File upload failed (' + uploadRes.status + '): ' + errText.substring(0, 200));
+  }
+
+  var uploadData = await uploadRes.json();
+  var fileUri = uploadData.file && uploadData.file.uri;
+  if (!fileUri) throw new Error('No file URI returned from Gemini upload');
+
+  document.getElementById('rxProgressDetail').textContent = 'Extracting prescription data…';
+
+  // Step 2 — Call generateContent referencing the uploaded file
+  var prompt = 'This is a medical prescription PDF from AMURA clinic. ' +
+    'Extract ALL supplement/medication information and return ONLY valid JSON — no markdown, no explanation. ' +
+    'Use exactly this structure:\n' +
+    '{' +
+    '"title":"' + rxName + '",' +
+    '"patient":"patient full name",' +
+    '"doctor":"doctor name and registration number",' +
+    '"date":"prescription date",' +
+    '"findings":"finding summary",' +
+    '"duration":"e.g. 90 days",' +
+    '"items":[' +
+      '{"name":"Cap. 5-HTP 100mg","morning":"0","noon":"0","evening":"1","night":"0","timing":"With Food (Carb)","days":"Day 2 - Day 90"}' +
+    '],' +
+    '"notes":["note1","note2"]' +
     '}\n\n' +
-    'Rules:\n' +
-    '- morning/noon/evening/night values must be strings of numbers (0, 1, 2 etc)\n' +
-    '- Extract ALL supplements listed\n' +
-    '- Include all important notes from the prescription\n' +
-    '- Return ONLY the JSON object, no markdown fences, no explanation';
+    'Rules: morning/noon/evening/night = string numbers like "0","1","2". ' +
+    'Extract every supplement. Include all important notes. ' +
+    'Return ONLY raw JSON, no backticks.';
 
-  var model = 'gemini-1.5-flash';
-  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + keyVal;
+  var genRes = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + keyVal,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { file_data: { mime_type: 'application/pdf', file_uri: fileUri } },
+            { text: prompt }
+          ]
+        }],
+        generationConfig: { maxOutputTokens: 2000, temperature: 0.1 }
+      })
+    }
+  );
 
-  var body = {
-    contents: [{
-      parts: [
-        { inline_data: { mime_type: 'application/pdf', data: base64 } },
-        { text: prompt }
-      ]
-    }],
-    generationConfig: { maxOutputTokens: 2000, temperature: 0.1 }
-  };
+  var genData = await genRes.json();
+  if (genData.error) throw new Error('Gemini error: ' + genData.error.message + ' [' + genData.error.code + ']');
+  if (!genData.candidates || !genData.candidates[0]) {
+    throw new Error('No response from Gemini. Full response: ' + JSON.stringify(genData).substring(0, 300));
+  }
 
-  var res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
+  var rawText = genData.candidates[0].content.parts[0].text || '';
 
-  var data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-
-  var rawText = data.candidates[0].content.parts[0].text;
-
-  // Strip markdown fences if present
-  var cleaned = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+  // Clean any markdown fences
+  var cleaned = rawText
+    .replace(/^```json\s*/im, '').replace(/^```\s*/im, '').replace(/```\s*$/im, '').trim();
 
   var parsed;
   try {
     parsed = JSON.parse(cleaned);
   } catch(e) {
-    // Try to extract JSON from text
-    var match = cleaned.match(/\{[\s\S]*\}/);
-    if (match) { parsed = JSON.parse(match[0]); }
-    else throw new Error('Could not parse AI response as JSON');
+    // Try grabbing first JSON object from text
+    var m = cleaned.match(/{[\s\S]*}/);
+    if (m) {
+      try { parsed = JSON.parse(m[0]); }
+      catch(e2) { throw new Error('JSON parse failed. Raw: ' + cleaned.substring(0, 300)); }
+    } else {
+      throw new Error('No JSON found in response. Raw: ' + cleaned.substring(0, 300));
+    }
   }
 
-  if (!parsed.items || !Array.isArray(parsed.items)) {
-    throw new Error('No supplement items found in prescription');
+  if (!parsed.items || !Array.isArray(parsed.items) || parsed.items.length === 0) {
+    throw new Error('No supplements extracted. Response was: ' + JSON.stringify(parsed).substring(0, 200));
   }
 
   parsed.title = rxName;
   return parsed;
+}
+
+function base64ToUint8Array(base64) {
+  var binary = atob(base64);
+  var bytes = new Uint8Array(binary.length);
+  for (var i = 0; i < binary.length; i++) { bytes[i] = binary.charCodeAt(i); }
+  return bytes;
 }
 
 // ── Delete ────────────────────────────────────────────────────
