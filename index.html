@@ -5517,8 +5517,8 @@ async function submitCSVImport() {
 // ============================================================
 (function() {
   const VERSION_URL = '/amura-tracker/version.json';
-  const POLL_INTERVAL = 60 * 1000; // check every 60 seconds
-  let currentVersion = null;
+  const POLL_INTERVAL = 30 * 1000; // check every 30 seconds
+  let currentSha = null;
   let reloadPending = false;
 
   async function checkVersion() {
@@ -5527,14 +5527,14 @@ async function submitCSVImport() {
       const res = await fetch(VERSION_URL + '?t=' + Date.now(), { cache: 'no-store' });
       if (!res.ok) return;
       const data = await res.json();
-      if (!currentVersion) {
-        // First load — store current version
-        currentVersion = data.version;
+      // version.json contains {"sha":"abc123..."} written by deploy.yml
+      const sha = data.sha || data.version || JSON.stringify(data);
+      if (!currentSha) {
+        currentSha = sha;
         return;
       }
-      if (data.version !== currentVersion) {
+      if (sha !== currentSha) {
         reloadPending = true;
-        // Show update toast then reload
         const toast = document.createElement('div');
         toast.style.cssText = [
           'position:fixed', 'bottom:90px', 'left:50%', 'transform:translateX(-50%)',
@@ -5552,15 +5552,25 @@ async function submitCSVImport() {
     }
   }
 
-  // Start polling after page is loaded
   window.addEventListener('load', () => {
     checkVersion();
     setInterval(checkVersion, POLL_INTERVAL);
   });
 
-  // Also check when tab becomes visible again (user switches back to tab)
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) checkVersion();
+  });
+
+  // Force reload on focus after long absence (> 5 min)
+  let lastActive = Date.now();
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      if (Date.now() - lastActive > 5 * 60 * 1000) {
+        window.location.reload(true);
+      }
+    } else {
+      lastActive = Date.now();
+    }
   });
 })();
 </script>
