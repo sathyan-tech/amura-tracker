@@ -3688,13 +3688,27 @@ function shareSnapshot() {
     ? `<span style="background:rgba(110,231,183,0.15);color:#6ee7b7;border:1px solid rgba(110,231,183,0.3);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;margin-left:8px">Phase ${m.phase}</span>`
     : '';
 
-  // Format date as DD/MM/YYYY for the share title
-  const shareDateStr = `${d}/${mo}/${y}`;
+  // Smart date label — Today / Yesterday / Day name
+  const shareDateStr = d + '/' + mo + '/' + y;
+  const todayStr2    = getTodayStr();
+  const [ty2, tm2, td2] = todayStr2.split('-');
+  const yestObj = new Date(+ty2, +tm2 - 1, +td2);
+  yestObj.setDate(yestObj.getDate() - 1);
+  const yesterdayStr = yestObj.toISOString().slice(0, 10);
+
+  let dateLabel;
+  if (currentDate === todayStr2) {
+    dateLabel = 'Today (' + shareDateStr + ')';
+  } else if (currentDate === yesterdayStr) {
+    dateLabel = 'Yesterday (' + shareDateStr + ')';
+  } else {
+    dateLabel = days[dateObj.getDay()] + ' (' + shareDateStr + ')';
+  }
 
   const card = document.getElementById('snapshotCard');
   card.innerHTML = `
     <div style="margin-bottom:20px;">
-      <div style="font-size:18px;font-weight:800;color:#e2e8f0;">My food log for ${shareDateStr}</div>
+      <div style="font-size:18px;font-weight:800;color:#e2e8f0;">Diet Log for ${dateLabel}</div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
         <div style="font-size:12px;color:#64748b;font-family:'DM Mono',monospace;">${dateStr}</div>
         ${phaseHtml}
