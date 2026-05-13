@@ -3815,10 +3815,30 @@ function doDownload() {
 async function doNativeShare() {
   if (!snapshotBlob) return;
   const [y, mo, d] = currentDate.split('-');
+
+  // Same Today/Yesterday logic as the snapshot card title
+  const shareDateStr  = d + '/' + mo + '/' + y;
+  const todayStrNS    = getTodayStr();
+  const [ty, tm, td]  = todayStrNS.split('-');
+  const yestObjNS     = new Date(+ty, +tm - 1, +td);
+  yestObjNS.setDate(yestObjNS.getDate() - 1);
+  const yesterdayStrNS = yestObjNS.toISOString().slice(0, 10);
+  const dayNamesNS    = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dateObjNS     = new Date(+y, +mo - 1, +d);
+
+  let dateLabelNS;
+  if (currentDate === todayStrNS) {
+    dateLabelNS = 'Today (' + shareDateStr + ')';
+  } else if (currentDate === yesterdayStrNS) {
+    dateLabelNS = 'Yesterday (' + shareDateStr + ')';
+  } else {
+    dateLabelNS = dayNamesNS[dateObjNS.getDay()] + ' (' + shareDateStr + ')';
+  }
+
   const file = new File([snapshotBlob], (window._snapshotFilename || `amura-${currentDate}.png`), { type: 'image/png' });
   const shareData = {
     title: "Sathyan's Amura Tracker",
-    text: `My Amura diet log for ${d}/${mo}/${y} 🌿`,
+    text: `Diet Log for ${dateLabelNS} 🌿`,
     files: [file],
   };
   try {
