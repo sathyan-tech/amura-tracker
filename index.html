@@ -3541,9 +3541,9 @@ function sharePhaseSnapshot() {
 // ── LOOKUP TAB snapshot ───────────────────────────────────────────────────────
 function shareLookupSnapshot() {
   // Read active filters from Lookup tab
-  var phFilter  = lookupPhaseFilter  || 'all';
-  var catFilter = lookupCatFilter    || 'all';
-  var stFilter  = lookupStatusFilter || 'all';
+  var phFilter  = lookupPhase  || 'all';
+  var catFilter = lookupCat    || 'all';
+  var stFilter  = lookupStatus || 'all';
   var searchQ   = (document.getElementById('lookupInput') || {}).value || '';
 
   // Collect filtered, deduped items (same logic as runLookup)
