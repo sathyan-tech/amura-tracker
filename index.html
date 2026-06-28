@@ -1845,14 +1845,17 @@ async function appInit() {
     displayName: currentUser.displayName || '',
     lastSeen: new Date().toISOString().slice(0, 10)
   }, { merge: true }).catch(() => {});
-  // Run config + master foods in parallel (don't depend on each other)
+  // Config and phases can run in parallel (independent of each other)
   await Promise.all([
     loadAppConfig(),      // adminEmail + defaultCalTarget
     loadCustomPhases(),   // custom phases (V5, V6 etc.)
-    loadMasterFoods(),    // CALORIE_DB from /masterFoods
   ]);
 
-  // Load user data — logs first (needed for Today tab), custom foods after
+  // Master foods MUST complete before user data loads
+  // (foodStatusOverrides applied on top of master food statuses)
+  await loadMasterFoods();
+
+  // User logs + custom foods
   await loadAllFromFirestore();
   await loadCustomFoods();
 
